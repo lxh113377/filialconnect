@@ -79,7 +79,7 @@
     var toggleBtn = document.querySelector('.lang-toggle');
     if (toggleBtn) {
       toggleBtn.querySelector('.lang-toggle-label').textContent = lang === 'en' ? 'ZH' : 'EN';
-      toggleBtn.setAttribute('aria-label', lang === 'en' ? 'Switch to Chinese' : 'Switch to English');
+      toggleBtn.setAttribute('aria-label', lang === 'en' ? 'ZH - Switch to Chinese' : 'EN - Switch to English');
     }
   }
 

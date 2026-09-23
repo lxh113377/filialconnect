@@ -10,6 +10,7 @@ Thumbs.db
 # Node (CI tooling only, not app deps)
 node_modules/
 .lighthouseci/
+.lh-tmp/
 
 # Archives
 *.zip
