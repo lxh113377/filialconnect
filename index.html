@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.classList.add("js")</script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FilialConnect - Helping elderly navigate digital services with ease, connecting families through technology">
+  <title>FilialConnect - Digital Bridge for Seniors</title>
+  <link rel="stylesheet" href="assets/css/main.css">
+  <script src="assets/js/i18n.js"></script>
+</head>
+<body>
+  <!-- Skip Navigation -->
+  <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
+
+  <!-- Header / Navigation -->
+  <header class="site-header" role="banner">
+    <nav class="nav-container" aria-label="Main navigation">
+      <a href="index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
+        <svg class="nav-logo" viewBox="0 0 42 42" fill="none" aria-hidden="true">
+          <circle cx="21" cy="21" r="20" fill="#2B5797" opacity="0.12"/>
+          <path d="M21 8c-4 0-8 3-8 8 0 5 3 9 5 12h6c2-3 5-7 5-12 0-5-4-8-8-8z" fill="#2B5797" opacity="0.3"/>
+          <path d="M15 26h12v3a2 2 0 01-2 2H17a2 2 0 01-2-2v-3z" fill="#2B5797"/>
+          <circle cx="18" cy="18" r="2" fill="#2B5797"/>
+          <circle cx="24" cy="18" r="2" fill="#2B5797"/>
+          <path d="M17 22c0 0 2 2 4 2s4-2 4-2" stroke="#2B5797" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <ul class="nav-links">
+        <li><a href="index.html" class="active" data-i18n="nav.home">Home</a></li>
+        <li><a href="pages/tutorials.html" data-i18n="nav.tutorials">Tutorials</a></li>
+        <li><a href="pages/fraud-database.html" data-i18n="nav.fraud">Fraud Alert</a></li>
+        <li><a href="pages/printable-guides.html" data-i18n="nav.guides">Guides</a></li>
+        <li><a href="pages/remote-assist.html" data-i18n="nav.remote">Remote Help</a></li>
+        <li><a href="pages/call-help.html" class="nav-cta" data-i18n="nav.call">Call for Help</a></li>
+        <li><button class="lang-toggle" aria-label="Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section class="hero" aria-labelledby="hero-heading">
+      <svg class="hero-icon" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+        <circle cx="40" cy="40" r="38" fill="#2B5797" opacity="0.08"/>
+        <path d="M40 16c-8 0-14 5-14 14 0 8 5 15 8 20h12c3-5 8-12 8-20 0-9-6-14-14-14z" fill="#2B5797" opacity="0.4"/>
+        <path d="M26 48h28v6a3 3 0 01-3 3H29a3 3 0 01-3-3v-6z" fill="#2B5797"/>
+        <path d="M40 20c-5 0-9 4-9 9s4 9 9 9 9-4 9-9-4-9-9-9z" fill="#E8833A" opacity="0.35"/>
+        <path d="M40 42v4" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="40" cy="54" r="3" fill="#2B5797"/>
+      </svg>
+
+      <h1 id="hero-heading" data-i18n="hero.h1">Digital Warmth<br>Across the Miles</h1>
+      <p data-i18n="hero.p">Bridging the digital divide for seniors. One click connects them to the help they need, when they need it most.</p>
+      <div class="hero-actions">
+        <a href="pages/call-help.html" class="btn btn-accent btn-lg">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 3l5 4-2 3 4 4 3-2 4 5-2 2c-8-1-13-6-14-14L3 3z" fill="currentColor"/></svg>
+          <span data-i18n="hero.cta-call">Call for Help</span>
+        </a>
+        <a href="pages/tutorials.html" class="btn btn-outline btn-lg">
+          <span data-i18n="hero.cta-tutorials">Browse Tutorials</span>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- Core Features Grid -->
+    <section class="section" aria-labelledby="features-heading">
+      <div class="section-header">
+        <h2 id="features-heading" data-i18n="features.h2">Everything You Need, Right Here</h2>
+        <p data-i18n="features.p">Five core tools designed to make digital life easier for seniors and their families</p>
+      </div>
+
+      <div class="card-grid stagger-children animate-in" role="list">
+        <!-- Card 1: Tutorials -->
+        <article class="card" role="listitem">
+          <svg class="card-icon" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+            <rect x="4" y="8" width="48" height="40" rx="4" fill="#2B5797" opacity="0.12"/>
+            <rect x="10" y="14" width="36" height="28" rx="2" fill="#2B5797" opacity="0.25"/>
+            <line x1="16" y1="22" x2="40" y2="22" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/>
+            <line x1="16" y1="28" x2="34" y2="28" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/>
+            <line x1="16" y1="34" x2="38" y2="34" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="44" cy="42" r="6" fill="#E8833A"/>
+            <path d="M42 42h4M44 40v4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <h3 data-i18n="card.tutorials.h3">Tutorial Library</h3>
+          <p data-i18n="card.tutorials.p">Step-by-step guides with large screenshots for hospital apps, train tickets, banking, and more. No videos needed just clear text and images.</p>
+          <a href="pages/tutorials.html" class="card-link">
+            <span data-i18n="card.tutorials.link">Explore Tutorials</span>
+            <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M6 4l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </article>
+
+        <!-- Card 2: Call Help -->
+        <article class="card card-accent" role="listitem">
+          <svg class="card-icon" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+            <circle cx="28" cy="28" r="22" fill="#E8833A" opacity="0.12"/>
+            <circle cx="28" cy="28" r="18" fill="#E8833A" opacity="0.2"/>
+            <path d="M28 14v16M28 30l-6-6M28 30l6-6" stroke="#E8833A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="28" cy="40" r="2" fill="#E8833A"/>
+          </svg>
+          <h3 data-i18n="card.call.h3">One-Tap Call for Help</h3>
+          <p data-i18n="card.call.p">Send an instant help request to your children. One big button, no complicated menus. Help arrives when you need it.</p>
+          <a href="pages/call-help.html" class="card-link">
+            <span data-i18n="card.call.link">Call for Help</span>
+            <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M6 4l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </article>
+
+        <!-- Card 3: Remote Assist -->
+        <article class="card card-success" role="listitem">
+          <svg class="card-icon" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+            <rect x="8" y="12" width="24" height="20" rx="3" fill="#2D8B4E" opacity="0.15"/>
+            <rect x="12" y="16" width="16" height="12" rx="1" fill="#2D8B4E" opacity="0.3"/>
+            <rect x="28" y="28" width="20" height="16" rx="3" fill="#2D8B4E" opacity="0.12"/>
+            <rect x="32" y="32" width="12" height="8" rx="1" fill="#2D8B4E" opacity="0.25"/>
+            <path d="M20 36v4l4-2-4-2z" fill="#2D8B4E"/>
+          </svg>
+          <h3 data-i18n="card.remote.h3">Remote Assistance</h3>
+          <p data-i18n="card.remote.p">Your children can view your screen remotely and guide you through any app. Secure, private, and family-only access.</p>
+          <a href="pages/remote-assist.html" class="card-link">
+            <span data-i18n="card.remote.link">Learn How</span>
+            <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M6 4l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </article>
+
+        <!-- Card 4: Fraud Database -->
+        <article class="card card-danger" role="listitem">
+          <svg class="card-icon" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+            <path d="M28 6L8 14v16c0 14 20 22 20 22s20-8 20-22V14L28 6z" fill="#C0392B" opacity="0.12" stroke="#C0392B" stroke-width="1.5"/>
+            <path d="M28 18v10M28 34v2" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <h3 data-i18n="card.fraud.h3">Fraud Alert Database</h3>
+          <p data-i18n="card.fraud.p">Stay safe from common scams targeting seniors. Learn to recognize phone fraud, fake bank calls, and online deception tactics.</p>
+          <a href="pages/fraud-database.html" class="card-link">
+            <span data-i18n="card.fraud.link">Stay Protected</span>
+            <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M6 4l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </article>
+
+        <!-- Card 5: Printable Guides -->
+        <article class="card card-warning" role="listitem">
+          <svg class="card-icon" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+            <rect x="10" y="8" width="36" height="28" rx="3" fill="#D4820A" opacity="0.12"/>
+            <rect x="16" y="14" width="24" height="16" rx="2" fill="#D4820A" opacity="0.2"/>
+            <line x1="20" y1="22" x2="36" y2="22" stroke="#D4820A" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="20" y1="26" x2="30" y2="26" stroke="#D4820A" stroke-width="1.5" stroke-linecap="round"/>
+            <rect x="18" y="38" width="20" height="10" rx="2" fill="#D4820A" opacity="0.15"/>
+            <path d="M24 38v-4h8v4" stroke="#D4820A" stroke-width="1.5"/>
+          </svg>
+          <h3 data-i18n="card.guides.h3">Printable Guides</h3>
+          <p data-i18n="card.guides.p">Download and print clear instructions to take to the bank, hospital, or anywhere. Large print, simple steps, always ready.</p>
+          <a href="pages/printable-guides.html" class="card-link">
+            <span data-i18n="card.guides.link">Download & Print</span>
+            <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M6 4l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </article>
+      </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section class="section" aria-labelledby="trust-heading" style="text-align:center;">
+      <div class="section-header">
+        <h2 id="trust-heading" data-i18n="trust.h2">Designed with Care</h2>
+        <p data-i18n="trust.p">Every detail is crafted for accessibility, clarity, and peace of mind</p>
+      </div>
+      <ul class="feature-list stagger-children animate-in" style="text-align:left;">
+        <li class="feature-item">
+          <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="20" stroke="#2B5797" stroke-width="2"/><path d="M16 24l5 5 11-11" stroke="#2B5797" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><h4 data-i18n="trust.contrast.h4">High Contrast Design</h4><p data-i18n="trust.contrast.p">Colors exceed WCAG AA standards, ensuring readability for aging eyes.</p></div>
+        </li>
+        <li class="feature-item">
+          <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="10" y="14" width="28" height="24" rx="3" stroke="#2B5797" stroke-width="2"/><line x1="16" y1="20" x2="32" y2="20" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="26" x2="28" y2="26" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="32" x2="24" y2="32" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/></svg>
+          <div><h4 data-i18n="trust.text.h4">Large, Clear Text</h4><p data-i18n="trust.text.p">Minimum 18px font size throughout. No squinting, no guessing.</p></div>
+        </li>
+        <li class="feature-item">
+          <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="18" stroke="#2B5797" stroke-width="2"/><circle cx="24" cy="24" r="6" fill="#2B5797" opacity="0.2"/><line x1="24" y1="8" x2="24" y2="14" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/><line x1="42" y1="16" x2="36" y2="20" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/></svg>
+          <div><h4 data-i18n="trust.touch.h4">Big Touch Targets</h4><p data-i18n="trust.touch.p">All buttons are at least 48x48px. Easy to tap, even with unsteady hands.</p></div>
+        </li>
+        <li class="feature-item">
+          <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4L6 12v14c0 12 18 20 18 20s18-8 18-20V12L24 4z" stroke="#2B5797" stroke-width="2"/><circle cx="24" cy="24" r="5" fill="#2B5797" opacity="0.15"/></svg>
+          <div><h4 data-i18n="trust.privacy.h4">Privacy First</h4><p data-i18n="trust.privacy.p">All connections are family-only. No data leaves your trusted circle.</p></div>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3 data-i18n="footer.brand.h3">FilialConnect</h3>
+        <p data-i18n="footer.brand.p">Bridging generations through thoughtful technology. Designed for seniors, built with care.</p>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer.features.h4">Features</h4>
+        <ul>
+          <li><a href="pages/tutorials.html" data-i18n="footer.link.tutorials">Tutorial Library</a></li>
+          <li><a href="pages/call-help.html" data-i18n="footer.link.call">Call for Help</a></li>
+          <li><a href="pages/remote-assist.html" data-i18n="footer.link.remote">Remote Assistance</a></li>
+          <li><a href="pages/fraud-database.html" data-i18n="footer.link.fraud">Fraud Alerts</a></li>
+          <li><a href="pages/printable-guides.html" data-i18n="footer.link.guides">Printable Guides</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer.about.h4">About</h4>
+        <ul>
+          <li><a href="pages/tutorials.html" data-i18n="footer.link.getting-started">Getting Started</a></li>
+          <li><a href="pages/fraud-database.html" data-i18n="footer.link.safety">Safety Tips</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
+    </div>
+  </footer>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" aria-label="Back to top" data-i18n="back-to-top" title="Back to top">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M10 4L5 9M10 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

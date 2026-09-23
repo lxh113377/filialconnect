@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.classList.add("js")</script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Remote screen sharing for family assistance - secure, private, family-only access">
+  <title>Remote Assistance - FilialConnect</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <script src="../assets/js/i18n.js"></script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <nav class="nav-container" aria-label="Main navigation">
+      <a href="../index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
+        <svg class="nav-logo" viewBox="0 0 42 42" fill="none" aria-hidden="true">
+          <circle cx="21" cy="21" r="20" fill="#2B5797" opacity="0.12"/>
+          <path d="M21 8c-4 0-8 3-8 8 0 5 3 9 5 12h6c2-3 5-7 5-12 0-5-4-8-8-8z" fill="#2B5797" opacity="0.3"/>
+          <path d="M15 26h12v3a2 2 0 01-2 2H17a2 2 0 01-2-2v-3z" fill="#2B5797"/>
+          <circle cx="18" cy="18" r="2" fill="#2B5797"/>
+          <circle cx="24" cy="18" r="2" fill="#2B5797"/>
+          <path d="M17 22c0 0 2 2 4 2s4-2 4-2" stroke="#2B5797" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <ul class="nav-links">
+        <li><a href="../index.html" data-i18n="nav.home">Home</a></li>
+        <li><a href="tutorials.html" data-i18n="nav.tutorials">Tutorials</a></li>
+        <li><a href="fraud-database.html" data-i18n="nav.fraud">Fraud Alert</a></li>
+        <li><a href="printable-guides.html" data-i18n="nav.guides">Guides</a></li>
+        <li><a href="remote-assist.html" class="active" data-i18n="nav.remote">Remote Help</a></li>
+        <li><a href="call-help.html" class="nav-cta" data-i18n="nav.call">Call for Help</a></li>
+        <li><button class="lang-toggle" aria-label="Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="../index.html" data-i18n="breadcrumb.home">Home</a>
+      <span class="separator" aria-hidden="true">/</span>
+      <span class="current" aria-current="page" data-i18n="breadcrumb.remote">Remote Assistance</span>
+    </nav>
+
+    <header class="page-header">
+      <h1 data-i18n="remote.h1">Remote Assistance</h1>
+      <p data-i18n="remote.p">Let your children see your screen and guide you through any digital task. Secure, private, and only your family can connect.</p>
+    </header>
+
+    <!-- Connection Demo -->
+    <section class="remote-demo" aria-labelledby="demo-heading">
+      <div class="connection-panel animate-in">
+        <span class="status-badge status-online" data-i18n="remote.status">Ready to Connect</span>
+        <h2 id="demo-heading" style="margin-top: var(--space-lg); margin-bottom: var(--space-sm);" data-i18n="remote.code.h2">Your Connection Code</h2>
+        <p style="color: var(--color-text-secondary); margin-bottom: var(--space-md);" data-i18n="remote.code.p">Share this code with your child to start a remote session</p>
+        <div class="connection-code" aria-label="Connection code: A7F 3K9">A7F 3K9</div>
+        <p style="font-size: var(--text-sm); color: var(--color-text-muted);" data-i18n="remote.code.note">This code changes every session for your security</p>
+      </div>
+    </section>
+
+    <!-- How Remote Assist Works -->
+    <section class="section" aria-labelledby="steps-heading">
+      <div class="section-header">
+        <h2 id="steps-heading" data-i18n="remote.steps.h2">How Remote Assistance Works</h2>
+        <p data-i18n="remote.steps.p">Three simple steps to get help from your family, no matter where they are</p>
+      </div>
+
+      <div class="connection-steps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h4 data-i18n="remote.step1.h4">Open Remote Help</h4>
+          <p style="font-size: var(--text-sm);" data-i18n="remote.step1.p">Tap the Remote Assistance button. A unique 6-digit code appears on your screen.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h4 data-i18n="remote.step2.h4">Share the Code</h4>
+          <p style="font-size: var(--text-sm);" data-i18n="remote.step2.p">Tell your child the code over the phone or send it through WeChat.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h4 data-i18n="remote.step3.h4">They Guide You</h4>
+          <p style="font-size: var(--text-sm);" data-i18n="remote.step3.p">Your child sees your screen and can draw arrows and circles to show you where to tap.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Security Section -->
+    <section class="section" aria-labelledby="security-heading">
+      <div class="section-header">
+        <h2 id="security-heading" data-i18n="remote.security.h2">Your Privacy Is Protected</h2>
+        <p data-i18n="remote.security.p">We take security seriously. Here is how we keep you safe</p>
+      </div>
+
+      <ul class="feature-list stagger-children animate-in">
+        <li class="feature-item">
+          <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4L6 12v14c0 12 18 20 18 20s18-8 18-20V12L24 4z" stroke="#2B5797" stroke-width="2"/><path d="M16 24l5 5 11-11" stroke="#2B5797" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div>
+            <h4 data-i18n="remote.family.h4">Family-Only Access</h4>
+            <p data-i18n="remote.family.p">Only people you have approved can connect to your screen. Strangers cannot request access under any circumstances.</p>
+          </div>
+        </li>
+        <li class="feature-item">
+          <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="10" y="14" width="28" height="24" rx="4" stroke="#2B5797" stroke-width="2"/><circle cx="24" cy="28" r="6" stroke="#2B5797" stroke-width="2"/><line x1="24" y1="28" x2="24" y2="34" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/></svg>
+          <div>
+            <h4 data-i18n="remote.codes.h4">One-Time Codes</h4>
+            <p data-i18n="remote.codes.p">Each session generates a new, unique connection code. Old codes cannot be reused, preventing unauthorized access.</p>
+          </div>
+        </li>
+        <li class="feature-item">
+          <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="20" stroke="#2B5797" stroke-width="2"/><path d="M24 34v-2M24 20V14" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/></svg>
+          <div>
+            <h4 data-i18n="remote.control.h4">You Stay in Control</h4>
+            <p data-i18n="remote.control.p">You can end the session at any time with one tap. Your child can only view your screen, never control it without permission.</p>
+          </div>
+        </li>
+        <li class="feature-item">
+          <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M8 8l32 32M8 40L40 8" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/></svg>
+          <div>
+            <h4 data-i18n="remote.nodata.h4">No Data Stored</h4>
+            <p data-i18n="remote.nodata.p">Screen content is never recorded or saved. Once the session ends, everything is gone. Your privacy is absolute.</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Call to Action -->
+    <section style="text-align:center; padding: var(--space-2xl) var(--space-lg);" aria-labelledby="cta-heading">
+      <h2 id="cta-heading" style="margin-bottom: var(--space-md);" data-i18n="remote.cta.h2">Need Emergency Help Instead?</h2>
+      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="remote.cta.p">If you cannot wait for a remote session, send an instant help request.</p>
+      <a href="call-help.html" class="btn btn-accent btn-lg" data-i18n="remote.cta.btn">Call for Help Now</a>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3 data-i18n="footer.brand.h3">FilialConnect</h3>
+        <p data-i18n="footer.brand.p">Bridging generations through thoughtful technology.</p>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer.features.h4">Features</h4>
+        <ul>
+          <li><a href="tutorials.html" data-i18n="footer.link.tutorials">Tutorial Library</a></li>
+          <li><a href="call-help.html" data-i18n="footer.link.call">Call for Help</a></li>
+          <li><a href="remote-assist.html" data-i18n="footer.link.remote">Remote Assistance</a></li>
+          <li><a href="fraud-database.html" data-i18n="footer.link.fraud">Fraud Alerts</a></li>
+          <li><a href="printable-guides.html" data-i18n="footer.link.guides">Printable Guides</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer.about.h4">About</h4>
+        <ul>
+          <li><a href="tutorials.html" data-i18n="footer.link.getting-started">Getting Started</a></li>
+          <li><a href="fraud-database.html" data-i18n="footer.link.safety">Safety Tips</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" aria-label="Back to top" data-i18n="back-to-top">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M10 4L5 9M10 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

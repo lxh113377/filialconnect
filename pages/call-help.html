@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.classList.add("js")</script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="One-tap emergency help request - instantly notify your family when you need digital assistance">
+  <title>Call for Help - FilialConnect</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <script src="../assets/js/i18n.js"></script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <nav class="nav-container" aria-label="Main navigation">
+      <a href="../index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
+        <svg class="nav-logo" viewBox="0 0 42 42" fill="none" aria-hidden="true">
+          <circle cx="21" cy="21" r="20" fill="#2B5797" opacity="0.12"/>
+          <path d="M21 8c-4 0-8 3-8 8 0 5 3 9 5 12h6c2-3 5-7 5-12 0-5-4-8-8-8z" fill="#2B5797" opacity="0.3"/>
+          <path d="M15 26h12v3a2 2 0 01-2 2H17a2 2 0 01-2-2v-3z" fill="#2B5797"/>
+          <circle cx="18" cy="18" r="2" fill="#2B5797"/>
+          <circle cx="24" cy="18" r="2" fill="#2B5797"/>
+          <path d="M17 22c0 0 2 2 4 2s4-2 4-2" stroke="#2B5797" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <ul class="nav-links">
+        <li><a href="../index.html" data-i18n="nav.home">Home</a></li>
+        <li><a href="tutorials.html" data-i18n="nav.tutorials">Tutorials</a></li>
+        <li><a href="fraud-database.html" data-i18n="nav.fraud">Fraud Alert</a></li>
+        <li><a href="printable-guides.html" data-i18n="nav.guides">Guides</a></li>
+        <li><a href="remote-assist.html" data-i18n="nav.remote">Remote Help</a></li>
+        <li><a href="call-help.html" class="nav-cta active" data-i18n="nav.call">Call for Help</a></li>
+        <li><button class="lang-toggle" aria-label="Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="../index.html" data-i18n="breadcrumb.home">Home</a>
+      <span class="separator" aria-hidden="true">/</span>
+      <span class="current" aria-current="page" data-i18n="breadcrumb.call">Call for Help</span>
+    </nav>
+
+    <!-- Emergency Call Section -->
+    <section class="call-help-hero" aria-labelledby="call-heading">
+      <h1 id="call-heading" style="margin-bottom: var(--space-sm);" data-i18n="call.h1">Need Help Right Now?</h1>
+      <p style="font-size: var(--text-lg); color: var(--color-text-secondary); margin-bottom: var(--space-2xl); max-width: 500px; margin-left: auto; margin-right: auto;" data-i18n="call.p">
+        One tap sends an alert to your family. They will see what you are looking at and call you back immediately.
+      </p>
+
+      <button class="call-button" aria-label="Send emergency help request to family">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <path d="M8 6l10 8-4 6 14 14 6-4 8 10-4 4C24 43 12 34 10 10L8 6z" fill="currentColor"/>
+        </svg>
+        <span class="call-text" data-i18n="call.button">Call for Help</span>
+      </button>
+
+      <div class="call-status" role="status">
+        <h3 data-i18n="call.status.h3">Help Request Sent</h3>
+        <p data-i18n="call.status.p">Your family has been notified. They will contact you shortly. If this is an emergency, please also call 120.</p>
+      </div>
+    </section>
+
+    <!-- Help Request Form -->
+    <section class="help-form" aria-labelledby="form-heading">
+      <h2 id="form-heading" style="margin-bottom: var(--space-lg);" data-i18n="call.form.h2">Send a Detailed Request</h2>
+      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="call.form.p">
+        Describe what you need help with. Your family will see this message along with a screenshot of your screen.
+      </p>
+
+      <form onsubmit="event.preventDefault(); alert('Help request sent!');">
+        <div class="form-group">
+          <label for="help-topic" data-i18n="call.form.topic-label">What do you need help with?</label>
+          <select id="help-topic" class="form-select">
+            <option value="" data-i18n="call.form.topic-placeholder">-- Select a topic --</option>
+            <option value="hospital" data-i18n="call.form.topic.hospital">Hospital / Medical App</option>
+            <option value="bank" data-i18n="call.form.topic.bank">Banking / Payment</option>
+            <option value="transport" data-i18n="call.form.topic.transport">Train / Bus Tickets</option>
+            <option value="shopping" data-i18n="call.form.topic.shopping">Online Shopping</option>
+            <option value="wechat" data-i18n="call.form.topic.wechat">WeChat / Messaging</option>
+            <option value="other" data-i18n="call.form.topic.other">Something Else</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="help-message" data-i18n="call.form.msg-label">Describe your problem</label>
+          <textarea id="help-message" class="form-textarea" placeholder="Example: I cannot find the appointment booking button in the hospital app..." data-i18n-placeholder="call.form.msg-placeholder"></textarea>
+          <span class="form-hint" data-i18n="call.form.msg-hint">The more details you share, the faster your family can help.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="help-urgency" data-i18n="call.form.urgency-label">How urgent is this?</label>
+          <select id="help-urgency" class="form-select">
+            <option value="normal" data-i18n="call.form.urgency.normal">Normal &mdash; I can wait</option>
+            <option value="soon" data-i18n="call.form.urgency.soon">Soon &mdash; Within a few hours</option>
+            <option value="urgent" data-i18n="call.form.urgency.urgent">Urgent &mdash; As soon as possible</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-accent btn-lg" style="width:100%;">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2 2l16 8-16 8 4-8-4-8z" fill="currentColor"/></svg>
+          <span data-i18n="call.form.submit">Send Help Request</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section" aria-labelledby="how-heading">
+      <div class="section-header">
+        <h2 id="how-heading" data-i18n="call.how.h2">How It Works</h2>
+        <p data-i18n="call.how.p">Simple, fast, and reliable &mdash; here is what happens when you press the button</p>
+      </div>
+
+      <div class="connection-steps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h4 data-i18n="call.step1.h4">You Tap the Button</h4>
+          <p style="font-size: var(--text-sm);" data-i18n="call.step1.p">One big orange button. No menus, no confusion.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h4 data-i18n="call.step2.h4">Family Gets Alert</h4>
+          <p style="font-size: var(--text-sm);" data-i18n="call.step2.p">Your children receive a notification with a screenshot of your screen.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h4 data-i18n="call.step3.h4">They Call You Back</h4>
+          <p style="font-size: var(--text-sm);" data-i18n="call.step3.p">Your family calls you and guides you through the problem step by step.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3 data-i18n="footer.brand.h3">FilialConnect</h3>
+        <p data-i18n="footer.brand.p">Bridging generations through thoughtful technology.</p>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer.features.h4">Features</h4>
+        <ul>
+          <li><a href="tutorials.html" data-i18n="footer.link.tutorials">Tutorial Library</a></li>
+          <li><a href="call-help.html" data-i18n="footer.link.call">Call for Help</a></li>
+          <li><a href="remote-assist.html" data-i18n="footer.link.remote">Remote Assistance</a></li>
+          <li><a href="fraud-database.html" data-i18n="footer.link.fraud">Fraud Alerts</a></li>
+          <li><a href="printable-guides.html" data-i18n="footer.link.guides">Printable Guides</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer.about.h4">About</h4>
+        <ul>
+          <li><a href="tutorials.html" data-i18n="footer.link.getting-started">Getting Started</a></li>
+          <li><a href="fraud-database.html" data-i18n="footer.link.safety">Safety Tips</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" aria-label="Back to top" data-i18n="back-to-top">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M10 4L5 9M10 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

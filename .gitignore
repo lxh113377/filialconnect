@@ -1,0 +1,15 @@
+# OS
+Thumbs.db
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Node (CI tooling only, not app deps)
+node_modules/
+.lighthouseci/
+
+# Archives
+*.zip

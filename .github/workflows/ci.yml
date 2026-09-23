@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - uses: actions/setup-node@0a44ba7841bc433874068903b48f606348e0e9d3 # v4.0.0
+        with:
+          node-version: 20
+
+      - name: HTML validation (HTMLHint)
+        run: npx --yes htmlhint "index.html" "pages/*.html"
+
+      - name: Link check (linkinator, fragments + external)
+        run: |
+          npx --yes linkinator . \
+            --recurse --check-fragments --check-external \
+            --skip "https://fonts.googleapis.com.*"
+
+      - name: Serve site
+        run: |
+          python3 -m http.server 8765 &
+          sleep 2
+
+      - name: Lighthouse CI (performance + a11y budgets)
+        run: |
+          npm install -g @lhci/cli@0.14.x
+          lhci autorun --config=lighthouserc.json
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}

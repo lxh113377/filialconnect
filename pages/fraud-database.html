@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>document.documentElement.classList.add("js")</script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fraud alert database for seniors - learn to recognize and avoid common scams targeting the elderly">
+  <title>Fraud Alerts - FilialConnect</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <script src="../assets/js/i18n.js"></script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <nav class="nav-container" aria-label="Main navigation">
+      <a href="../index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
+        <svg class="nav-logo" viewBox="0 0 42 42" fill="none" aria-hidden="true">
+          <circle cx="21" cy="21" r="20" fill="#2B5797" opacity="0.12"/>
+          <path d="M21 8c-4 0-8 3-8 8 0 5 3 9 5 12h6c2-3 5-7 5-12 0-5-4-8-8-8z" fill="#2B5797" opacity="0.3"/>
+          <path d="M15 26h12v3a2 2 0 01-2 2H17a2 2 0 01-2-2v-3z" fill="#2B5797"/>
+          <circle cx="18" cy="18" r="2" fill="#2B5797"/>
+          <circle cx="24" cy="18" r="2" fill="#2B5797"/>
+          <path d="M17 22c0 0 2 2 4 2s4-2 4-2" stroke="#2B5797" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <ul class="nav-links">
+        <li><a href="../index.html" data-i18n="nav.home">Home</a></li>
+        <li><a href="tutorials.html" data-i18n="nav.tutorials">Tutorials</a></li>
+        <li><a href="fraud-database.html" class="active" data-i18n="nav.fraud">Fraud Alert</a></li>
+        <li><a href="printable-guides.html" data-i18n="nav.guides">Guides</a></li>
+        <li><a href="remote-assist.html" data-i18n="nav.remote">Remote Help</a></li>
+        <li><a href="call-help.html" class="nav-cta" data-i18n="nav.call">Call for Help</a></li>
+        <li><button class="lang-toggle" aria-label="Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="../index.html" data-i18n="breadcrumb.home">Home</a>
+      <span class="separator" aria-hidden="true">/</span>
+      <span class="current" aria-current="page" data-i18n="breadcrumb.fraud">Fraud Alerts</span>
+    </nav>
+
+    <header class="page-header">
+      <h1 data-i18n="fraud.h1">Fraud Alert Database</h1>
+      <p data-i18n="fraud.p">Knowledge is your best defense. Learn to recognize common scams before they reach you.</p>
+    </header>
+
+    <!-- Warning Banner -->
+    <div style="max-width: var(--container-narrow); margin: 0 auto; padding: var(--space-md) var(--space-lg) var(--space-lg);">
+      <div style="background: var(--color-danger-bg); border: 2px solid var(--color-danger); border-radius: var(--radius-md); padding: var(--space-lg); display: flex; gap: var(--space-md); align-items: flex-start;">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true" style="flex-shrink:0; margin-top:2px;">
+          <path d="M14 2L2 26h24L14 2z" fill="#C0392B"/>
+          <path d="M14 10v8M14 22v1" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <strong style="color: var(--color-danger); font-size: var(--text-lg);" data-i18n="fraud.banner.strong">Important Safety Reminder</strong>
+          <p style="margin: var(--space-xs) 0 0; font-size: var(--text-base); color: var(--color-text);" data-i18n="fraud.banner.p">
+            Banks, police, and government agencies will <strong>never</strong> ask for your passwords, verification codes, or money transfers over the phone. If someone does, hang up immediately.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fraud List -->
+    <div class="fraud-list">
+      <!-- Fraud 1: Impersonation -->
+      <div class="fraud-item" role="region" aria-labelledby="fraud-1-title">
+        <div class="fraud-summary" tabindex="0" role="button" aria-expanded="false">
+          <span class="fraud-level high" aria-label="High risk">!</span>
+          <span class="fraud-title" id="fraud-1-title" data-i18n="fraud.1.title">Impersonating Officials</span>
+          <svg class="fraud-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="fraud-detail">
+          <div class="fraud-detail-inner">
+            <h4 data-i18n="fraud.1.how">How It Works</h4>
+            <p style="margin-bottom: var(--space-md);" data-i18n="fraud.1.how.p">Scammers call pretending to be police officers, bank staff, or government officials. They claim your bank account is involved in a crime or that you owe money, and demand immediate payment.</p>
+            <h4 data-i18n="fraud.1.signs">Warning Signs</h4>
+            <ul>
+              <li data-i18n="fraud.1.sign1">Caller claims to be from the police, court, or tax bureau</li>
+              <li data-i18n="fraud.1.sign2">They ask you to transfer money to a "safe account"</li>
+              <li data-i18n="fraud.1.sign3">They threaten arrest or legal action if you do not comply</li>
+              <li data-i18n="fraud.1.sign4">They tell you not to tell your family</li>
+            </ul>
+            <h4 data-i18n="fraud.1.do">What to Do</h4>
+            <ul>
+              <li data-i18n="fraud.1.do1">Hang up immediately &mdash; real officials never demand money over the phone</li>
+              <li data-i18n="fraud.1.do2">Call the official number of the agency they claim to represent</li>
+              <li data-i18n="fraud.1.do3">Tell your family about the call</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fraud 2: Fake Investment -->
+      <div class="fraud-item" role="region" aria-labelledby="fraud-2-title">
+        <div class="fraud-summary" tabindex="0" role="button" aria-expanded="false">
+          <span class="fraud-level high" aria-label="High risk">!</span>
+          <span class="fraud-title" id="fraud-2-title" data-i18n="fraud.2.title">Fake Investment Schemes</span>
+          <svg class="fraud-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="fraud-detail">
+          <div class="fraud-detail-inner">
+            <h4 data-i18n="fraud.2.how">How It Works</h4>
+            <p style="margin-bottom: var(--space-md);" data-i18n="fraud.2.how.p">Scammers invite you to join WeChat or QQ groups promising high returns on investments in gold, stocks, cryptocurrency, or health products. They show fake profits to convince you to invest more, then disappear with your money.</p>
+            <h4 data-i18n="fraud.2.signs">Warning Signs</h4>
+            <ul>
+              <li data-i18n="fraud.2.sign1">"Guaranteed" high returns with "no risk"</li>
+              <li data-i18n="fraud.2.sign2">Pressure to invest quickly before "the opportunity is gone"</li>
+              <li data-i18n="fraud.2.sign3">Group chats where everyone seems to be making money</li>
+              <li data-i18n="fraud.2.sign4">Requests to download unknown apps to make investments</li>
+            </ul>
+            <h4 data-i18n="fraud.2.do">What to Do</h4>
+            <ul>
+              <li data-i18n="fraud.2.do1">Only invest through licensed banks and financial institutions</li>
+              <li data-i18n="fraud.2.do2">Consult your children before making any investment</li>
+              <li data-i18n="fraud.2.do3">Remember: if it sounds too good to be true, it is</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fraud 3: Fake Tech Support -->
+      <div class="fraud-item" role="region" aria-labelledby="fraud-3-title">
+        <div class="fraud-summary" tabindex="0" role="button" aria-expanded="false">
+          <span class="fraud-level medium" aria-label="Medium risk">!</span>
+          <span class="fraud-title" id="fraud-3-title" data-i18n="fraud.3.title">Fake Tech Support Calls</span>
+          <svg class="fraud-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="fraud-detail">
+          <div class="fraud-detail-inner">
+            <h4 data-i18n="fraud.3.how">How It Works</h4>
+            <p style="margin-bottom: var(--space-md);" data-i18n="fraud.3.how.p">Someone calls claiming your computer or phone has a virus. They ask you to install software that gives them remote control of your device, then steal your banking information.</p>
+            <h4 data-i18n="fraud.3.signs">Warning Signs</h4>
+            <ul>
+              <li data-i18n="fraud.3.sign1">Unsolicited calls about computer or phone problems</li>
+              <li data-i18n="fraud.3.sign2">Requests to install remote access software</li>
+              <li data-i18n="fraud.3.sign3">Claims that your device is "sending out viruses"</li>
+              <li data-i18n="fraud.3.sign4">Asking for payment to "fix" the problem</li>
+            </ul>
+            <h4 data-i18n="fraud.3.do">What to Do</h4>
+            <ul>
+              <li data-i18n="fraud.3.do1">Never install software at a stranger&apos;s request</li>
+              <li data-i18n="fraud.3.do2">Hang up &mdash; real tech companies do not make unsolicited calls</li>
+              <li data-i18n="fraud.3.do3">If worried, ask your family to check your device</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fraud 4: Lottery / Prize -->
+      <div class="fraud-item" role="region" aria-labelledby="fraud-4-title">
+        <div class="fraud-summary" tabindex="0" role="button" aria-expanded="false">
+          <span class="fraud-level medium" aria-label="Medium risk">!</span>
+          <span class="fraud-title" id="fraud-4-title" data-i18n="fraud.4.title">Lottery & Prize Scams</span>
+          <svg class="fraud-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="fraud-detail">
+          <div class="fraud-detail-inner">
+            <h4 data-i18n="fraud.4.how">How It Works</h4>
+            <p style="margin-bottom: var(--space-md);" data-i18n="fraud.4.how.p">You receive a message or call saying you have won a prize, lottery, or sweepstakes. To claim it, you need to pay a "processing fee" or "tax" first. The prize never arrives.</p>
+            <h4 data-i18n="fraud.4.signs">Warning Signs</h4>
+            <ul>
+              <li data-i18n="fraud.4.sign1">You "won" a contest you never entered</li>
+              <li data-i18n="fraud.4.sign2">You must pay money to receive your prize</li>
+              <li data-i18n="fraud.4.sign3">Urgent deadlines to claim your winnings</li>
+              <li data-i18n="fraud.4.sign4">Requests for bank details to "deposit" the prize</li>
+            </ul>
+            <h4 data-i18n="fraud.4.do">What to Do</h4>
+            <ul>
+              <li data-i18n="fraud.4.do1">Real prizes never require you to pay first</li>
+              <li data-i18n="fraud.4.do2">Delete the message and block the sender</li>
+              <li data-i18n="fraud.4.do3">Never share your bank information with strangers</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fraud 5: Phishing Links -->
+      <div class="fraud-item" role="region" aria-labelledby="fraud-5-title">
+        <div class="fraud-summary" tabindex="0" role="button" aria-expanded="false">
+          <span class="fraud-level low" aria-label="Low risk">!</span>
+          <span class="fraud-title" id="fraud-5-title" data-i18n="fraud.5.title">Fake Links & Phishing Messages</span>
+          <svg class="fraud-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="fraud-detail">
+          <div class="fraud-detail-inner">
+            <h4 data-i18n="fraud.5.how">How It Works</h4>
+            <p style="margin-bottom: var(--space-md);" data-i18n="fraud.5.how.p">You receive a text message or WeChat message with a link that looks like it is from your bank, a delivery company, or a family member. Clicking it takes you to a fake website that steals your login and password.</p>
+            <h4 data-i18n="fraud.5.signs">Warning Signs</h4>
+            <ul>
+              <li data-i18n="fraud.5.sign1">Messages with links you were not expecting</li>
+              <li data-i18n="fraud.5.sign2">Links that look slightly wrong (extra letters, misspellings)</li>
+              <li data-i18n="fraud.5.sign3">Urgent messages like "Your account will be closed"</li>
+              <li data-i18n="fraud.5.sign4">Messages from "family" asking for money through new numbers</li>
+            </ul>
+            <h4 data-i18n="fraud.5.do">What to Do</h4>
+            <ul>
+              <li data-i18n="fraud.5.do1">Never click links in unexpected messages</li>
+              <li data-i18n="fraud.5.do2">If a "family member" asks for money, call them first to verify</li>
+              <li data-i18n="fraud.5.do3">Type the website address yourself instead of clicking links</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Section -->
+    <section class="section" style="text-align:center;" aria-labelledby="report-heading">
+      <h2 id="report-heading" style="margin-bottom: var(--space-md);" data-i18n="fraud.report.h2">Think You Have Been Targeted?</h2>
+      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="fraud.report.p">If you suspect a scam, tell your family immediately. They can help you verify and report it.</p>
+      <a href="call-help.html" class="btn btn-accent btn-lg" data-i18n="fraud.report.btn">Alert Your Family Now</a>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3 data-i18n="footer.brand.h3">FilialConnect</h3>
+        <p data-i18n="footer.brand.p">Bridging generations through thoughtful technology.</p>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer.features.h4">Features</h4>
+        <ul>
+          <li><a href="tutorials.html" data-i18n="footer.link.tutorials">Tutorial Library</a></li>
+          <li><a href="call-help.html" data-i18n="footer.link.call">Call for Help</a></li>
+          <li><a href="remote-assist.html" data-i18n="footer.link.remote">Remote Assistance</a></li>
+          <li><a href="fraud-database.html" data-i18n="footer.link.fraud">Fraud Alerts</a></li>
+          <li><a href="printable-guides.html" data-i18n="footer.link.guides">Printable Guides</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4 data-i18n="footer.about.h4">About</h4>
+        <ul>
+          <li><a href="tutorials.html" data-i18n="footer.link.getting-started">Getting Started</a></li>
+          <li><a href="fraud-database.html" data-i18n="footer.link.safety">Safety Tips</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
+    </div>
+  </footer>
+
+  <button class="back-to-top" aria-label="Back to top" data-i18n="back-to-top">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M10 4L5 9M10 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
