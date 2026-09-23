@@ -174,28 +174,23 @@
 
     if (animatedElements.length === 0) return;
 
-    function checkVisibility() {
-      animatedElements.forEach(function (el) {
-        var rect = el.getBoundingClientRect();
-        var windowHeight = window.innerHeight || document.documentElement.clientHeight;
-        if (rect.top < windowHeight * 0.85 && rect.bottom > 0) {
-          el.classList.add('visible');
-        }
-      });
+    if ('IntersectionObserver' in window) {
+      // rootMargin -15% bottom reproduces the old "top < 85% viewport" trigger
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: '0px 0px -15% 0px' });
+
+      animatedElements.forEach(function (el) { observer.observe(el); });
+      return;
     }
 
-    checkVisibility();
-
-    var ticking = false;
-    window.addEventListener('scroll', function () {
-      if (!ticking) {
-        window.requestAnimationFrame(function () {
-          checkVisibility();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    }, { passive: true });
+    // Fallback: reveal everything immediately
+    animatedElements.forEach(function (el) { el.classList.add('visible'); });
   }
 
   /* ============================================================

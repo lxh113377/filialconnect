@@ -69,6 +69,14 @@
 - P1-5 已修（用户选 C）：detectBrowserLang() 按 navigator.language 自动选中/英文，localStorage 显式选择优先；实测 zh-CN 显示中文、en-US 显示英文
 - 复测：Lighthouse a11y 4 页保持 1.0，HTMLHint/linkinator 零错误
 
+## P2 审计清理（2026-09-24）
+- P2-1 已修：initScrollAnimations 改 IntersectionObserver（rootMargin -15% 复现原 85% 触发点，触发后 unobserve；无 IO 环境直接显示兜底）
+- P2-2/P2-3 核验发现此前已修好（t() 读 I18N / 5 处全 auto-fit）
+- P2-4 已修：12 页注入 `<meta name="theme-color" content="#2B5797">`
+- P2-5 已修：fraud/printable/remote 3 页 page-header 补 aria-labelledby（审计只列了 1 页，实测 3 页）
+- P2-6 维持审计决策：SVG symbol+use 低优暂不动
+- 复测：Lighthouse a11y 4 页 1.0，截图验证 IO 动画正常触发
+
 ## 待完善（用户后续可提）
 - [ ] 教程详情页内容（当前为卡片入口+占位）
 - [ ] 「未来设计师」Logo 文件（`assets/images/logo-future-designer.png`）
