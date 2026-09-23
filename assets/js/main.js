@@ -25,6 +25,7 @@
     initFraudAccordion();
     initTutorialFilter();
     initCallHelp();
+    initHelpForm();
     initPrintButtons();
     initSmoothScroll();
   });
@@ -52,8 +53,14 @@
       var key = el.getAttribute('data-i18n');
       if (dict[key] !== undefined) {
         var val = dict[key];
-        if (/<[a-z][\s\S]*>/i.test(val)) {
-          el.innerHTML = val;
+        if (val.indexOf('<br>') !== -1) {
+          // Safe line-break rendering: only literal <br> is honored,
+          // everything else is inserted as text (no HTML injection).
+          el.textContent = '';
+          val.split('<br>').forEach(function (part, i) {
+            if (i > 0) el.appendChild(document.createElement('br'));
+            el.appendChild(document.createTextNode(part));
+          });
         } else {
           el.textContent = val;
         }
@@ -279,6 +286,24 @@
   }
 
   /* ============================================================
+     Help Request Form
+     ============================================================ */
+  function initHelpForm() {
+    var form = document.getElementById('help-request-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var lang = getCurrentLang();
+      var msg = (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang]['toast.help-sent'])
+        ? I18N[lang]['toast.help-sent']
+        : 'Help request sent!';
+      showToast(msg, 'success');
+      form.reset();
+    });
+  }
+
+  /* ============================================================
      Call Help Functionality
      ============================================================ */
   function initCallHelp() {
@@ -326,7 +351,9 @@
     var toast = document.createElement('div');
     toast.className = 'toast ' + (type === 'error' ? 'toast-error' : '');
     toast.setAttribute('role', 'alert');
-    toast.innerHTML = '<span>' + message + '</span>';
+    var toastSpan = document.createElement('span');
+    toastSpan.textContent = message;
+    toast.appendChild(toastSpan);
     document.body.appendChild(toast);
 
     requestAnimationFrame(function () {

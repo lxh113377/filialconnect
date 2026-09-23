@@ -62,6 +62,13 @@
 - 可访问名：lang-toggle aria-label 含可见文字（"ZH - Switch to Chinese"），call-button 改 data-i18n-aria-label + 双语字典键 call.button.aria
 - 注意：改 HTML 标题时开闭标签必须同步（首轮脚本只改开标签，靠 HTMLHint 抓出修复）
 
+## P1 审计清理（2026-09-24）
+- P1-1 已修：main.js 全站零 innerHTML（hero `<br>` 走 split+createTextNode；toast 走 textContent）
+- P1-2/P1-3 核验发现此前已修好（role 已移除、筛选已是 button+aria-pressed），无需动
+- P1-4 已修：call-help 表单去内联 alert，新增 initHelpForm() 走 toast + toast.help-sent 双语键
+- P1-5 待用户决策：默认语言 en vs zh（目标用户是中文老人，但比赛评审看英文）
+- 复测：Lighthouse a11y 4 页保持 1.0，HTMLHint/linkinator 零错误
+
 ## 待完善（用户后续可提）
 - [ ] 教程详情页内容（当前为卡片入口+占位）
 - [ ] 「未来设计师」Logo 文件（`assets/images/logo-future-designer.png`）
