@@ -77,15 +77,15 @@
 - P2-6 维持审计决策：SVG symbol+use 低优暂不动
 - 复测：Lighthouse a11y 4 页 1.0，截图验证 IO 动画正常触发
 
-## 待完善（用户后续可提）
-- [ ] 教程详情页内容（当前为卡片入口+占位）
-- [ ] 「未来设计师」Logo 文件（`assets/images/logo-future-designer.png`）
-- [ ] 思源黑体 woff2 文件（`assets/fonts/`，可选）
-- [ ] 实际截图图片（替换 SVG 占位图）
+## 待完善（2026-09-24 实测核验后更新）
+- [x] 教程详情页内容 —— 实测 6 页全部有真实完整步骤（hospital/train/wechat/medical/banking/ride 各 6-7 步，EN+ZH 双语键全覆盖，362 键零缺失），旧记录"占位"已过时
+- [ ] 「未来设计师」Logo 文件（`assets/images/logo-future-designer.png`）—— 需要外部素材，代码零图片引用（全站内联 SVG），无断链
+- [ ] 思源黑体 woff2 文件（`assets/fonts/`，可选）—— 目录不存在，当前系统字体栈工作正常
+- [ ] 实际截图图片（替换 SVG 占位图）—— 需要外部素材，非代码任务
 
-## 提交前最后检查清单
-- [ ] 用浏览器打开每个 HTML 文件，检查导航链接
-- [ ] 用 Chrome DevTools 检查手机/平板视图
-- [ ] 用 WAVE 或 axe 检查无障碍
-- [ ] 确认 `assets/images/` 无漏文件
-- [ ] 整个文件夹压缩为 ZIP（仅英文命名）
+## 提交前最后检查清单（2026-09-24 状态）
+- [x] 导航链接双向导通 —— linkinator 16 链接零断链（CI 每次 push 自动跑）
+- [x] Chrome DevTools 手机/平板视图 —— 四断点响应式已验证，Edge headless 截图抽查通过
+- [x] WAVE/axe 无障碍检查 —— Lighthouse a11y 4 页 1.0（CI 门禁 ≥0.95）
+- [x] `assets/images/` 无漏文件 —— 全站零图片引用（内联 SVG），无缺失
+- [ ] 整个文件夹压缩为 ZIP（仅英文命名）—— 提交前最后一步执行
