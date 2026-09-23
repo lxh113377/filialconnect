@@ -36,12 +36,19 @@
   var LANG_KEY = 'filialconnect-lang';
   var SUPPORTED_LANGS = ['en', 'zh'];
 
+  function detectBrowserLang() {
+    var nav = (navigator.languages && navigator.languages[0]) ||
+              navigator.language || navigator.userLanguage || 'en';
+    return String(nav).toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+  }
+
   function getCurrentLang() {
     var stored = localStorage.getItem(LANG_KEY);
     if (stored && SUPPORTED_LANGS.indexOf(stored) !== -1) {
       return stored;
     }
-    return 'en';
+    // No explicit choice yet: follow the browser language
+    return detectBrowserLang();
   }
 
   function applyTranslations(lang) {

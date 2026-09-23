@@ -41,7 +41,7 @@
 - 方案：`data-i18n` 属性 + JS 字典对象（零外部依赖）
 - 字典文件：`assets/js/i18n.js`（~251 键/语言，EN/ZH）
 - 切换逻辑：`assets/js/main.js` → `initI18n()` + `applyTranslations()`
-- 持久化：`localStorage` key `filialconnect-lang`，默认英文
+- 持久化：`localStorage` key `filialconnect-lang`；无记录时按浏览器语言自动检测（navigator.language zh* → 中文，否则英文；2026-09-24 用户决策选项 C）
 - 切换按钮：导航栏胶囊按钮 `ZH` / `EN`
 - 覆盖：全部 6 个页面（含导航、面包屑、正文、页脚、表单占位符）
 - 中文翻译：适老化用语（呼叫求助、防骗提醒、冒充公检法等）
@@ -66,7 +66,7 @@
 - P1-1 已修：main.js 全站零 innerHTML（hero `<br>` 走 split+createTextNode；toast 走 textContent）
 - P1-2/P1-3 核验发现此前已修好（role 已移除、筛选已是 button+aria-pressed），无需动
 - P1-4 已修：call-help 表单去内联 alert，新增 initHelpForm() 走 toast + toast.help-sent 双语键
-- P1-5 待用户决策：默认语言 en vs zh（目标用户是中文老人，但比赛评审看英文）
+- P1-5 已修（用户选 C）：detectBrowserLang() 按 navigator.language 自动选中/英文，localStorage 显式选择优先；实测 zh-CN 显示中文、en-US 显示英文
 - 复测：Lighthouse a11y 4 页保持 1.0，HTMLHint/linkinator 零错误
 
 ## 待完善（用户后续可提）
