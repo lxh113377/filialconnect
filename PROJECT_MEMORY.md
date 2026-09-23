@@ -46,6 +46,15 @@
 - 覆盖：全部 6 个页面（含导航、面包屑、正文、页脚、表单占位符）
 - 中文翻译：适老化用语（呼叫求助、防骗提醒、冒充公检法等）
 
+## 工程化（2026-09-23 新增）
+- Git 仓库：已初始化，分支 main，Conventional Commits 规范
+- CI：`.github/workflows/ci.yml` — HTMLHint（12 页零错误）+ linkinator（目录模式递归 16 链接零断链）+ Lighthouse CI（`lighthouserc.json`：性能≥0.9、无障碍≥0.95）
+- 换行：`.gitattributes` 统一 LF
+- 本机跑 npx 注意：全局 npmrc 配了 7897 代理，离线时用临时 userconfig 覆盖（registry=npmmirror，无 proxy）
+
+## P0 审计（2026-07-28）→ 全部闭环（2026-09-23 实测修复）
+- 详见 `项目优化建议.md` P0 表，5 条全部 [x]
+
 ## 待完善（用户后续可提）
 - [ ] 教程详情页内容（当前为卡片入口+占位）
 - [ ] 「未来设计师」Logo 文件（`assets/images/logo-future-designer.png`）
