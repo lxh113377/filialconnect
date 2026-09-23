@@ -55,6 +55,13 @@
 ## P0 审计（2026-07-28）→ 全部闭环（2026-09-23 实测修复）
 - 详见 `项目优化建议.md` P0 表，5 条全部 [x]
 
+## A11y 修复（2026-09-24，CI 抓出）
+- Lighthouse a11y 4 页 0.94-0.95 → 1.0，CI 已转绿
+- 对比度方案：橙底按钮用深色文字（#1A1A2E on #E8833A = 6.29:1），保住品牌橙不改色相；muted 文字 #6E6E82；accent-dark #A85212；footer-bottom alpha 0.65
+- 标题层级：trust/step h4→h3、fraud 详情 h4→h2、教程卡 h3→h2、call-status h3→h2，CSS 保持原视觉尺寸
+- 可访问名：lang-toggle aria-label 含可见文字（"ZH - Switch to Chinese"），call-button 改 data-i18n-aria-label + 双语字典键 call.button.aria
+- 注意：改 HTML 标题时开闭标签必须同步（首轮脚本只改开标签，靠 HTMLHint 抓出修复）
+
 ## 待完善（用户后续可提）
 - [ ] 教程详情页内容（当前为卡片入口+占位）
 - [ ] 「未来设计师」Logo 文件（`assets/images/logo-future-designer.png`）
