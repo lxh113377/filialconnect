@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+### Added
+- **DOM 级审计 `tools/verify-dom.mjs`（cheerio 只读不写）**：把每页当解析后的 DOM 重读一遍，
+  与 `assets/locales/en.json` 对账 —— ① 每个 `[data-i18n]` 文本、`placeholder/aria-label/alt`
+  属性等于字典值；② 每页 canonical / og:url / 分档 og:image / manifest / apple-touch-icon /
+  twitter:card 符合规则；③ 用了字典里没有的键即报错。动机：head 与兜底文本由 `build.py`
+  用正则**写**，而正则读者与正则作者会共享盲区。实测覆盖 **810 个 `[data-i18n]` 节点 / 14 页**；
+  三类负样本（改兜底文本、改 canonical、塞入无字典键）全部指名"页面+键+期望/实际"转红，
+  还原后 14 页全清。已同时挂进 `test_build.py`（1,376 → **1,377**）与 CI 步骤
+
+## [Unreleased]
+
 ### Changed
 - **派生件工具链改用成熟库**（用户 2026-09-25 撤销「零依赖」口径后）：新增 `tools/build.mjs`，
   接管 `assets/js/i18n.js`（由 `assets/locales/{en,zh}.json` 生成，JSON 成为字典唯一来源）、

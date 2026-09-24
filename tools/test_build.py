@@ -54,6 +54,13 @@ def t_pipeline():
                           os.path.join(ROOT, 'tools', 'build.mjs'), 'check'],
                          capture_output=True, text=True).returncode == 0,
           'run: node tools/build.mjs check')
+    # The regex writer and the regex reader can share a blind spot; this re-reads
+    # every page as a parsed DOM and compares against the dictionary itself.
+    dom = subprocess.run([shutil.which('node') or 'node',
+                          os.path.join(ROOT, 'tools', 'verify-dom.mjs')],
+                         capture_output=True, text=True)
+    check('DOM audit: fallback text and head meta agree with assets/locales',
+          dom.returncode == 0, (dom.stdout or '').strip().split('\n')[0:3][-1])
     check('derived artifacts are committed in built form',
           all(read(fp) == text for fp, text in out.items()),
           'drift in %s' % [fp for fp, text in out.items() if read(fp) != text])

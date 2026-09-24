@@ -36,6 +36,9 @@ jobs:
       - name: Node-owned artifacts drift check (locales/sitemap/lighthouserc/workbox sw)
         run: node tools/build.mjs check
 
+      - name: DOM audit (parsed pages vs dictionary; head meta and fallback text)
+        run: node tools/verify-dom.mjs
+
       - name: Pipeline self-tests (build/check/i18n invariants)
         run: python3 tools/test_build.py
 
