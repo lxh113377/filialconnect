@@ -5,7 +5,18 @@
 
 ## [Unreleased]
 
+### Changed
+- **CI 检查工具纳入清单**：新增 `package.json`（`devDependencies`: htmlhint@1.9.2 / linkinator@8.1.0 /
+  @lhci/cli@0.14.0，`dependencies` 留空）+ `package-lock.json`（379 包，含上次弄红 CI 的 undici）；
+  CI 由四处 `npx --yes <tool>@ver` / `npm i -g` 改为 `npm ci` + `node_modules/.bin/*`；
+  dependabot 增 `npm` 生态。站点自身仍不需要 `npm install`
+- **措辞**：README / CONTRIBUTING 不再以「零依赖」作为优点词，改为具体属性
+  （浏览器不请求第三方资源 / 无构建步骤 / 改文案不用装环境）
+
 ### Fixed
+- **`actions/setup-node` 注释谎报版本**：原 pin `249970729…` 实为 **v6.5.0**，注释写 `# v7.0.0`；
+  现改为真正的 v7.0.0 SHA `82076278…`。同批把 deploy workflow 里三个可变 tag
+  （configure-pages / upload-pages-artifact / deploy-pages）也钉到 commit
 - **诈骗名单匹配召回率**：旧规则只比对「域名末两段」，导致名单里 16,417 条（19.8%）深层
   条目只能靠逐字粘贴才可能命中；改为从完整 host 逐级上溯到根域（`listed()`），
   命中面覆盖到深层条目的子域名，且不把根域条目放大成通配（不误伤 `*.github.io`）
@@ -22,6 +33,11 @@
   仓库零改动，上游发一版就把 CI 弄红
 - **匹配器一致性测试**：`test_build.py` 直接抽取浏览器实际加载的 `hostOf()`+`listed()`
   在 node 中对真实名单跑 6  fixture（含反向对照），自测由 1,331 项增至 1,342 项
+- **workflow 钉版门禁**：新增静态断言——所有 `uses:` 必须钉 40 位 commit 且带 `# vX.Y.Z`
+  注释（可变 tag 会悄悄在 CI 底下移动，与 undici 事件同类）；负样本实测把
+  `deploy-pages@v5` 改回可变 tag → 2 项转红，还原后 1,365 项全绿。
+  自测最终 **1,365 项**；本轮增量链：1,331 →（文案对账 +1）1,332 →（匹配器 +10）1,342 →
+  （公域后缀金丝雀 +1）1,343 →（dev 清单与锁一致性 +5）1,348 →（workflow 钉版 +17）1,365
 - **公域后缀误伤金丝雀**：`listed()` 会上溯到根域，因此名单里若出现 `blogspot.com`
   这类免费托管域会把整片合法站点判为诈骗；断言 20 个常见托管/短链域永不出现在快照中
   （注入 `blogspot.com` 实测该断言转红，复原后 1,343 项全绿）
