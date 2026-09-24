@@ -292,6 +292,10 @@ var I18N = {
     'toast.draft-opened': 'Your message app is opening. Please press send there.',
     'linkcheck.scope': 'Scope: this offline list holds about 83,000 international phishing domains. Chinese domains and phone scams are not in it, so a clean result does not mean the message is safe.',
     'error.where': 'Where to go next',
+    'search.label': 'Search tutorials',
+    'search.placeholder': 'Type a word such as hospital, train ticket or WeChat',
+    'search.none': 'No tutorial matches {q}. Try a shorter word.',
+    'search.allword': 'that',
     // BEGIN:GENERATED (tools/build.py) - edit content/*.json instead
     'tut-detail.hospital.h1': 'How to Book a Doctor Appointment',
     'tut-detail.hospital.p': 'Follow these simple steps to book a doctor appointment using your phone. No need to wait in long lines at the hospital.',
@@ -748,6 +752,10 @@ var I18N = {
     'toast.draft-opened': '正在打开短信或邮件，请到那里点发送。',
     'linkcheck.scope': '范围说明：这份离线名单是约 8.3 万条国际钓鱼域名，不含境内域名，也不监控电话诈骗。查到“未命中”并不等于这条消息安全。',
     'error.where': '接下来可以去哪里',
+    'search.label': '搜索教程',
+    'search.placeholder': '输入关键词，例如：挂号、火车票、微信',
+    'search.none': '没有找到与「{q}」匹配的教程。换个更短的词试试。',
+    'search.allword': '那个',
     // BEGIN:GENERATED (tools/build.py) - edit content/*.json instead
     'tut-detail.hospital.h1': '如何预约挂号',
     'tut-detail.hospital.p': '按照以下简单步骤，用手机预约医生。无需在医院排长队。',

@@ -138,6 +138,36 @@ def t_promises():
     check('link checker discloses its coverage limit', 'not covered' in s or '不含境内' in s)
 
 
+# ------------------------------------------------- 5. referenced assets exist
+def t_assets():
+    """A meta tag pointing at a missing file is the same defect class as copy that
+    promises more than the code does — social cards silently render blank."""
+    for fp in pages():
+        head = html_only(fp)[:html_only(fp).index('</head>')]
+        for m in re.finditer(r'(?:content|href)="([^"]*assets/[^"]+)"', head):
+            url = m.group(1)
+            rel = url.split(build.SITE_BASE)[-1].lstrip('/') if url.startswith('http') \
+                else os.path.normpath(os.path.join(os.path.dirname(fp), url))
+            check('%s: head asset exists (%s)' % (fp, url), os.path.exists(os.path.join(ROOT, rel)))
+        check('%s: has canonical' % fp, 'rel="canonical"' in head)
+        check('%s: declares og:image' % fp, 'og:image' in head)
+    img = os.path.join(ROOT, 'assets', 'images', 'og-cover.png')
+    if os.path.exists(img):
+        with open(img, 'rb') as fh:
+            sig = fh.read(8)
+        dims = int.from_bytes(fh_read(img, 16, 4), 'big'), int.from_bytes(fh_read(img, 20, 4), 'big')
+        check('og-cover.png is a real PNG', sig == b'\x89PNG\r\n\x1a\n', str(sig))
+        check('og-cover.png is 1200x630 (social card spec)', dims == (1200, 630), str(dims))
+    else:
+        check('og-cover.png exists', False, 'missing')
+
+
+def fh_read(path, off, n):
+    with open(path, 'rb') as fh:
+        fh.seek(off)
+        return fh.read(n)
+
+
 # ------------------------------------------------------------------- 5. output
 def t_output():
     sm = read('sitemap.xml')
@@ -160,14 +190,14 @@ def t_output():
 
 
 def main():
-    for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_output):
+    for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_assets, t_output):
         fn()
     for f in FAILS:
         print('FAIL:', f)
     if FAILS:
         print('%d/%d checks failed' % (len(FAILS), COUNT[0]))
         return 1
-    print('PASS: %d checks across pipeline, structure, i18n, copy-truth, output' % COUNT[0])
+    print('PASS: %d checks across pipeline, structure, i18n, copy-truth, assets, output' % COUNT[0])
     return 0
 
 

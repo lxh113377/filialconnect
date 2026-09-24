@@ -2034,6 +2034,26 @@ html[data-fontscale="xl"] {
   }
 }
 
+/* ---- Tutorial search ---- */
+.tutorial-search {
+  max-width: var(--container-narrow);
+  margin: 0 auto var(--space-lg);
+  padding: 0 var(--space-lg);
+}
+
+.tutorial-search-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+}
+
+.tutorial-search-input {
+  width: 100%;
+  min-height: 48px;
+  font-size: var(--text-base);
+}
+
 /* Keep scroll-revealed and collapsed content visible on paper. */
 @media print {
   .fraud-detail {

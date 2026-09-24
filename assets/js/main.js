@@ -414,13 +414,36 @@
   }
 
   /* ============================================================
-     Tutorial Filter
+     Tutorial library — topic filter + text search share one state
      ============================================================ */
   function initTutorialFilter() {
     var filterTags = document.querySelectorAll('.filter-tag');
     var tutorialCards = document.querySelectorAll('.tutorial-card');
 
     if (filterTags.length === 0 || tutorialCards.length === 0) return;
+
+    var searchInput = document.getElementById('tutorial-search-input');
+    var live = document.querySelector('.filter-status');
+    var category = 'all';
+
+    function apply() {
+      var q = ((searchInput && searchInput.value) || '').trim().toLowerCase();
+      var shown = 0;
+
+      tutorialCards.forEach(function (card) {
+        var hitCat = category === 'all' || card.getAttribute('data-category') === category;
+        var hitText = !q || card.textContent.toLowerCase().indexOf(q) !== -1;
+        var show = hitCat && hitText;
+        card.style.display = show ? '' : 'none';
+        if (show) shown += 1;
+      });
+
+      if (live) {
+        live.textContent = shown === 0
+          ? t('search.none').replace('{q}', q || t('search.allword'))
+          : t('filter.count').replace('{n}', String(shown));
+      }
+    }
 
     filterTags.forEach(function (tag) {
       tag.addEventListener('click', function () {
@@ -430,21 +453,20 @@
         });
         tag.classList.add('active');
         tag.setAttribute('aria-pressed', 'true');
-
-        var filter = tag.getAttribute('data-filter');
-        var shown = 0;
-
-        tutorialCards.forEach(function (card) {
-          var hit = filter === 'all' || card.getAttribute('data-category') === filter;
-          card.style.display = hit ? '' : 'none';
-          if (hit) shown += 1;
-        });
-
-        // Announce the result count so screen-reader users are not left on silence
-        var live = document.querySelector('.filter-status');
-        if (live) live.textContent = t('filter.count').replace('{n}', String(shown));
+        category = tag.getAttribute('data-filter');
+        apply();
       });
     });
+
+    if (searchInput) {
+      var timer = null;
+      searchInput.addEventListener('input', function () {
+        // Debounced so a slow typist never triggers a reflow per keystroke
+        window.clearTimeout(timer);
+        timer = window.setTimeout(apply, 200);
+      });
+      searchInput.addEventListener('search', apply);
+    }
   }
 
   /* ============================================================
@@ -589,21 +611,40 @@
     }
 
     var set = null;
+    var loading = null;
 
-    function loadDomains(cb) {
+    // silent = background pre-warm: never touches the live status region
+    function loadDomains(cb, silent) {
       if (set) { cb(set); return; }
-      out.textContent = t('linkcheck.loading');
+      if (loading) { loading.push(cb); return; }
+      loading = [cb];
+      if (!silent) out.textContent = t('linkcheck.loading');
       fetch('../assets/data/destroylist-domains.txt')
         .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
         .then(function (txt) {
           set = new Set(txt.split(/\r?\n/).filter(Boolean));
-          cb(set);
+          var wait = loading; loading = null;
+          wait.forEach(function (fn) { fn(set); });
         })
         .catch(function () {
-          out.textContent = t('linkcheck.errload');
-          out.className = 'link-check-result is-unknown';
+          loading = null;
+          if (!silent) {
+            out.textContent = t('linkcheck.errload');
+            out.className = 'link-check-result is-unknown';
+          }
         });
     }
+
+    // The list is 532 KB gzipped; fetching it while the visitor reads the page
+    // removes the wait from the moment they actually press 检查.
+    function prewarm() {
+      var conn = navigator.connection || {};
+      if (conn.saveData || /2g/.test(conn.effectiveType || '')) return;
+      loadDomains(function () {}, true);
+    }
+
+    if (window.requestIdleCallback) window.requestIdleCallback(prewarm, { timeout: 4000 });
+    else window.setTimeout(prewarm, 1500);
 
     function hostOf(raw) {
       var m = raw.match(/^(?:https?|ftp):\/\/(?:[^@/]*@)?([^/?#:]+)/i) || raw.match(/^([a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?:[/:?#]|$)/i);

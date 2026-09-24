@@ -20,7 +20,7 @@
 | 模块 | 页面 | 说明 |
 |------|------|------|
 | 首页总入口 | `index.html` | 场景化导航（子女帮父母 / 老人自助） |
-| 教程库 | `pages/tutorials.html` | 分类筛选（button + aria-pressed，筛选结果数有读屏播报） |
+| 教程库 | `pages/tutorials.html` | 关键词搜索 + 分类筛选（两者可组合，结果数与"无匹配"均读屏播报） |
 | 6 篇教程详情 | `pages/tutorial-*.html` | 医院 / 火车票 / 微信 / 医疗 / 银行 / 打车，各 6-7 大步骤（由 `content/tutorials.json` 生成） |
 | 呼叫子女 | `pages/call-help.html` | 本机保存家人称呼/电话 → 大按钮打开**真实拨号界面**；求助表单生成**真实短信/邮件草稿** |
 | 远程协助 | `pages/remote-assist.html` | 每次访问生成随机连接码（无 JS 时降级静态码） |
@@ -73,7 +73,9 @@ python tools/fetch-fraud-feeds.py  # 手动刷新防骗域名离线名单（CI �
 2. **Linkinator** — 站内递归 + fragment + 外部链接；Markdown 文档单独一轮
 3. **i18n 对称门禁** — `tools/check-i18n.py`
 4. **内容管线漂移门禁** — `python tools/build.py check`（含导航/页脚 marker 覆盖检查）
-5. **管线自测** — `python tools/test_build.py`
+5. **管线自测** — `python tools/test_build.py`（1,200+ 条：幂等、单 h1、标题不跳级、本地链接可解析、
+   子路径绝对路径防呆、双语对称、孤儿键、**文案真实性关键词**、`<head>` 引用的资源文件真实存在、
+   og-cover.png 尺寸合规、名单与清单计数一致、sitemap 覆盖）
 6. **子路径真实服务** — 按生产路径 `/filialconnect/` 起 http.server 并探测 1.5MB 离线名单可达
 7. **Lighthouse CI** — 全部 13 页 × 2 次，Performance ≥0.9、Accessibility ≥0.95（error 级）
 
@@ -99,8 +101,12 @@ WCAG 2.1 AA 之外的适老细节：`prefers-reduced-motion` 同时约束 CSS �
   用户在自家 App 里点发送才真正发出；本站不会、也无法替用户发出任何通知。
   家人联系方式仅存于本机 `localStorage`。
 - 远程协助的连接码是本机随机字符串，不对应任何真实远控会话。
-- 可疑链接自查用的离线名单为**国际钓鱼域名**，不含境内域名、不覆盖电话诈骗，
-  「未命中」不等于安全（页面已按此措辞）。
+- 可疑链接自查用的离线名单为**国际钓鱼域名**（83,097 条，gzip 后 532 KB），不含境内域名、
+  不覆盖电话诈骗，「未命中」不等于安全（页面已按此措辞）。名单在页面空闲时预取，
+  尊重 `save-data` 与 2g；已评估并按实测数据**否决**了按 TLD 分片方案（.com 仅占 43.4%、
+  共 527 个 TLD，分片最多多省一半且仅在查 .com 时生效）。
+- 分享卡片图 `assets/images/og-cover.png`（1200×630）由仓库外的 `_internal/make_og_image.py`
+  用 Pillow 生成后入库 —— 站点运行时仍零依赖、零图片请求（首页与教程页不引用它）。
 - 教程文案里的第三方 App 名称仅指认用途，无官方关联；界面为自绘内联 SVG，非真实软件截图。
 
 ## 目录结构

@@ -268,13 +268,9 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
   <meta property="og:site_name" content="FilialConnect 孝心联">
   <meta property="og:title" content="{{TITLE}}">
   <meta property="og:description" content="{{DESC}}">
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{TITLE}}">
   <meta name="twitter:description" content="{{DESC}}">
-''' + HEAD_MARK_BEG + '''
-  <link rel="canonical" href="{{CANON}}">
-  <meta property="og:url" content="{{CANON}}">
-''' + HEAD_MARK_END + '''
 </head>
 <body>
   <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
@@ -375,16 +371,25 @@ def canonical_for(fp):
 
 
 def sync_head(s, fp):
-    """Upsert the marker-delimited canonical / og:url block before </head>."""
+    """Upsert the marker-delimited canonical / og:url / social-image block
+    before </head>."""
+    og = SITE_BASE + '/assets/images/og-cover.png'
     block = '\n'.join([HEAD_MARK_BEG,
                        '  <link rel="canonical" href="%s">' % canonical_for(fp),
                        '  <meta property="og:url" content="%s">' % canonical_for(fp),
+                       '  <meta property="og:image" content="%s">' % og,
+                       '  <meta property="og:image:width" content="1200">',
+                       '  <meta property="og:image:height" content="630">',
+                       '  <meta property="og:image:alt" content="FilialConnect 孝心联 - bilingual elderly-friendly tech tutorials">',
+                       '  <meta name="twitter:image" content="%s">' % og,
                        HEAD_MARK_END])
     if HEAD_MARK_BEG in s and HEAD_MARK_END in s:
         s = re.sub(re.escape(HEAD_MARK_BEG) + r'.*?' + re.escape(HEAD_MARK_END),
                    lambda m: block, s, flags=re.S)
     else:
         s = s.replace('</head>', block + '\n</head>', 1)
+    s = s.replace('<meta name="twitter:card" content="summary">',
+                  '<meta name="twitter:card" content="summary_large_image">')
     return s.replace(INLINE_JS + '\n  ', FOUC_JS + '\n  ').replace(INLINE_JS, FOUC_JS)
 
 
@@ -403,8 +408,7 @@ def render_tutorial_page(t):
     h = h.replace('{{SLUG}}', t['slug'])
     h = h.replace('{{H1_EN}}', esc_text(t['h1']['en'])).replace('{{INTRO_EN}}', esc_text(t['intro']['en']))
     h = h.replace('{{STEPS}}', steps).replace('{{RELATED}}', rel)
-    h = h.replace('{{NAV}}', nav_for(False)).replace('{{FOOTER}}', footer_for(False))
-    return h.replace('{{CANON}}', canonical_for(t['page']))
+    return h.replace('{{NAV}}', nav_for(False)).replace('{{FOOTER}}', footer_for(False))
 
 
 FOOTER_404 = '  <script src="assets/js/main.js"></script>'
@@ -425,10 +429,7 @@ PAGE_404_TMPL = '''<!DOCTYPE html>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="FilialConnect 孝心联">
   <meta property="og:title" content="Page not found (404) | FilialConnect 孝心联">
-''' + HEAD_MARK_BEG + '''
-  <link rel="canonical" href="{{CANON}}">
-  <meta property="og:url" content="{{CANON}}">
-''' + HEAD_MARK_END + '''
+  <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
   <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
@@ -462,8 +463,7 @@ PAGE_404_TMPL = '''<!DOCTYPE html>
 
 
 def render_404_page():
-    h = PAGE_404_TMPL.replace('{{NAV}}', nav_for(True)).replace('{{FOOTER}}', footer_for(True))
-    return h.replace('{{CANON}}', canonical_for('404.html'))
+    return PAGE_404_TMPL.replace('{{NAV}}', nav_for(True)).replace('{{FOOTER}}', footer_for(True))
 
 
 def render_sitemap():
@@ -508,11 +508,11 @@ def build_outputs():
     tut_by_file = {t['file']: t for t in tuts}
     for t in tuts:
         t['page'] = 'pages/' + t['file']
-    out['404.html'] = render_404_page()
+    out['404.html'] = sync_head(render_404_page(), '404.html')
     for fp in all_pages():
         base = os.path.basename(fp)
         if base in tut_by_file:
-            out[fp] = render_tutorial_page(tut_by_file[base])
+            out[fp] = sync_head(render_tutorial_page(tut_by_file[base]), fp)
             continue
         if fp == '404.html':
             continue
