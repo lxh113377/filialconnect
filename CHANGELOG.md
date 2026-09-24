@@ -22,6 +22,9 @@
   仓库零改动，上游发一版就把 CI 弄红
 - **匹配器一致性测试**：`test_build.py` 直接抽取浏览器实际加载的 `hostOf()`+`listed()`
   在 node 中对真实名单跑 6  fixture（含反向对照），自测由 1,331 项增至 1,342 项
+- **公域后缀误伤金丝雀**：`listed()` 会上溯到根域，因此名单里若出现 `blogspot.com`
+  这类免费托管域会把整片合法站点判为诈骗；断言 20 个常见托管/短链域永不出现在快照中
+  （注入 `blogspot.com` 实测该断言转红，复原后 1,343 项全绿）
 - Actions 依赖由 dependabot 生成的 5 个 PR 全部合入（checkout 7.0.1 / setup-python 7.0.0 /
   configure-pages 6 / upload-pages-artifact 5 / deploy-pages 5），`setup-node` 手动补至 v7.0.0
 
