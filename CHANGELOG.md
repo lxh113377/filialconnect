@@ -6,6 +6,33 @@
 ## [Unreleased]
 
 ### Changed
+- **派生件工具链改用成熟库**（用户 2026-09-25 撤销「零依赖」口径后）：新增 `tools/build.mjs`，
+  接管 `assets/js/i18n.js`（由 `assets/locales/{en,zh}.json` 生成，JSON 成为字典唯一来源）、
+  `sitemap.xml`（xmlbuilder2）、`lighthouserc.json` / `.mobile.json`（URL 改为**从生成的 sitemap 反推**，
+  页面清单由 3 份收敛为 1 份）、`sw.js`（**workbox-build** `generateSW`，NetworkFirst 页面/名单、
+  CacheFirst 图片/manifest，`sourcemap:false`）；`build.py` 交还这 4 类所有权，只管 14 个页面
+- **运行时 i18n 改用 i18next + browser-languagedetector**（`assets/vendor/` 入库，不远程拉取）；
+  库不可用时回退直读字典，老年用户设备不受扩展拦截影响
+- 文案随事实更新：站点现在确实加载入库的第三方库，故 README/SECURITY/CONTRIBUTING 的
+  「不加载任何第三方脚本」改为「只从本站自身取资源，第三方库入库并锁版本，不远程拉取」
+
+### Fixed
+- **门禁静默失效**：`build.py` 交还 sw.js 后，原 SHELL 断言随之消失 —— 把 sw.js 换成空壳
+  仍报 1,369 全绿。现由 `node tools/build.mjs check` 重新生成到临时目录**逐字节比对**并校验
+  每个页面都在预缓存清单内（负样本：空壳 sw.js → 立即 FAIL）
+- **i18next 从未初始化**：守卫里写的插件全局名 `window.LanguageDetector` 不存在（UMD 真名为
+  `i18nextBrowserLanguageDetector`），init 被整段跳过、`t()` 静默走回退。浏览器实测
+  `initialized:false` 暴露后修正，并新增 6 项静态门禁：main.js 必须引用 vendor 文件**实际导出**的全局名
+- `lighthouserc.json` 的 404 URL 此前被列两次（15→14 条）
+
+### Added
+- 新依赖精确锁版本：cheerio / xmlbuilder2 / workbox-build / i18next / i18next-browser-languagedetector
+  （由本轮自建的"禁 `^~*x`"门禁当场拦下 npm 默认写入的 `^` 后修正）
+- 部署与交付：`deploy-pages.yml` 纳入 `workbox-*.js`；ZIP 交付物 57 → 63 文件（含 vendor 与 locales）；
+  `.gitignore` 忽略 `*.map`
+- 自测 1,368 → **1,376**（vendor 全局名 6 项、文案与运行时一致性 1 项、拆分所有权断言 1 项）
+
+### Changed
 - **CI 检查工具纳入清单**：新增 `package.json`（`devDependencies`: htmlhint@1.9.2 / linkinator@8.1.0 /
   @lhci/cli@0.14.0，`dependencies` 留空）+ `package-lock.json`（379 包，含上次弄红 CI 的 undici）；
   CI 由四处 `npx --yes <tool>@ver` / `npm i -g` 改为 `npm ci` + `node_modules/.bin/*`；

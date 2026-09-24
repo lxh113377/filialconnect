@@ -123,22 +123,13 @@ def write(fp, text):
 
 
 def parse_dict():
-    """{'en': {k: v}, 'zh': {...}} from the current i18n.js (incl. generated)."""
-    d = {'en': {}, 'zh': {}}
-    cur = None
-    for ln in read('assets/js/i18n.js').split('\n'):
-        m = re.match(r"^  (en|zh):\s*\{", ln)
-        if m:
-            cur = m.group(1)
-            continue
-        if cur and re.match(r"^  \},?\s*$", ln):
-            cur = None
-            continue
-        if cur:
-            mk = LINE_RE.match(ln)
-            if mk:
-                d[cur][mk.group(1)] = _normalize_entities(_unescape(mk.group(2)))
-    return d
+    """{'en': {k: v}, 'zh': {...}} — read from assets/locales/*.json.
+
+    The JSON files are the dictionary's single source since the Node toolchain
+    took over assets/js/i18n.js (that file is now a generated runtime bundle),
+    so gates read JSON instead of scraping JavaScript for string literals.
+    """
+    return {lang: json.loads(read('assets/locales/%s.json' % lang)) for lang in ('en', 'zh')}
 
 
 def gen_pairs(lang):
@@ -279,6 +270,8 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
   <meta name="description" content="{{DESC}}">
   <title>{{TITLE}}</title>
   <link rel="stylesheet" href="{{R}}assets/css/main.css">
+  <script src="{{R}}assets/vendor/i18next.min.js"></script>
+  <script src="{{R}}assets/vendor/i18next-browser-languagedetector.min.js"></script>
   <script src="{{R}}assets/js/i18n.js"></script>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="FilialConnect 孝心联">
@@ -695,10 +688,10 @@ def render_sw():
 def build_outputs():
     tuts, cases = load_content()
     dict_en = parse_dict()['en']
-    out = {'assets/js/i18n.js': render_i18n(), 'sitemap.xml': render_sitemap(),
-           'lighthouserc.json': render_lighthouserc(),
-           'lighthouserc.mobile.json': render_lighthouserc_mobile(),
-           'sw.js': render_sw()}
+    # sitemap.xml, lighthouserc(.mobile).json, sw.js and assets/js/i18n.js are no
+    # longer here: tools/build.mjs owns them with xmlbuilder2 / workbox-build /
+    # the JSON locales. `node tools/build.mjs check` is that half of the gate.
+    out = {}
     tut_by_file = {t['file']: t for t in tuts}
     for t in tuts:
         t['page'] = 'pages/' + t['file']
@@ -845,7 +838,7 @@ def do_build():
     for fp, text in out2.items():
         if read(fp) != text:
             write(fp, text)
-    print('built %d files (%d pages, sitemap.xml, i18n.js)' % (len(out2), len(all_pages())))
+    print('built %d files (%d pages; node owns i18n.js/sitemap/lighthouserc/sw.js)' % (len(out2), len(all_pages())))
 
 
 def do_check():

@@ -47,9 +47,13 @@ def html_only(fp):
 # ---------------------------------------------------------------- 1. pipeline
 def t_pipeline():
     out = build.build_outputs()
-    check('build covers every page + i18n + sitemap',
-          set(out) >= set(pages()) | {'assets/js/i18n.js', 'sitemap.xml'},
-          'missing %s' % sorted((set(pages()) | {'assets/js/i18n.js', 'sitemap.xml'}) - set(out)))
+    check('python half owns every page', set(out) >= set(pages()),
+          'missing %s' % sorted(set(pages()) - set(out)))
+    check('node half reports no drift (i18n.js / sitemap / lighthouserc / sw)',
+          subprocess.run([shutil.which('node') or 'node',
+                          os.path.join(ROOT, 'tools', 'build.mjs'), 'check'],
+                         capture_output=True, text=True).returncode == 0,
+          'run: node tools/build.mjs check')
     check('derived artifacts are committed in built form',
           all(read(fp) == text for fp, text in out.items()),
           'drift in %s' % [fp for fp, text in out.items() if read(fp) != text])
@@ -149,6 +153,14 @@ def t_promises():
                'assets/js/i18n.js'] + pages()
     hits = [(fp, w) for fp in targets for w in banned_slogan if w in read(fp)]
     check('no public file re-adopts the revoked "zero dependency" slogan', not hits, str(hits[:4]))
+    # Vendored libraries (i18next, workbox) are shipped from our own origin, so the
+    # older "we load no third-party code at all" phrasing is now factually wrong.
+    stale_claims = ('不加载任何第三方脚本', '不请求任何第三方资源', '零外部依赖', '无第三方依赖')
+    vendor = os.path.isdir(os.path.join(ROOT, 'assets', 'vendor'))
+    claims = [(fp, c) for fp in ('README.md', 'CONTRIBUTING.md', 'SECURITY.md')
+              for c in stale_claims if vendor and c in read(fp)]
+    check('docs match the shipped runtime (vendored libs != "no third-party code")',
+          not claims, str(claims[:3]))
     check('link checker discloses its coverage limit',
           '83,000' in s and '8.3 万' in s and 'does not mean' in s and '并不等于' in s)
     feed = json.loads(read('assets/data/fraud-feeds-meta.json'))
@@ -328,9 +340,27 @@ def t_workflows():
               not stray, str(stray[:2]))
 
 
+def t_vendor():
+    """The vendored UMD bundles publish under a specific global name. Guessing it
+    (LanguageDetector vs i18nextBrowserLanguageDetector) makes i18next.init() a
+    silent no-op, so assert main.js references the name the file really exports."""
+    js = read('assets/js/main.js')
+    for vendor in ('assets/vendor/i18next.min.js',
+                   'assets/vendor/i18next-browser-languagedetector.min.js'):
+        head = read(vendor)[:400]
+        m = re.search(r"\)\.([A-Za-z][A-Za-z0-9]*)\s*=", head)
+        check('%s exports a discoverable UMD global' % vendor, m is not None, head[:80])
+        if m:
+            check('main.js uses the real global %s from %s' % (m.group(1), vendor),
+                  m.group(1) in js, 'main.js never mentions %s' % m.group(1))
+    check('main.js initialises i18next', 'i18next.use(' in js and '.init({' in js)
+    check('main.js keeps a dictionary fallback if the library is blocked',
+          'i18nReady()' in js and 'I18N[lang][key] !== undefined' in js)
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
-               t_workflows):
+               t_workflows, t_vendor):
         fn()
     for f in FAILS:
         print('FAIL:', f)

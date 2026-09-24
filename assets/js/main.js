@@ -87,8 +87,7 @@
     var speaking = false;
 
     function t(key) {
-      var lang = getCurrentLang();
-      return (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
+      return tr(key);
     }
 
     function stop() {
@@ -168,15 +167,32 @@
     return detectBrowserLang();
   }
 
+  // i18next owns the resource store, language detection and lookup; the generated
+  // assets/js/i18n.js is its bundle. If the vendored library is unavailable
+  // (blocked by an extension, very old browser), every call falls back to a
+  // direct dictionary read so the page still renders in the visitor's language.
+  function i18nReady() {
+    return typeof i18next !== 'undefined' && !!i18next.isInitialized;
+  }
+
+  function tr(key) {
+    if (i18nReady()) return i18next.t(key, { defaultValue: key });
+    var lang = getCurrentLang();
+    return (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang][key] !== undefined)
+      ? I18N[lang][key] : key;
+  }
+
+  function dictHas(lang, key) {
+    return !!(typeof I18N !== 'undefined' && I18N[lang] && I18N[lang][key] !== undefined);
+  }
+
   function applyTranslations(lang) {
     if (typeof I18N === 'undefined' || !I18N[lang]) return;
 
-    var dict = I18N[lang];
-
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       var key = el.getAttribute('data-i18n');
-      if (dict[key] !== undefined) {
-        var val = dict[key];
+      if (dictHas(lang, key)) {
+        var val = tr(key);
         if (val.indexOf('<br>') !== -1) {
           // Safe line-break rendering: only literal <br> is honored,
           // everything else is inserted as text (no HTML injection).
@@ -197,8 +213,8 @@
       var attr = pair[0], marker = pair[1];
       document.querySelectorAll('[' + marker + ']').forEach(function (el) {
         var key = el.getAttribute(marker);
-        if (dict[key] !== undefined) {
-          el.setAttribute(attr, dict[key]);
+        if (dictHas(lang, key)) {
+          el.setAttribute(attr, tr(key));
         }
       });
     });
@@ -214,6 +230,19 @@
 
   function initI18n() {
     var lang = getCurrentLang();
+    var detector = window.i18nextBrowserLanguageDetector || window.LanguageDetector;
+    if (typeof i18next !== 'undefined' && detector && typeof I18N !== 'undefined') {
+      i18next.use(detector).init({
+        resources: { en: { translation: I18N.en }, zh: { translation: I18N.zh } },
+        lng: lang,
+        fallbackLng: 'en',
+        supportedLngs: SUPPORTED_LANGS,
+        load: 'currentOnly',
+        detection: { order: ['localStorage', 'navigator'], lookupLocalStorage: LANG_KEY, caches: [] },
+        interpolation: { escapeValue: false },
+        returnEmptyString: false,
+      });
+    }
     applyTranslations(lang);
 
     var toggleBtn = document.querySelector('.lang-toggle');
@@ -222,6 +251,7 @@
         var currentLang = getCurrentLang();
         var newLang = currentLang === 'en' ? 'zh' : 'en';
         storageSet(LANG_KEY, newLang);
+        if (i18nReady()) i18next.changeLanguage(newLang);
         applyTranslations(newLang);
         updateCallHint();
         refreshReadBtn();
@@ -605,8 +635,7 @@
     if (!input || !btn || !out) return;
 
     function t(key) {
-      var lang = getCurrentLang();
-      return (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
+      return tr(key);
     }
 
     var set = null;

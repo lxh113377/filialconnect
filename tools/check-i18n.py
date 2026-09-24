@@ -3,6 +3,7 @@
 data-i18n attribute used in HTML must exist in the dictionary.
 Usage: python tools/check-i18n.py   (exit 0 = pass, 1 = fail)"""
 import io
+import json
 import os
 import re
 import sys
@@ -12,15 +13,17 @@ KEY_RE = re.compile(r"^\s*'([^']+)'\s*:", re.M)
 
 
 def main():
-    js = io.open(os.path.join(ROOT, 'assets', 'js', 'i18n.js'), encoding='utf-8').read()
-    en_m = re.search(r"en:\s*\{(.*?)\n  \}", js, re.S)
-    zh_m = re.search(r"zh:\s*\{(.*?)\n  \}", js, re.S)
-    if not en_m or not zh_m:
-        print('FAIL: en/zh dictionary blocks not found')
+    # The dictionary's single source is assets/locales/*.json since the Node
+    # toolchain took over assets/js/i18n.js (now a generated runtime bundle),
+    # so read JSON instead of scraping JavaScript for string literals.
+    try:
+        en_map = json.load(io.open(os.path.join(ROOT, 'assets', 'locales', 'en.json'), encoding='utf-8'))
+        zh_map = json.load(io.open(os.path.join(ROOT, 'assets', 'locales', 'zh.json'), encoding='utf-8'))
+    except (OSError, ValueError) as exc:
+        print('FAIL: cannot read locale JSON: %s' % exc)
         return 1
-
-    en = set(KEY_RE.findall(en_m.group(1)))
-    zh = set(KEY_RE.findall(zh_m.group(1)))
+    en = set(en_map)
+    zh = set(zh_map)
     failures = []
 
     if en != zh:

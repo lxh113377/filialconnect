@@ -33,6 +33,9 @@ jobs:
       - name: Content pipeline drift check (build.py)
         run: python3 tools/build.py check
 
+      - name: Node-owned artifacts drift check (locales/sitemap/lighthouserc/workbox sw)
+        run: node tools/build.mjs check
+
       - name: Pipeline self-tests (build/check/i18n invariants)
         run: python3 tools/test_build.py
 
