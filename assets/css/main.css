@@ -14,6 +14,10 @@
   --color-primary-light: #4A7BC8;
   --color-primary-dark: #1A3A6E;
   --color-primary-subtle: #E8EFF8;
+  /* Text-on-surface variants (dark mode brightens these; backgrounds keep brand hue) */
+  --color-primary-text: #2B5797;
+  --color-primary-text-deep: #1A3A6E;
+  --color-accent-text: #A85212;
   --color-accent: #E8833A;
   --color-accent-light: #F5B880;
   --color-accent-dark: #A85212;
@@ -138,7 +142,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 700;
   line-height: 1.25;
-  color: var(--color-primary-dark);
+  color: var(--color-primary-text-deep);
 }
 
 h1 { font-size: var(--text-hero); }
@@ -171,7 +175,7 @@ p {
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   text-decoration: none;
   transition: color var(--duration-base) var(--ease-out-quart);
 }
@@ -246,7 +250,7 @@ strong {
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 700;
-  color: var(--color-primary-dark);
+  color: var(--color-primary-text-deep);
 }
 
 .nav-links {
@@ -268,7 +272,7 @@ strong {
 
 .nav-links a:hover,
 .nav-links a.active {
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   background: var(--color-primary-subtle);
 }
 
@@ -346,7 +350,7 @@ strong {
 
 .lang-toggle:hover {
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   background: var(--color-primary-subtle);
 }
 
@@ -501,7 +505,7 @@ strong {
 
 .btn-outline {
   background: transparent;
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   border: 2px solid var(--color-primary);
 }
 
@@ -602,7 +606,7 @@ strong {
   align-items: center;
   gap: var(--space-xs);
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .card-link:hover {
@@ -736,7 +740,7 @@ strong {
   display: inline-block;
   padding: 3px 12px;
   background: var(--color-primary-subtle);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   font-weight: 500;
@@ -744,7 +748,7 @@ strong {
 
 .tag-accent {
   background: var(--color-accent-subtle);
-  color: var(--color-accent-dark);
+  color: var(--color-accent-text);
 }
 
 
@@ -1030,7 +1034,7 @@ label {
   padding: var(--space-md) var(--space-xl);
   background: var(--color-primary-subtle);
   border-radius: var(--radius-md);
-  color: var(--color-primary-dark);
+  color: var(--color-primary-text-deep);
 }
 
 .connection-steps {
@@ -1107,7 +1111,7 @@ label {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   background: var(--color-primary-subtle);
   padding: 4px 10px;
   border-radius: var(--radius-sm);
@@ -1264,7 +1268,7 @@ label {
   height: 24px;
   border-radius: 50%;
   background: var(--color-primary-subtle);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   font-size: var(--text-xs);
   font-weight: 700;
   display: flex;
@@ -1491,10 +1495,13 @@ label {
 /* Progressive enhancement: hidden states only apply when JS is available
    (html.js set by inline head script). Without JS content stays visible. */
 html.js .animate-in {
-  opacity: 0;
-  transform: translateY(24px);
   transition: opacity var(--duration-glacial) var(--ease-out-expo),
               transform var(--duration-glacial) var(--ease-out-expo);
+}
+
+html.js .animate-in:not(.visible) {
+  opacity: 0;
+  transform: translateY(24px);
 }
 
 .animate-in.visible {
@@ -1503,10 +1510,13 @@ html.js .animate-in {
 }
 
 html.js .stagger-children > * {
-  opacity: 0;
-  transform: translateY(24px);
   transition: opacity var(--duration-glacial) var(--ease-out-expo),
               transform var(--duration-glacial) var(--ease-out-expo);
+}
+
+html.js .stagger-children:not(.visible) > * {
+  opacity: 0;
+  transform: translateY(24px);
 }
 
 .stagger-children.visible > *:nth-child(1) { transition-delay: 0ms; }
@@ -1721,4 +1731,139 @@ html.js .stagger-children > * {
   .guide-card {
     border: 2px solid ButtonText;
   }
+}
+
+/* -------------------------------------------
+   Suspicious Link Self-Check (D2)
+   ------------------------------------------- */
+.link-check {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin: var(--space-2xl) auto;
+  max-width: var(--container-narrow);
+  box-shadow: var(--shadow-sm);
+}
+
+.link-check h2 {
+  font-size: var(--text-xl);
+  color: var(--color-primary-text);
+  margin-bottom: var(--space-sm);
+}
+
+.link-check-desc {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+  margin-bottom: var(--space-lg);
+}
+
+.link-check-form {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.link-check-input {
+  flex: 1 1 260px;
+  min-height: 48px;
+  font-size: var(--text-lg);
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.link-check-input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-color: var(--color-accent);
+}
+
+.link-check-result {
+  margin-top: var(--space-md);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.link-check-result:empty {
+  display: none;
+}
+
+.link-check-result.is-bad {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border-left: 6px solid var(--color-danger);
+}
+
+.link-check-result.is-ok {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border-left: 6px solid var(--color-success);
+}
+
+.link-check-result.is-unknown {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border-left: 6px solid var(--color-warning);
+}
+
+.link-check-note {
+  margin-top: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* -------------------------------------------
+   Dark Mode (token overrides only; light values untouched)
+   Contrast (text/surface): #ECEAF2 on #2A3040 11.9:1 · #C6CBD6 8.1:1
+   #A5AABC 5.5:1 · #9DC1F0 6.9:1 · #F5B880 8.9:1 · #1A1A2E on #E8833A 6.3:1
+   ------------------------------------------- */
+@media screen and (prefers-color-scheme: dark) {
+  :root {
+    --color-primary-text: #9DC1F0;
+    --color-primary-text-deep: #B5CDF2;
+    --color-primary-subtle: #253147;
+    --color-accent-text: #F5B880;
+    --color-accent-subtle: #3A2F22;
+    --color-bg: #1E222C;
+    --color-bg-alt: #262B37;
+    --color-surface: #2A3040;
+    --color-surface-hover: #313849;
+    --color-text: #ECEAF2;
+    --color-text-secondary: #C6CBD6;
+    --color-text-muted: #A5AABC;
+    --color-border: #3E4557;
+    --color-border-light: #343B4C;
+    --color-success: #5FBF82;
+    --color-success-bg: #21382A;
+    --color-warning: #E0A34A;
+    --color-warning-bg: #3A2F1C;
+    --color-danger: #E07B6E;
+    --color-danger-bg: #3C2320;
+    --color-shadow: rgba(0, 0, 0, 0.4);
+    --color-shadow-strong: rgba(0, 0, 0, 0.55);
+  }
+
+  /* Accent buttons keep pinned dark text (their background stays brand orange) */
+  .btn-accent {
+    color: #1A1A2E;
+  }
+
+  /* Recolor hardcoded inline-SVG colors via presentation-attribute selectors */
+  [fill="#2B5797"] { fill: #9DC1F0; }
+  [stroke="#2B5797"] { stroke: #9DC1F0; }
+  [fill="#E8EFF8"] { fill: #253147; }
+  [fill="#FFF3E8"] { fill: #3A2F22; }
+  [fill="#EDF7F1"] { fill: #21382A; }
+  [fill="#2D8B4E"] { fill: #5FBF82; }
+  [fill="#D4820A"] { fill: #E0A34A; }
+  [fill="#C0392B"] { fill: #E07B6E; }
 }

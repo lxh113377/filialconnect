@@ -1,0 +1,606 @@
+{
+  "tutorials": [
+    {
+      "slug": "hospital",
+      "file": "tutorial-hospital.html",
+      "title": "How to Book a Doctor Appointment - FilialConnect",
+      "desc": "Step-by-step guide to booking doctor appointments using hospital apps",
+      "h1": {
+        "en": "How to Book a Doctor Appointment",
+        "zh": "如何预约挂号"
+      },
+      "intro": {
+        "en": "Follow these simple steps to book a doctor appointment using your phone. No need to wait in long lines at the hospital.",
+        "zh": "按照以下简单步骤，用手机预约医生。无需在医院排长队。"
+      },
+      "steps": [
+        {
+          "title": {
+            "en": "Open the Hospital App",
+            "zh": "打开医院 App"
+          },
+          "p": {
+            "en": "Find the hospital app on your phone. Common apps include health department platforms or your local hospital app. If you do not have one, ask your children to help you install it.",
+            "zh": "在手机上找到医院 App。常用的包括卫健委平台或当地医院的专用 App。如果没有安装，请让子女帮忙下载。"
+          }
+        },
+        {
+          "title": {
+            "en": "Search for Your Hospital",
+            "zh": "搜索医院"
+          },
+          "p": {
+            "en": "Type the name of your hospital in the search bar. Make sure you select the correct hospital, as some cities have multiple branches.",
+            "zh": "在搜索栏输入医院名称。注意选择正确的医院，有些城市有多个分院。"
+          }
+        },
+        {
+          "title": {
+            "en": "Select the Department",
+            "zh": "选择科室"
+          },
+          "p": {
+            "en": "Choose the department you need, such as Internal Medicine, Cardiology, or Orthopedics. If you are unsure, ask your family or choose General Internal Medicine.",
+            "zh": "选择您需要的科室，如内科、心内科、骨科等。不确定时可以咨询家人或选择普通内科。"
+          }
+        },
+        {
+          "title": {
+            "en": "Choose a Doctor and Time",
+            "zh": "选择医生和时间"
+          },
+          "p": {
+            "en": "Browse available doctors and time slots. Pick a date and time that works for you. Morning slots are usually easier to get.",
+            "zh": "浏览可预约的医生和时间段。选择适合您的日期和时间。上午的号源通常更容易获取。"
+          }
+        },
+        {
+          "title": {
+            "en": "Confirm and Pay",
+            "zh": "确认并支付"
+          },
+          "p": {
+            "en": "Review your appointment details and pay the registration fee. Most apps accept WeChat Pay or Alipay. The fee is usually small.",
+            "zh": "核对预约信息并支付挂号费。大多数 App 支持微信支付或支付宝。费用通常较低。"
+          }
+        },
+        {
+          "title": {
+            "en": "View Your Appointment",
+            "zh": "查看预约信息"
+          },
+          "p": {
+            "en": "After booking, you will receive a confirmation. Check the app for your appointment number and queue position before going to the hospital.",
+            "zh": "预约成功后会收到确认通知。去医院前，在 App 中查看预约号和排队位置。"
+          }
+        },
+        {
+          "title": {
+            "en": "Arrive at the Hospital",
+            "zh": "到达医院"
+          },
+          "p": {
+            "en": "Arrive 30 minutes early. Go directly to the department floor and wait for your number to be called. Bring your ID and insurance card.",
+            "zh": "提前 30 分钟到达。直接前往科室楼层等候叫号。请携带身份证和医保卡。"
+          }
+        }
+      ],
+      "related": [
+        {
+          "file": "tutorial-medical.html",
+          "title": {
+            "en": "Understanding Your Medical Report",
+            "zh": "看懂您的体检报告"
+          }
+        },
+        {
+          "file": "tutorial-banking.html",
+          "title": {
+            "en": "Mobile Banking Made Simple",
+            "zh": "手机银行简明指南"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "train",
+      "file": "tutorial-train.html",
+      "title": "Buying Train Tickets Online - FilialConnect",
+      "desc": "Complete guide to buying train tickets online through the official 12306 app",
+      "h1": {
+        "en": "Buying Train Tickets Online",
+        "zh": "在线购买火车票"
+      },
+      "intro": {
+        "en": "Book train tickets from home using the official 12306 app. No need to go to the station ticket window.",
+        "zh": "在家就能用 12306 官方 App 购票。无需去车站排队。"
+      },
+      "steps": [
+        {
+          "title": {
+            "en": "Open the 12306 App",
+            "zh": "打开 12306 App"
+          },
+          "p": {
+            "en": "The official railway app is called 12306. If you do not have it, ask your children to help you install it from the official app store.",
+            "zh": "铁路官方购票 App 叫 12306。如果没有安装，请让子女帮忙从官方应用商店下载。"
+          }
+        },
+        {
+          "title": {
+            "en": "Search for Your Route",
+            "zh": "搜索路线"
+          },
+          "p": {
+            "en": "Enter your departure city and destination city. Select the date you want to travel. The app will show all available trains.",
+            "zh": "输入出发城市和目的城市，选择出行日期。App 会显示所有可用列车。"
+          }
+        },
+        {
+          "title": {
+            "en": "Choose Your Train",
+            "zh": "选择列车"
+          },
+          "p": {
+            "en": "Compare trains by departure time, duration, and price. High-speed trains (G/D series) are faster. Regular trains (K/T series) are cheaper.",
+            "zh": "比较出发时间、行程时长和票价。高铁（G/D 系列）更快，普通列车（K/T 系列）更便宜。"
+          }
+        },
+        {
+          "title": {
+            "en": "Select Seat Type",
+            "zh": "选择座位类型"
+          },
+          "p": {
+            "en": "Choose your seat type: Second Class is affordable, First Class is more comfortable, Business Class is premium. For short trips, Second Class is fine.",
+            "zh": "选择座位类型：二等座经济实惠，一等座更舒适，商务座为高端选择。短途出行二等座即可。"
+          }
+        },
+        {
+          "title": {
+            "en": "Add Passenger Information",
+            "zh": "填写乘客信息"
+          },
+          "p": {
+            "en": "Enter the name and ID number of each passenger. Make sure the information matches your ID card exactly.",
+            "zh": "输入每位乘客的姓名和身份证号。确保信息与身份证完全一致。"
+          }
+        },
+        {
+          "title": {
+            "en": "Pay for Your Ticket",
+            "zh": "支付购票"
+          },
+          "p": {
+            "en": "Pay using WeChat Pay, Alipay, or bank card. After payment, your e-ticket is stored in the app.",
+            "zh": "使用微信支付、支付宝或银行卡付款。付款后，电子票会保存在 App 中。"
+          }
+        },
+        {
+          "title": {
+            "en": "Collect Your Ticket or Use E-Ticket",
+            "zh": "取票或使用电子票"
+          },
+          "p": {
+            "en": "At the station, you can use your ID card directly at the gate for e-ticket entry, or print a paper ticket at the self-service machines.",
+            "zh": "在车站可直接用身份证刷闸机进站，也可在自助取票机上打印纸质票。"
+          }
+        }
+      ],
+      "related": [
+        {
+          "file": "tutorial-ride.html",
+          "title": {
+            "en": "Using Ride-Hailing Apps",
+            "zh": "使用网约车 App"
+          }
+        },
+        {
+          "file": "tutorial-wechat.html",
+          "title": {
+            "en": "WeChat Complete Guide",
+            "zh": "微信全能使用指南"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "wechat",
+      "file": "tutorial-wechat.html",
+      "title": "WeChat Complete Guide - FilialConnect",
+      "desc": "Complete WeChat guide for seniors - chatting, video calls, payments, and grocery shopping",
+      "h1": {
+        "en": "WeChat Complete Guide",
+        "zh": "微信全能使用指南"
+      },
+      "intro": {
+        "en": "Master the most useful WeChat features step by step. From chatting with family to paying at stores.",
+        "zh": "逐步掌握微信最实用的功能。从和家人聊天到商店付款。"
+      },
+      "steps": [
+        {
+          "title": {
+            "en": "Open WeChat",
+            "zh": "打开微信"
+          },
+          "p": {
+            "en": "Find the WeChat icon on your phone. It is a green icon with two chat bubbles. Tap it to open.",
+            "zh": "在手机上找到微信图标（绿色带两个对话气泡）。点击打开。"
+          }
+        },
+        {
+          "title": {
+            "en": "Add Contacts",
+            "zh": "添加联系人"
+          },
+          "p": {
+            "en": "Tap the \"+\" button at the top right, then \"Add Contacts.\" You can search by WeChat ID or phone number, or scan a QR code.",
+            "zh": "点击右上角的\"+\"按钮，选择\"添加朋友\"。可通过微信号、手机号搜索，或扫描二维码添加。"
+          }
+        },
+        {
+          "title": {
+            "en": "Send Messages",
+            "zh": "发送消息"
+          },
+          "p": {
+            "en": "Tap a contact name to open a chat. Type your message and tap Send. You can also send voice messages by holding the microphone button.",
+            "zh": "点击联系人名字打开聊天窗口。输入消息点击发送。也可按住语音按钮发送语音消息。"
+          }
+        },
+        {
+          "title": {
+            "en": "Make Video Calls",
+            "zh": "视频通话"
+          },
+          "p": {
+            "en": "In a chat, tap the \"+\" icon and select \"Video Call.\" This lets you see your family face-to-face, even from far away.",
+            "zh": "在聊天中点击\"+\"图标选择\"视频通话\"。即使远隔千里，也能面对面看到家人。"
+          }
+        },
+        {
+          "title": {
+            "en": "Use WeChat Pay",
+            "zh": "使用微信支付"
+          },
+          "p": {
+            "en": "Tap \"Me\" then \"Pay\" to set up WeChat Pay. You can pay at stores by scanning QR codes, send money to friends, and pay bills.",
+            "zh": "点击\"我\"再点击\"支付\"设置微信支付。可以在商店扫二维码付款、给朋友转账、缴纳生活费用。"
+          }
+        },
+        {
+          "title": {
+            "en": "Order Groceries",
+            "zh": "网购日用杂货"
+          },
+          "p": {
+            "en": "In WeChat, tap \"Discover\" then \"Mini Programs.\" Search for grocery delivery apps. You can order fresh food and daily necessities delivered to your door.",
+            "zh": "在微信点击\"发现\"再点击\"小程序\"。搜索买菜配送服务。新鲜食材和生活用品直接送到家门口。"
+          }
+        },
+        {
+          "title": {
+            "en": "Stay Safe on WeChat",
+            "zh": "微信安全提醒"
+          },
+          "p": {
+            "en": "Do not click unfamiliar links. Do not transfer money to strangers. If someone asks for money through a new number, call your family to verify first.",
+            "zh": "不点击陌生链接。不向陌生人转账。如果有人通过新号码要钱，先打电话向家人核实。"
+          }
+        }
+      ],
+      "related": [
+        {
+          "file": "fraud-database.html",
+          "title": {
+            "en": "Fraud Alert Database",
+            "zh": "防骗数据库"
+          }
+        },
+        {
+          "file": "tutorial-banking.html",
+          "title": {
+            "en": "Mobile Banking Made Simple",
+            "zh": "手机银行简明指南"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "medical",
+      "file": "tutorial-medical.html",
+      "title": "Understanding Your Medical Report - FilialConnect",
+      "desc": "Learn to read and understand your medical report and test results",
+      "h1": {
+        "en": "Understanding Your Medical Report",
+        "zh": "看懂您的体检报告"
+      },
+      "intro": {
+        "en": "Learn to read your health check results. Know what the numbers mean before your next doctor visit.",
+        "zh": "学会阅读健康检查结果。在下次看医生前了解各项指标的含义。"
+      },
+      "steps": [
+        {
+          "title": {
+            "en": "Find Your Report",
+            "zh": "找到报告"
+          },
+          "p": {
+            "en": "Medical reports can be found in the hospital app, or you may receive a paper copy. Ask the hospital staff if you need help locating it.",
+            "zh": "体检报告可以在医院 App 中查看，也可能拿到纸质版。如需帮助，请向医院工作人员咨询。"
+          }
+        },
+        {
+          "title": {
+            "en": "Read the Summary First",
+            "zh": "先看概要"
+          },
+          "p": {
+            "en": "Most reports start with a summary. Look for any items marked with an arrow up (↑) or down (↓), which means the value is higher or lower than normal.",
+            "zh": "大多数报告开头有概要。注意标有箭头向上(↑)或向下(↓)的项目，表示数值偏高或偏低。"
+          }
+        },
+        {
+          "title": {
+            "en": "Check Blood Sugar",
+            "zh": "查看血糖"
+          },
+          "p": {
+            "en": "Fasting blood sugar (glucose) should be between 3.9-6.1 mmol/L. If it is higher, talk to your doctor about diabetes prevention.",
+            "zh": "空腹血糖应在 3.9-6.1 mmol/L 之间。如偏高，请咨询医生关于糖尿病预防的建议。"
+          }
+        },
+        {
+          "title": {
+            "en": "Check Blood Pressure Numbers",
+            "zh": "了解血压数值"
+          },
+          "p": {
+            "en": "Normal blood pressure is below 120/80. The first number (systolic) is pressure when your heart beats. The second (diastolic) is pressure between beats.",
+            "zh": "正常血压低于 120/80。第一个数字（收缩压）是心跳时的压力，第二个（舒张压）是心跳间隔时的压力。"
+          }
+        },
+        {
+          "title": {
+            "en": "Understand Cholesterol",
+            "zh": "了解胆固醇"
+          },
+          "p": {
+            "en": "Total cholesterol should be below 5.2 mmol/L. HDL (good cholesterol) should be high. LDL (bad cholesterol) should be low.",
+            "zh": "总胆固醇应低于 5.2 mmol/L。HDL（好胆固醇）应偏高，LDL（坏胆固醇）应偏低。"
+          }
+        },
+        {
+          "title": {
+            "en": "Note Any Abnormal Items",
+            "zh": "记录异常项目"
+          },
+          "p": {
+            "en": "Write down any items with abnormal values. Bring this list to your doctor visit so you can ask questions about each one.",
+            "zh": "把所有异常数值的项目记下来。看病时带上这份清单，逐项向医生提问。"
+          }
+        },
+        {
+          "title": {
+            "en": "Ask Your Doctor",
+            "zh": "咨询医生"
+          },
+          "p": {
+            "en": "Never self-diagnose based on a report. Always discuss results with your doctor. They can explain what each number means for your specific health situation.",
+            "zh": "绝不要根据报告自行诊断。务必与医生讨论结果。医生能结合您的具体情况解释每项数值的含义。"
+          }
+        }
+      ],
+      "related": [
+        {
+          "file": "tutorial-hospital.html",
+          "title": {
+            "en": "How to Book a Doctor Appointment",
+            "zh": "如何预约挂号"
+          }
+        },
+        {
+          "file": "tutorial-wechat.html",
+          "title": {
+            "en": "WeChat Complete Guide",
+            "zh": "微信全能使用指南"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "banking",
+      "file": "tutorial-banking.html",
+      "title": "Mobile Banking Made Simple - FilialConnect",
+      "desc": "Mobile banking made simple - check balances, transfer money, and pay bills safely",
+      "h1": {
+        "en": "Mobile Banking Made Simple",
+        "zh": "手机银行简明指南"
+      },
+      "intro": {
+        "en": "Manage your money safely using your bank app. Check balances, transfer funds, and pay bills from home.",
+        "zh": "安全地用银行 App 管理您的资金。在家就能查余额、转账和缴费。"
+      },
+      "steps": [
+        {
+          "title": {
+            "en": "Open Your Bank App",
+            "zh": "打开银行 App"
+          },
+          "p": {
+            "en": "Find your bank app on your phone. Each bank has its own app. If you have trouble, ask your children to help you install it.",
+            "zh": "在手机上找到您的银行 App。每家银行都有自己的 App。如有困难，请让子女帮忙安装。"
+          }
+        },
+        {
+          "title": {
+            "en": "Log In Safely",
+            "zh": "安全登录"
+          },
+          "p": {
+            "en": "Enter your account number and password. Never share your password with anyone. If you forget it, go to your bank branch to reset it.",
+            "zh": "输入账号和密码登录。绝不与任何人分享密码。如忘记密码，请前往银行网点重置。"
+          }
+        },
+        {
+          "title": {
+            "en": "Check Your Balance",
+            "zh": "查看余额"
+          },
+          "p": {
+            "en": "Tap \"My Account\" or \"Balance\" to see how much money you have. The display is clear and easy to read.",
+            "zh": "点击\"我的账户\"或\"余额查询\"查看账户金额。显示清晰易读。"
+          }
+        },
+        {
+          "title": {
+            "en": "Transfer Money",
+            "zh": "转账"
+          },
+          "p": {
+            "en": "Tap \"Transfer\" to send money to another account. You need the recipient name, bank, and account number. Double-check all details before confirming.",
+            "zh": "点击\"转账\"向其他账户汇款。需要收款人姓名、开户行和账号。确认前请仔细核对所有信息。"
+          }
+        },
+        {
+          "title": {
+            "en": "Pay Bills",
+            "zh": "缴纳费用"
+          },
+          "p": {
+            "en": "Tap \"Payments\" to pay utility bills, phone bills, and more. The app stores your payment history so you can review it later.",
+            "zh": "点击\"生活缴费\"支付水电费、话费等。App 会保存缴费记录，方便日后查看。"
+          }
+        },
+        {
+          "title": {
+            "en": "Stay Safe",
+            "zh": "安全提醒"
+          },
+          "p": {
+            "en": "Never click links in messages claiming your account has problems. Log in only through the official app. If you receive suspicious calls, hang up and tell your family.",
+            "zh": "绝不点击短信中声称账户有问题的链接。只通过官方 App 登录。接到可疑电话立即挂断并告知家人。"
+          }
+        }
+      ],
+      "related": [
+        {
+          "file": "fraud-database.html",
+          "title": {
+            "en": "Fraud Alert Database",
+            "zh": "防骗数据库"
+          }
+        },
+        {
+          "file": "tutorial-wechat.html",
+          "title": {
+            "en": "WeChat Complete Guide",
+            "zh": "微信全能使用指南"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "ride",
+      "file": "tutorial-ride.html",
+      "title": "Using Ride-Hailing Apps - FilialConnect",
+      "desc": "Complete guide to using ride-hailing apps like DiDi - call a taxi from your phone",
+      "h1": {
+        "en": "Using Ride-Hailing Apps",
+        "zh": "使用网约车 App"
+      },
+      "intro": {
+        "en": "Call a taxi from your phone anytime. No need to stand on the street waiting.",
+        "zh": "随时用手机叫出租车。无需站在路边等候。"
+      },
+      "steps": [
+        {
+          "title": {
+            "en": "Open the Ride App",
+            "zh": "打开出行 App"
+          },
+          "p": {
+            "en": "Find the ride-hailing app on your phone. Common apps include DiDi and other local services. Tap to open.",
+            "zh": "在手机上找到网约车 App。常用的包括滴滴出行等。点击打开。"
+          }
+        },
+        {
+          "title": {
+            "en": "Set Your Pickup Location",
+            "zh": "设置上车地点"
+          },
+          "p": {
+            "en": "The app usually detects your current location automatically. If it is wrong, tap the location box and enter your address manually.",
+            "zh": "App 通常会自动定位您当前位置。如定位不准，点击地址栏手动输入您的地址。"
+          }
+        },
+        {
+          "title": {
+            "en": "Enter Your Destination",
+            "zh": "输入目的地"
+          },
+          "p": {
+            "en": "Type the address or name of where you want to go. The app will show estimated arrival time and fare.",
+            "zh": "输入您要去的地方的地址或名称。App 会显示预估到达时间和费用。"
+          }
+        },
+        {
+          "title": {
+            "en": "Choose Car Type",
+            "zh": "选择车型"
+          },
+          "p": {
+            "en": "Select \"Express\" for a standard affordable ride, or \"Comfort\" for a nicer car. Express is usually sufficient for everyday trips.",
+            "zh": "选择\"快享\"为经济实惠的标准出行，或\"舒适型\"为更舒适的车辆。日常出行快享即可。"
+          }
+        },
+        {
+          "title": {
+            "en": "Confirm and Wait",
+            "zh": "确认并等待"
+          },
+          "p": {
+            "en": "Tap \"Confirm\" to request a ride. The app will match you with a driver. You can see the driver name, car type, and license plate number.",
+            "zh": "点击\"确认呼叫\"发起订单。App 会为您匹配司机。可看到司机姓名、车型和车牌号。"
+          }
+        },
+        {
+          "title": {
+            "en": "Track Your Ride",
+            "zh": "追踪行程"
+          },
+          "p": {
+            "en": "Watch the driver approach on the map. When the car arrives, check the license plate matches. Get in and enjoy your ride.",
+            "zh": "在地图上观察司机接近。车辆到达时核对车牌号。上车后安心乘坐。"
+          }
+        },
+        {
+          "title": {
+            "en": "Rate After the Trip",
+            "zh": "行程后评价"
+          },
+          "p": {
+            "en": "After arriving, the app asks you to rate the driver. A 5-star rating is the default. Payment is automatic through the app.",
+            "zh": "到达后 App 会提示评价司机。默认5星好评。费用通过 App 自动支付。"
+          }
+        }
+      ],
+      "related": [
+        {
+          "file": "tutorial-train.html",
+          "title": {
+            "en": "Buying Train Tickets Online",
+            "zh": "在线购买火车票"
+          }
+        },
+        {
+          "file": "tutorial-wechat.html",
+          "title": {
+            "en": "WeChat Complete Guide",
+            "zh": "微信全能使用指南"
+          }
+        }
+      ]
+    }
+  ]
+}

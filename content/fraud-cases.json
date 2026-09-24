@@ -1,0 +1,289 @@
+{
+  "cases": [
+    {
+      "n": 1,
+      "level": "high",
+      "level_label": "High risk",
+      "title": {
+        "en": "Impersonating Police or Officials",
+        "zh": "冒充公检法"
+      },
+      "how": {
+        "en": "How It Works",
+        "zh": "骗术手法"
+      },
+      "howp": {
+        "en": "Scammers call pretending to be police, bank staff, or government officials. They claim your bank account is involved in a crime or you owe money, and demand immediate payment.",
+        "zh": "骗子打电话冒充警察、银行工作人员或政府官员。他们声称您的银行账户涉及犯罪或您欠了钱，并要求立即付款。"
+      },
+      "signs_h": {
+        "en": "Warning Signs",
+        "zh": "识别标志"
+      },
+      "signs": [
+        {
+          "en": "Caller claims to be from police, court, or tax bureau",
+          "zh": "来电者声称来自警察、法院或税务局"
+        },
+        {
+          "en": "They ask you to transfer money to a \"safe account\"",
+          "zh": "他们要求您将钱转到\"安全账户\""
+        },
+        {
+          "en": "They threaten arrest or legal action if you do not cooperate",
+          "zh": "他们威胁如果不配合就逮捕或采取法律行动"
+        },
+        {
+          "en": "They tell you not to inform your family",
+          "zh": "他们叫您不要告诉家人"
+        }
+      ],
+      "do_h": {
+        "en": "What to Do",
+        "zh": "对方法"
+      },
+      "dos": [
+        {
+          "en": "Hang up immediately—real officials never demand money over the phone",
+          "zh": "立即挂断电话—真正的官员绝不会通过电话索要钱财"
+        },
+        {
+          "en": "Verify by calling the official number of the agency they claim to represent",
+          "zh": "拨打他们声称代表的机构的官方电话核实"
+        },
+        {
+          "en": "Tell your family about the call",
+          "zh": "把这次来电告诉您的家人"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "level": "high",
+      "level_label": "High risk",
+      "title": {
+        "en": "Fake Investment Schemes",
+        "zh": "虚假投资理财"
+      },
+      "how": {
+        "en": "How It Works",
+        "zh": "骗术手法"
+      },
+      "howp": {
+        "en": "Scammers invite you to WeChat or QQ groups promising high returns on gold, stocks, cryptocurrency, or health products. They show fake profits to convince you to invest more, then disappear with your money.",
+        "zh": "骗子邀请您加入微信或 QQ 群，承诺在黄金、股票、加密货币或保健品方面获得高额回报。他们展示虚假利润来说服您投入更多资金，然后带着您的钱消失。"
+      },
+      "signs_h": {
+        "en": "Warning Signs",
+        "zh": "识别标志"
+      },
+      "signs": [
+        {
+          "en": "\"Guaranteed\" high returns with \"zero risk\"",
+          "zh": "\"保证\"高回报且\"零风险\""
+        },
+        {
+          "en": "Pressure to invest quickly before the \"opportunity disappears\"",
+          "zh": "施加压力让您在\"机会消失前\"快速投资"
+        },
+        {
+          "en": "Group chat where everyone seems to be making money",
+          "zh": "群聊里似乎每个人都在赚钱"
+        },
+        {
+          "en": "Asked to download unknown apps for investment",
+          "zh": "要求下载未知 App 进行投资"
+        }
+      ],
+      "do_h": {
+        "en": "What to Do",
+        "zh": "对方法"
+      },
+      "dos": [
+        {
+          "en": "Only invest through licensed banks and financial institutions",
+          "zh": "仅通过持牌银行和金融机构进行投资"
+        },
+        {
+          "en": "Consult your children before making any investment decisions",
+          "zh": "在做出任何投资决定前，先咨询您的子女"
+        },
+        {
+          "en": "Remember: if it sounds too good to be true, it is",
+          "zh": "记住：如果听起来好得令人难以置信，那它就是"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "level": "medium",
+      "level_label": "Medium risk",
+      "title": {
+        "en": "Fake Customer Service Scams",
+        "zh": "假冒客服诈骗"
+      },
+      "how": {
+        "en": "How It Works",
+        "zh": "骗术手法"
+      },
+      "howp": {
+        "en": "Someone calls claiming your computer or phone has a virus. They ask you to install software that lets them control your device remotely, then steal your banking information.",
+        "zh": "有人打电话声称您的电脑或手机中了病毒。他们要求您安装软件，让他们远程控制您的设备，然后窃取您的银行信息。"
+      },
+      "signs_h": {
+        "en": "Warning Signs",
+        "zh": "识别标志"
+      },
+      "signs": [
+        {
+          "en": "Unsolicited call about problems with your computer or phone",
+          "zh": "关于电脑或手机问题的主动来电"
+        },
+        {
+          "en": "Asked to install remote access software",
+          "zh": "要求安装远程访问软件"
+        },
+        {
+          "en": "Claims your device is \"spreading viruses\"",
+          "zh": "声称您的设备正在\"散发病毒\""
+        },
+        {
+          "en": "Demands payment to \"fix\" the problem",
+          "zh": "要求付款以\"修复\"问题"
+        }
+      ],
+      "do_h": {
+        "en": "What to Do",
+        "zh": "对方法"
+      },
+      "dos": [
+        {
+          "en": "Never install software at a stranger's request",
+          "zh": "绝不要按照陌生人的要求安装软件"
+        },
+        {
+          "en": "Hang up—real tech companies do not make unsolicited calls",
+          "zh": "挂断电话—真正的科技公司不会主动打电话"
+        },
+        {
+          "en": "If concerned, ask a family member to check your device",
+          "zh": "如果担心，请让家人帮您检查设备"
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "level": "medium",
+      "level_label": "Medium risk",
+      "title": {
+        "en": "Prize and Lottery Scams",
+        "zh": "中奖骗局"
+      },
+      "how": {
+        "en": "How It Works",
+        "zh": "骗术手法"
+      },
+      "howp": {
+        "en": "You receive a message or call saying you have won a prize, lottery, or sweepstakes. To claim it, you need to pay a \"processing fee\" or \"tax\" first. The prize never arrives.",
+        "zh": "您收到一条消息或电话，说您赢得了奖品、彩票或抽奖。要领取，您需要先支付\"手续费\"或\"税款\"。奖品永远不会送达。"
+      },
+      "signs_h": {
+        "en": "Warning Signs",
+        "zh": "识别标志"
+      },
+      "signs": [
+        {
+          "en": "You \"won\" a contest you never entered",
+          "zh": "您\"赢得\"了从未参加过的比赛"
+        },
+        {
+          "en": "You must pay money before receiving the prize",
+          "zh": "您必须先付钱才能领取奖品"
+        },
+        {
+          "en": "Urgent deadline to claim the prize",
+          "zh": "领取奖品的紧急截止日期"
+        },
+        {
+          "en": "Asked for bank details to \"deposit\" the prize",
+          "zh": "要求提供银行详细信息以\"存入\"奖品"
+        }
+      ],
+      "do_h": {
+        "en": "What to Do",
+        "zh": "对方法"
+      },
+      "dos": [
+        {
+          "en": "Real prizes never require you to pay first",
+          "zh": "真实的奖品绝不会要求您先付款"
+        },
+        {
+          "en": "Delete the message and block the sender",
+          "zh": "删除消息并拉黑发件人"
+        },
+        {
+          "en": "Never share your banking information with strangers",
+          "zh": "绝不要与陌生人分享您的银行信息"
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "level": "low",
+      "level_label": "Low risk",
+      "title": {
+        "en": "Phishing Link Scams",
+        "zh": "钓鱼链接诈骗"
+      },
+      "how": {
+        "en": "How It Works",
+        "zh": "骗术手法"
+      },
+      "howp": {
+        "en": "You receive a text or WeChat message with a link that looks like it is from your bank, delivery company, or family. Clicking it takes you to a fake website that steals your login and password.",
+        "zh": "您收到一条短信或微信消息，其中包含一个链接，看起来像来自您的银行、快递公司或家人。点击它会将您带到一个假冒网站，窃取您的登录名和密码。"
+      },
+      "signs_h": {
+        "en": "Warning Signs",
+        "zh": "识别标志"
+      },
+      "signs": [
+        {
+          "en": "Message with a link you were not expecting",
+          "zh": "您没有预料到的带链接的消息"
+        },
+        {
+          "en": "Link looks slightly wrong (extra letters, misspellings)",
+          "zh": "链接看起来略有错误（多出的字母、拼写错误）"
+        },
+        {
+          "en": "Urgent message like \"Your account will be closed\"",
+          "zh": "紧急消息，如\"您的账户将被关闭\""
+        },
+        {
+          "en": "Message from \"family\" asking for money through a new number",
+          "zh": "来自\"家人\"的通过新号码索要金钱的消息"
+        }
+      ],
+      "do_h": {
+        "en": "What to Do",
+        "zh": "对方法"
+      },
+      "dos": [
+        {
+          "en": "Never click links in unexpected messages",
+          "zh": "绝不要点击意外消息中的链接"
+        },
+        {
+          "en": "If \"family\" asks for money, call them first to verify",
+          "zh": "如果\"家人\"索要金钱，请先给他们打电话核实"
+        },
+        {
+          "en": "Type website addresses yourself instead of clicking links",
+          "zh": "自己输入网站地址，而不是点击链接"
+        }
+      ]
+    }
+  ]
+}

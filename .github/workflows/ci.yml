@@ -21,6 +21,12 @@ jobs:
       - name: HTML validation (HTMLHint)
         run: npx --yes htmlhint "index.html" "pages/*.html"
 
+      - name: i18n symmetry check (EN/ZH keys + HTML coverage + orphans)
+        run: python3 tools/check-i18n.py
+
+      - name: Content pipeline drift check (build.py)
+        run: python3 tools/build.py check
+
       - name: Link check (linkinator, fragments + external)
         run: |
           npx --yes linkinator . \

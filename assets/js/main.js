@@ -26,7 +26,8 @@
     initTutorialFilter();
     initCallHelp();
     initHelpForm();
-    initPrintButtons();
+    initRemoteCode();
+    initLinkCheck();
     initSmoothScroll();
   });
 
@@ -36,6 +37,16 @@
   var LANG_KEY = 'filialconnect-lang';
   var SUPPORTED_LANGS = ['en', 'zh'];
 
+  // Browsers in private mode may throw on any localStorage access; language
+  // choice then degrades to per-session detection instead of breaking initI18n.
+  function storageGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+
+  function storageSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* storage unavailable */ }
+  }
+
   function detectBrowserLang() {
     var nav = (navigator.languages && navigator.languages[0]) ||
               navigator.language || navigator.userLanguage || 'en';
@@ -43,7 +54,7 @@
   }
 
   function getCurrentLang() {
-    var stored = localStorage.getItem(LANG_KEY);
+    var stored = storageGet(LANG_KEY);
     if (stored && SUPPORTED_LANGS.indexOf(stored) !== -1) {
       return stored;
     }
@@ -106,7 +117,7 @@
       toggleBtn.addEventListener('click', function () {
         var currentLang = getCurrentLang();
         var newLang = currentLang === 'en' ? 'zh' : 'en';
-        localStorage.setItem(LANG_KEY, newLang);
+        storageSet(LANG_KEY, newLang);
         applyTranslations(newLang);
       });
     }
@@ -138,12 +149,29 @@
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && links.classList.contains('open')) {
+      if (!links.classList.contains('open')) return;
+
+      if (e.key === 'Escape') {
         links.classList.remove('open');
         toggle.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = '';
         toggle.focus();
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        // Keep Tab cycling inside the open menu so focus never escapes behind it
+        var focusables = [toggle].concat(Array.prototype.slice.call(links.querySelectorAll('a')));
+        var first = focusables[0];
+        var last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     });
   }
@@ -153,6 +181,7 @@
      ============================================================ */
   function initActiveNav() {
     var currentPath = window.location.pathname;
+    var isTutorialDetail = /\/tutorial-.+\.html$/.test(currentPath);
     var navLinks = document.querySelectorAll('.nav-links a');
 
     navLinks.forEach(function (link) {
@@ -160,7 +189,8 @@
       if (!href) return;
 
       if (currentPath.endsWith(href) ||
-          (href === 'index.html' && (currentPath.endsWith('/') || currentPath.endsWith('index.html')))) {
+          (href === 'index.html' && (currentPath.endsWith('/') || currentPath.endsWith('index.html'))) ||
+          (href === 'tutorials.html' && isTutorialDetail)) {
         link.classList.add('active');
       }
     });
@@ -185,7 +215,17 @@
         });
       }, { rootMargin: '0px 0px -15% 0px' });
 
-      animatedElements.forEach(function (el) { observer.observe(el); });
+      animatedElements.forEach(function (el) {
+        // Elements already inside the viewport at load never fire an
+        // intersection change under the negative bottom margin on tall
+        // viewports; reveal them directly.
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          el.classList.add('visible');
+        } else {
+          observer.observe(el);
+        }
+      });
       return;
     }
 
@@ -236,9 +276,12 @@
         var isOpen = item.classList.contains('open');
         items.forEach(function (other) {
           other.classList.remove('open');
+          var otherSummary = other.querySelector('.fraud-summary');
+          if (otherSummary) otherSummary.setAttribute('aria-expanded', 'false');
         });
         if (!isOpen) {
           item.classList.add('open');
+          summary.setAttribute('aria-expanded', 'true');
         }
       });
 
@@ -342,6 +385,68 @@
   }
 
   /* ============================================================
+     Suspicious Link Self-Check (offline destroylist data)
+     ============================================================ */
+  function initLinkCheck() {
+    var input = document.getElementById('link-check-input');
+    var btn = document.getElementById('link-check-btn');
+    var out = document.getElementById('link-check-result');
+    if (!input || !btn || !out) return;
+
+    function t(key) {
+      var lang = getCurrentLang();
+      return (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
+    }
+
+    var set = null;
+
+    function loadDomains(cb) {
+      if (set) { cb(set); return; }
+      out.textContent = t('linkcheck.loading');
+      fetch('../assets/data/destroylist-domains.txt')
+        .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
+        .then(function (txt) {
+          set = new Set(txt.split(/\r?\n/).filter(Boolean));
+          cb(set);
+        })
+        .catch(function () {
+          out.textContent = t('linkcheck.errload');
+          out.className = 'link-check-result is-unknown';
+        });
+    }
+
+    function hostOf(raw) {
+      var m = raw.match(/^(?:https?|ftp):\/\/(?:[^@/]*@)?([^/?#:]+)/i) || raw.match(/^([a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?:[/:?#]|$)/i);
+      return m ? m[1].toLowerCase() : null;
+    }
+
+    function check() {
+      loadDomains(function (s) {
+        var raw = input.value.trim().toLowerCase();
+        var host = hostOf(raw);
+        if (!host) {
+          out.textContent = t('linkcheck.parse');
+          out.className = 'link-check-result is-unknown';
+          return;
+        }
+        var parts = host.split('.');
+        var root = parts.length > 2 ? parts.slice(-2).join('.') : host;
+        var bad = s.has(host) || s.has(root) || s.has(raw);
+        out.textContent = bad ? t('linkcheck.bad') : t('linkcheck.ok');
+        out.className = 'link-check-result ' + (bad ? 'is-bad' : 'is-ok');
+      });
+    }
+
+    btn.addEventListener('click', check);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        check();
+      }
+    });
+  }
+
+  /* ============================================================
      Toast Notifications
      ============================================================ */
   function showToast(message, type) {
@@ -371,16 +476,21 @@
   }
 
   /* ============================================================
-     Print Buttons
+     Remote Assist Session Code (per-visit generation; static HTML value
+     is the no-JS fallback) — print buttons stay inline onclick by design
      ============================================================ */
-  function initPrintButtons() {
-    var printBtns = document.querySelectorAll('.print-btn');
+  function initRemoteCode() {
+    var codeEl = document.querySelector('.connection-code');
+    if (!codeEl) return;
 
-    printBtns.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        window.print();
-      });
-    });
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no confusable I/O/0/1
+    var code = '';
+    for (var i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+      if (i === 2) code += ' ';
+    }
+    codeEl.textContent = code;
+    codeEl.setAttribute('aria-label', 'Connection code: ' + code);
   }
 
   /* ============================================================

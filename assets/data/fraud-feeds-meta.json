@@ -1,0 +1,10 @@
+{
+  "source": "https://github.com/phishdestroy/destroylist",
+  "license": "MIT",
+  "feed": "rootlist/online_root_domains.txt",
+  "branch": "main",
+  "commit": "",
+  "fetched_utc": "2026-09-24T08:59:57Z",
+  "domains": 83097,
+  "malformed_skipped": 0
+}
