@@ -36,7 +36,7 @@ def main():
     used = set()
     for fp in pages:
         s = io.open(fp, encoding='utf-8').read()
-        used |= set(re.findall(r'data-i18n(?:-placeholder|-aria-label)?="([^"]+)"', s))
+        used |= set(re.findall(r'data-i18n(?:-placeholder|-aria-label|-alt)?="([^"]+)"', s))
 
     main_js = io.open(os.path.join(ROOT, 'assets', 'js', 'main.js'), encoding='utf-8').read()
     js_refs = set(re.findall(r"\bt\('([A-Za-z0-9.\-]+)'\)", main_js))

@@ -307,6 +307,11 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
       <p data-i18n="tut-detail.{{SLUG}}.p">{{INTRO_EN}}</p>
     </section>
 
+    <figure class="tut-illustration">
+      <img src="{{R}}{{IMG}}" data-i18n-alt="tut-detail.{{SLUG}}.img.alt" alt="{{IMG_ALT_EN}}" width="960" height="540" loading="lazy">
+      <figcaption data-i18n="tut-img.note">Teaching illustration (simplified mock-up, not a real app screenshot).</figcaption>
+    </figure>
+
     <section class="step-list" aria-label="Tutorial steps">
 {{STEPS}}
     </section>
@@ -427,6 +432,7 @@ def render_tutorial_page(t):
     h = h.replace('{{SLUG}}', t['slug'])
     h = h.replace('{{H1_EN}}', esc_text(t['h1']['en'])).replace('{{INTRO_EN}}', esc_text(t['intro']['en']))
     h = h.replace('{{STEPS}}', steps).replace('{{RELATED}}', rel)
+    h = h.replace('{{IMG}}', t['illustration']).replace('{{IMG_ALT_EN}}', esc(t['img_alt']['en']))
     ld = {'@context': 'https://schema.org', '@type': 'HowTo',
           'name': t['h1']['en'], 'description': t['intro']['en'],
           'step': [{'@type': 'HowToStep', 'position': i, 'name': s['title']['en'], 'text': s['p']['en']}
@@ -530,7 +536,7 @@ def sync_nav_footer(s, is_index):
 FALLBACK_TEXT_RE = re.compile(
     r'<([a-z0-9]+)((?:[^>"]|"[^"]*")*?)data-i18n="([^"]+)"((?:[^>"]|"[^"]*")*?)>([^<]*)</\1>')
 OPEN_TAG_RE = re.compile(r'<([a-z0-9]+)((?:[^>"]|"[^"]*")*?)>')
-ATTR_KEY_RE = re.compile(r'data-i18n-(placeholder|aria-label)="([^"]+)"')
+ATTR_KEY_RE = re.compile(r'data-i18n-(placeholder|aria-label|alt)="([^"]+)"')
 
 
 def sync_fallbacks(s, dict_en):
@@ -563,7 +569,7 @@ def sync_fallbacks(s, dict_en):
             val = dict_en.get(key)
             if val is None:
                 continue
-            attr_name = 'placeholder' if kind == 'placeholder' else 'aria-label'
+            attr_name = kind  # placeholder / aria-label / alt
             # (?<![-\w]) so we never strip the data-i18n-* key attribute itself
             new_attrs = re.sub(r'(?<![-\w])\s*%s="[^"]*"' % attr_name, '', new_attrs)
             new_attrs = new_attrs.rstrip() + ' %s="%s"' % (attr_name, esc(val))

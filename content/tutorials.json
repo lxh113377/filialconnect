@@ -100,7 +100,12 @@
             "zh": "手机银行简明指南"
           }
         }
-      ]
+      ],
+      "illustration": "assets/images/tut-hospital.png",
+      "img_alt": {
+        "en": "Illustration: a hospital app screen with date chips, department rows, and a large orange appointment button",
+        "zh": "示意图：医院App界面，含日期选项、科室列表和橙色预约挂号大按钮"
+      }
     },
     {
       "slug": "train",
@@ -202,7 +207,12 @@
             "zh": "微信全能使用指南"
           }
         }
-      ]
+      ],
+      "illustration": "assets/images/tut-train.png",
+      "img_alt": {
+        "en": "Illustration: a ticket booking screen with a route, two train options, and a large orange pay button",
+        "zh": "示意图：购票界面，含行程、两趟车次和橙色立即支付大按钮"
+      }
     },
     {
       "slug": "wechat",
@@ -304,7 +314,12 @@
             "zh": "手机银行简明指南"
           }
         }
-      ]
+      ],
+      "illustration": "assets/images/tut-wechat.png",
+      "img_alt": {
+        "en": "Illustration: a family group chat with message bubbles and a highlighted plus button for video calls",
+        "zh": "示意图：家庭群聊界面，消息气泡和被圈出的视频通话加号按钮"
+      }
     },
     {
       "slug": "medical",
@@ -406,7 +421,12 @@
             "zh": "微信全能使用指南"
           }
         }
-      ]
+      ],
+      "illustration": "assets/images/tut-medical.png",
+      "img_alt": {
+        "en": "Illustration: a test report screen with three result rows, each marked normal with a green check",
+        "zh": "示意图：检查报告界面，三行结果均标绿色对勾正常"
+      }
     },
     {
       "slug": "banking",
@@ -498,7 +518,12 @@
             "zh": "微信全能使用指南"
           }
         }
-      ]
+      ],
+      "illustration": "assets/images/tut-banking.png",
+      "img_alt": {
+        "en": "Illustration: a banking app home with a balance card, three service icons, and a privacy reminder button",
+        "zh": "示意图：手机银行首页，余额卡、三个服务图标和验证码提醒按钮"
+      }
     },
     {
       "slug": "ride",
@@ -600,7 +625,12 @@
             "zh": "微信全能使用指南"
           }
         }
-      ]
+      ],
+      "illustration": "assets/images/tut-ride.png",
+      "img_alt": {
+        "en": "Illustration: a ride-hailing map showing a route from a green pickup dot to an orange destination dot",
+        "zh": "示意图：打车地图，从绿色上车点到橙色目的地的路线"
+      }
     }
   ]
 }

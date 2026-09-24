@@ -1836,6 +1836,29 @@ html.js .stagger-children:not(.visible) > * {
 }
 
 /* -------------------------------------------
+   Tutorial illustrations (D6)
+   ------------------------------------------- */
+.tut-illustration {
+  margin: var(--space-xl) auto;
+  max-width: 720px;
+  text-align: center;
+}
+
+.tut-illustration img {
+  width: 100%;
+  height: auto;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.tut-illustration figcaption {
+  margin-top: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* -------------------------------------------
    Dark Mode (token overrides only; light values untouched)
    Contrast (text/surface): #ECEAF2 on #2A3040 11.9:1 · #C6CBD6 8.1:1
    #A5AABC 5.5:1 · #9DC1F0 6.9:1 · #F5B880 8.9:1 · #1A1A2E on #E8833A 6.3:1

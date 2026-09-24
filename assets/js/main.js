@@ -190,18 +190,16 @@
       }
     });
 
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
-      var key = el.getAttribute('data-i18n-placeholder');
-      if (dict[key] !== undefined) {
-        el.setAttribute('placeholder', dict[key]);
-      }
-    });
-
-    document.querySelectorAll('[data-i18n-aria-label]').forEach(function (el) {
-      var key = el.getAttribute('data-i18n-aria-label');
-      if (dict[key] !== undefined) {
-        el.setAttribute('aria-label', dict[key]);
-      }
+    [['placeholder', 'data-i18n-placeholder'],
+     ['aria-label', 'data-i18n-aria-label'],
+     ['alt', 'data-i18n-alt']].forEach(function (pair) {
+      var attr = pair[0], marker = pair[1];
+      document.querySelectorAll('[' + marker + ']').forEach(function (el) {
+        var key = el.getAttribute(marker);
+        if (dict[key] !== undefined) {
+          el.setAttribute(attr, dict[key]);
+        }
+      });
     });
 
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
