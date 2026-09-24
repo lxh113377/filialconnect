@@ -375,7 +375,10 @@ def sync_head(s, fp):
     """Upsert the marker-delimited canonical / og:url / social-image block
     before </head>."""
     og = SITE_BASE + '/assets/images/og-cover.png'
+    up = '../' if fp.startswith('pages/') else ''
     block = '\n'.join([HEAD_MARK_BEG,
+                       '  <link rel="manifest" href="%smanifest.json">' % up,
+                       '  <link rel="apple-touch-icon" href="%sassets/images/icon-192.png">' % up,
                        '  <link rel="canonical" href="%s">' % canonical_for(fp),
                        '  <meta property="og:url" content="%s">' % canonical_for(fp),
                        '  <meta property="og:image" content="%s">' % og,
