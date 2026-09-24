@@ -461,6 +461,14 @@ def t_contrast_tokens():
               pinned or not uses_text_token,
               'background is --color-accent while color is --color-text, which inverts in dark mode')
     check('contrast-token rule actually scanned the accent surfaces', seen >= 3, 'saw %d blocks' % seen)
+    # Same mistake shape, second occurrence in one round: a brand status colour used as
+    # both the fill and the text sitting on its own tint. axe measured 3.90:1 (success)
+    # and 2.84:1 (warning) in the light palette and the 0.95 category floor hid it.
+    for status in ('success', 'warning', 'danger'):
+        for pat in (r'background: var\(--color-%s-bg\);\s*color: var\(--color-%s\);' % (status, status),
+                    r'color: var\(--color-%s\);\s*background: var\(--color-%s-bg\);' % (status, status)):
+            hits = re.findall(pat, css)
+            check('no %s brand token doubles as text on its own tint' % status, not hits, str(hits[:2]))
 
 
 def main():

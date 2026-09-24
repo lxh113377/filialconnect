@@ -45,6 +45,13 @@
   --color-warning-bg: #FFF8ED;
   --color-danger: #C0392B;
   --color-danger-bg: #FDEDEC;
+  /* Text on top of the matching -bg tint. The brand colour above is a fill (dots, borders);
+     using it as foreground text on its own tint measured 3.90:1 (success) and 2.84:1
+     (warning) in the light palette — axe failed the status badge and the 0.95 category
+     floor absorbed it. Same mistake shape as --color-on-accent one round earlier. */
+  --color-success-text: #1F7A3F;
+  --color-warning-text: #8A5A00;
+  --color-danger-text: #A93226;
   --color-shadow: rgba(26, 26, 46, 0.08);
   --color-shadow-strong: rgba(26, 26, 46, 0.15);
 
@@ -933,17 +940,17 @@ label {
 
 .fraud-level.high {
   background: var(--color-danger-bg);
-  color: var(--color-danger);
+  color: var(--color-danger-text);
 }
 
 .fraud-level.medium {
   background: var(--color-warning-bg);
-  color: var(--color-warning);
+  color: var(--color-warning-text);
 }
 
 .fraud-level.low {
   background: var(--color-success-bg);
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 .fraud-title {
@@ -1389,7 +1396,7 @@ label {
 
 .status-online {
   background: var(--color-success-bg);
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 .status-online::before {
@@ -1816,7 +1823,7 @@ html.js .stagger-children:not(.visible) > * {
 }
 
 .link-check-result.is-bad {
-  color: var(--color-danger);
+  color: var(--color-danger-text);
   background: var(--color-danger-bg);
   padding: var(--space-md);
   border-radius: var(--radius-md);
@@ -1824,7 +1831,7 @@ html.js .stagger-children:not(.visible) > * {
 }
 
 .link-check-result.is-ok {
-  color: var(--color-success);
+  color: var(--color-success-text);
   background: var(--color-success-bg);
   padding: var(--space-md);
   border-radius: var(--radius-md);
@@ -1832,7 +1839,7 @@ html.js .stagger-children:not(.visible) > * {
 }
 
 .link-check-result.is-unknown {
-  color: var(--color-warning);
+  color: var(--color-warning-text);
   background: var(--color-warning-bg);
   padding: var(--space-md);
   border-radius: var(--radius-md);
@@ -1895,6 +1902,11 @@ html.js .stagger-children:not(.visible) > * {
     --color-warning-bg: #3A2F1C;
     --color-danger: #E07B6E;
     --color-danger-bg: #3C2320;
+    /* Dark palette already passed these pairs, so the text tokens keep those exact values
+       rather than inheriting the light darkening — this block documents the split. */
+    --color-success-text: #5FBF82;
+    --color-warning-text: #E0A34A;
+    --color-danger-text: #E07B6E;
     --color-shadow: rgba(0, 0, 0, 0.4);
     --color-shadow-strong: rgba(0, 0, 0, 0.55);
     --color-watermark: #8FA9CC;
