@@ -25,7 +25,7 @@ jobs:
       - name: Stage site (public deliverable only)
         run: |
           mkdir _site
-          cp -r index.html 404.html pages assets sitemap.xml robots.txt manifest.json sw.js _site/
+          cp -r index.html 404.html pages assets sitemap.xml robots.txt manifest.json sw.js workbox-*.js _site/
           cp README.md LICENSE SECURITY.md SOURCES.md CONTRIBUTING.md _site/
           find _site -name '__pycache__' -type d -prune -exec rm -rf {} +
           find _site -name '*.pyc' -delete

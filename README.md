@@ -12,7 +12,7 @@
 ![WCAG 2.2 AA](https://img.shields.io/badge/WCAG%202.2-AA%20%E2%9C%93-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**纯静态 · 无构建步骤 · 构建脚本只用 Python 标准库 · Lighthouse 无障碍 1.0（13 页 CI 门禁 ≥0.95）· 长者字号三档 + 整页朗读**
+**纯静态 · 无远程依赖 · 构建脚本 = Python（页面）+ Node（xmlbuilder2 / workbox-build / i18next）· Lighthouse 无障碍 1.0（13 页 CI 门禁 ≥0.95）· 长者字号三档 + 整页朗读**
 
 ## 功能模块
 
@@ -122,7 +122,7 @@ filialconnect/
 │   ├── js/i18n.js    # EN/ZH 双语字典（含生成块）
 │   ├── js/main.js    # IIFE，14 个 init 模块
 │   └── data/         # 离线诈骗域名名单 + 来源元数据
-├── tools/            # 只用 Python 标准库的构建与门禁脚本（build/check-i18n/test_build/fetch-feeds）
+├── tools/            # 构建与门禁脚本：build.py（页面）+ build.mjs（i18n/sitemap/lighthouserc/sw，Node 成熟库）
 ├── .github/          # workflows + dependabot
 ├── lighthouserc.json
 ├── SECURITY.md       # 数据流与漏洞报告口径

@@ -22,3 +22,6 @@ __pycache__/
 # Internal working docs (project memory / audit reports) — kept out of the
 # public repository; live one level up in 孝心联/_internal/
 /_internal/
+
+# workbox source maps (regenerate on demand)
+*.map
