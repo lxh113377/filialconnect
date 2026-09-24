@@ -62,10 +62,10 @@
   防止「按页豁免」退化成「按页漏检」
 - **中文浏览器首访排版抖动（CLS 最高 0.262）**。页面先以英文兜底完成首屏，再由 i18n 整页换成
   中文，中文更短导致全站重排。`main.js` 位于 `</body>` 前，节点已齐备，故把语种应用提到
-  `ready()` 之外同步执行。zh-CN 实测 14 页中 **11 页 CLS 归零**（含 call-help 0.157→0、
-  printable-guides 0.262→0）；tutorial-medical / ride / train 仍为 0.1597，
-  已排除配图（已预留 width/height）与入场动画（只用 opacity/transform，不触发位移）两个嫌疑，
-  根因待查
+  `ready()` 之外同步执行。zh-CN 全量复测 **14 页 CLS 全部归零**，printable-guides 的
+  perf 随之从 0.87 回到 1.00（此前它是本仓唯一一处真实预算破线）。
+  过程中订正一次自己的误判：中间某次扫描显示 tutorial-medical / ride / train 仍为 0.1597，
+  据此写下的「残留三页、根因待查」是单次采样噪声，最终全量扫描证否——三页同因同解
 - **`<article role="listitem">` 是 axe 判定的非法 ARIA 组合**（`aria-allowed-role` score 0），
   命中 index 与 tutorials 两页。改为 `<div role="listitem">` 并保留 `role="list"` 容器，
   复测两页 a11y 0.99 → **1.00**
