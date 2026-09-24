@@ -16,6 +16,13 @@
     }
   }
 
+  // main.js is the last script in <body>, so every [data-i18n] node already exists by the
+  // time this runs. Swapping the language here instead of inside ready() is what stops the
+  // page from painting English fallback and then re-flowing into Chinese: measured in a
+  // zh-CN browser as CLS 0.157 on call-help and 0.262 on printable-guides. CI has never
+  // seen it because the runner's browser locale is en-US, so no swap happens there at all.
+  applyTranslations(getCurrentLang());
+
   ready(function () {
     initI18n();
     initMobileNav();

@@ -6,6 +6,29 @@
 ## [Unreleased]
 
 ### Added
+- **性能实测能力 `tools/perf-probe.mjs`**：六轮以来「性能」维度只有「CI 没变红」这一种证据，
+  而 CI 只打印未达标的项，从不打印分数。探针逐页输出 Performance / Accessibility /
+  Best-Practices / SEO 真实分数与 LCP / CLS / TBT，落 `reports/perf-baseline.json`，
+  支持 `--runs` / `--profile` / `--lang` / `--only`。两处取证坑写死在脚本里并附实测依据：
+  ① 共用一个 Chrome profile 时 Service Worker 会用上一轮的旧缓存回答后续页面（同一份 CSS，
+  共享 profile 测得 a11y 0.96、干净 profile 测得 1.00），故**逐页起停浏览器**；
+  ② 端口被上一台服务器占着会静默测到旧拷贝，故**测量前先比对服务端字节与磁盘字节**，
+  不一致直接拒跑而不是产出一份看起来正常的基线
+- **逐文件 gzip 字节预算入门禁**（对标 withastro/starlight 的 `size-limit`）：HTML 8 KiB /
+  CSS 16 KiB / JS 30 KiB / JSON 12 KiB / PNG 64 KiB，另加除名单外总量 640 KiB。上限按实测分布
+  标定为最坏页的 1.5 倍（HTML min 2.4 / median 3.7 / max 5.3 KiB）；诈骗名单是上游数据而非代码，
+  单独给 640 KiB 并在报错文案里要求"裁决分片或档位"，不允许改数字凑绿
+- **橙底元素对比度断言**：任何 `background: var(--color-accent)` 的规则都不得让前景读
+  会随主题翻转的 `--color-text`。该判据先经实测证明能咬住 `.call-button` 才收录，
+  并配一条"扫描到的橙底规则数 ≥3"的兜底断言，防止判据自己空转成假通过
+- **`actions/dependency-review-action` 工作流**：`#49` 把检查工具收进 package.json 之后，
+  本仓与跑门禁的机器之间第一次真实存在 379 个传递依赖包，而仓内此前没有任何供应链扫描
+  （`grep codeql|dependency-review|zizmor .github` = 0 命中）。action SHA 由
+  `gh api …/git/ref/tags/v5.0.0` 远端解析得到，不按注释照抄
+- **无障碍声明页与 README 的分数口径改为可复核表述**：不再写「Lighthouse 无障碍 1.0」，
+  改为写明门禁级别、页面数与「浅色深色两套配色均已实测」
+
+### Changed
 - **DOM 级审计 `tools/verify-dom.mjs`（cheerio 只读不写）**：把每页当解析后的 DOM 重读一遍，
   与 `assets/locales/en.json` 对账 —— ① 每个 `[data-i18n]` 文本、`placeholder/aria-label/alt`
   属性等于字典值；② 每页 canonical / og:url / 分档 og:image / manifest / apple-touch-icon /
@@ -26,6 +49,28 @@
   「不加载任何第三方脚本」改为「只从本站自身取资源，第三方库入库并锁版本，不远程拉取」
 
 ### Fixed
+- **紧急呼叫按钮在深色模式下对比度 2.28:1（WCAG AA 大字要求 3:1）**。深色块逐个选择器手工
+  钉前景色（`.btn-accent` / `.nav-cta`），漏了 `.call-button` —— 它的 `color` 读 `--color-text`，
+  该令牌在深色下翻成 `#ECEAF2`，而背景 `--color-accent` 不翻。改为读不随主题翻转的
+  `--color-on-accent` 单源令牌，并删掉深色侧的 `!important` 钉色副本（复测 a11y 0.96 → **1.00**）。
+  404 页 `.error-code` 同源：用水印 `opacity: 0.35` 使前景随背景合成、无法静态判定，
+  改为明暗各一且均 >3:1 的 `--color-watermark`
+- **SEO 断言一直是 `warn` 级，404.html 实测 0.63 六轮无人看见**。`noindex` 使
+  `is-crawlable` 恒失败，占 SEO 权重 4.04/13.04，分数上限就是 0.63。现 SEO 与 Best-Practices
+  升 `error` 级，404 按 URL 显式豁免并写明理由——豁免是记录下来的决定，不是音量旋钮。
+  生成器内置矩阵自检：任一 URL 命中 0 个或多个断言上下文即构建失败，
+  防止「按页豁免」退化成「按页漏检」
+- **中文浏览器首访排版抖动（CLS 最高 0.262）**。页面先以英文兜底完成首屏，再由 i18n 整页换成
+  中文，中文更短导致全站重排。`main.js` 位于 `</body>` 前，节点已齐备，故把语种应用提到
+  `ready()` 之外同步执行。zh-CN 实测 14 页中 **11 页 CLS 归零**（含 call-help 0.157→0、
+  printable-guides 0.262→0）；tutorial-medical / ride / train 仍为 0.1597，
+  已排除配图（已预留 width/height）与入场动画（只用 opacity/transform，不触发位移）两个嫌疑，
+  根因待查
+- **`<article role="listitem">` 是 axe 判定的非法 ARIA 组合**（`aria-allowed-role` score 0），
+  命中 index 与 tutorials 两页。改为 `<div role="listitem">` 并保留 `role="list"` 容器，
+  复测两页 a11y 0.99 → **1.00**
+- **`@lhci/cli` 0.14.0 → 0.15.1**（PR#7）：第六轮以「换 Lighthouse 大版本可能翻预算」暂缓，
+  本轮查到该 PR 分支 CI 已 completed success，顾虑有实测反证，按证据合并
 - **门禁静默失效**：`build.py` 交还 sw.js 后，原 SHELL 断言随之消失 —— 把 sw.js 换成空壳
   仍报 1,369 全绿。现由 `node tools/build.mjs check` 重新生成到临时目录**逐字节比对**并校验
   每个页面都在预缓存清单内（负样本：空壳 sw.js → 立即 FAIL）

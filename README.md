@@ -12,7 +12,7 @@
 ![WCAG 2.2 AA](https://img.shields.io/badge/WCAG%202.2-AA%20%E2%9C%93-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**纯静态 · 无远程依赖 · 构建脚本 = Python（页面）+ Node（xmlbuilder2 / workbox-build / i18next）· Lighthouse 无障碍 1.0（13 页 CI 门禁 ≥0.95）· 长者字号三档 + 整页朗读**
+**纯静态 · 运行时不请求第三方 origin · 构建脚本 = Python（页面）+ Node（xmlbuilder2 / workbox-build / i18next）· Lighthouse 无障碍 CI error 级门禁 ≥0.95（14 页全量，浅色与深色两套配色均已实测）· 长者字号三档 + 整页朗读**
 
 ## 功能模块
 
@@ -74,11 +74,16 @@ python tools/fetch-fraud-feeds.py  # 手动刷新防骗域名离线名单（CI �
 2. **Linkinator** — 站内递归 + fragment + 外部链接；Markdown 文档单独一轮
 3. **i18n 对称门禁** — `tools/check-i18n.py`
 4. **内容管线漂移门禁** — `python tools/build.py check`（含导航/页脚 marker 覆盖检查）
-5. **管线自测** — `python tools/test_build.py`（1,200+ 条：幂等、单 h1、标题不跳级、本地链接可解析、
+5. **管线自测** — `python tools/test_build.py`（1,426 条：幂等、单 h1、标题不跳级、本地链接可解析、
    子路径绝对路径防呆、双语对称、孤儿键、**文案真实性关键词**、`<head>` 引用的资源文件真实存在、
-   og-cover.png 尺寸合规、名单与清单计数一致、sitemap 覆盖）
+   og-cover.png 尺寸合规、名单与清单计数一致、sitemap 覆盖、**逐文件 gzip 字节预算**、
+   橙底元素必须使用不随主题翻转的前景令牌）
 6. **子路径真实服务** — 按生产路径 `/filialconnect/` 起 http.server 并探测 1.5MB 离线名单可达
-7. **Lighthouse CI** — 全部 13 页 × 2 次，Performance ≥0.9、Accessibility ≥0.95（error 级）
+7. **Lighthouse CI** — 全部 14 页 × 2 次，Performance ≥0.9、Accessibility ≥0.95、
+   Best-Practices ≥0.9、SEO ≥0.9 全部 error 级；404.html 的 SEO 按名豁免并写明理由
+8. **性能实测（按需）** — `node tools/perf-probe.mjs --lang=zh-CN` 打印逐页真实四分类分数与
+   LCP/CLS/TBT，落 `reports/perf-baseline.json`。CI 只显示"哪几项没达标"，看不到具体分数，
+   也看不到只在中文浏览器下出现的排版抖动，所以两者都要跑
 
 ## 适老化与无障碍依据
 

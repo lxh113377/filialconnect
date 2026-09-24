@@ -8,7 +8,7 @@
   "a11s.l4": "The offline scam-domain list covers international domains only - absence from the list never means \"safe\".",
   "a11s.limits.h2": "Known limitations",
   "a11s.m1": "Minimum 18px text with fluid scaling; a reading aid offers two larger presets.",
-  "a11s.m2": "Color contrast at or above 4.5:1 (measured; Lighthouse accessibility 1.0 on audited pages, enforced at no lower than 0.95 in CI).",
+  "a11s.m2": "Colour contrast at or above 4.5:1 in both the light and the dark palette. Lighthouse accessibility is gated at 0.95 or better in CI, which fails the build below that.",
   "a11s.m3": "Full keyboard support: skip link, visible focus rings, Enter/Space accordions, Escape-closable menu with focus return.",
   "a11s.m4": "Respects prefers-reduced-motion, prefers-color-scheme (dark mode) and forced-colors (high contrast).",
   "a11s.m5": "Every interactive element carries an accessible name in both languages.",

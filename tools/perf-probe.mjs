@@ -31,6 +31,7 @@ const RUNS = Number(argv.runs || 1);
 const PROFILE = argv.profile || 'both';
 const OUT = join(ROOT, argv.out || (argv.only ? '.perf-probe-scratch.json' : 'reports/perf-baseline.json'));
 const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
+const LANG = argv.lang ? String(argv.lang) : '';
 
 /** The budgets file is the single source for which pages exist — reuse, don't re-declare. */
 function profileConfig(name) {
@@ -171,7 +172,9 @@ async function probeUrl(url, lighthouseConfig) {
   // profile and 1.00 in a clean one, with the same stylesheet on disk.
   const chrome = await chromeLauncher.launch({
     chromePath: lighthouseConfig.chromePath,
-    chromeFlags: ['--no-sandbox', '--disable-gpu', '--headless=new'],
+    // --lang decides which language the page swaps *to*, and that swap is what moves
+    // layout. The GitHub runner is en-US, so an en-US probe cannot see a zh-CN regression.
+    chromeFlags: ['--no-sandbox', '--disable-gpu', '--headless=new', ...(LANG ? [`--lang=${LANG}`] : [])],
   });
   const samples = [];
   try {
@@ -249,6 +252,7 @@ async function main() {
     generated_utc: new Date().toISOString(),
     runs_per_url: RUNS,
     port: PORT,
+    browser_lang: LANG || '(browser default)',
     served_css_head: check.sha,
     chrome: chromePath.replace(/\\/g, '/'),
     isolation: 'one browser instance per URL (a shared profile lets the service worker answer later pages from an earlier cache)',

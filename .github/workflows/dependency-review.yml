@@ -1,0 +1,29 @@
+name: Dependency review
+
+# Added after #49 moved the CI checkers into package.json: 379 transitive npm packages
+# now sit between this repo and the machine that runs its gates, which is a supply chain
+# whether or not the shipped site has any. Peer evidence: docusaurus ships
+# dependency-review.yml + codeql-analysis.yml, withastro/docs scans its workflows with
+# zizmor. Kept to the one check that is first-party and free for a public repo.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Resolved from the release's git tag object on 2026-09-25 (gh api
+      # repos/actions/dependency-review-action -> tag v5.0.0 -> commit a1d282b...),
+      # not copied from a README, because a `# vX` comment is an unverified assertion.
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate
+          # Dev-only tooling still runs on the runner, so it is not exempt; the site
+          # itself ships no npm packages, so nothing here can reach a visitor.
+          comment-summary-in-pr: always
