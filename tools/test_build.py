@@ -138,6 +138,14 @@ def t_promises():
     check('no unimplementable help-delivery promises in copy',
           not [b for b in banned if b in s], str([b for b in banned if b in s]))
     check('help flow states it cannot send by itself', 'cannot send' in s or '不会自己发' in s)
+    # 2026-09-25: the user revoked "zero dependency" as a goal or selling point, and it
+    # had already crept back into 6 files (two of them as hard rules). This guard is the
+    # machine-side lock so the phrasing cannot return silently in a future round.
+    banned_slogan = ('零依赖', '零外部依赖', 'dependency-free', 'no third-party dependency')
+    targets = ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'CODE_OF_CONDUCT.md',
+               'SOURCES.md', 'assets/js/i18n.js'] + pages()
+    hits = [(fp, w) for fp in targets for w in banned_slogan if w in read(fp)]
+    check('no public file re-adopts the revoked "zero dependency" slogan', not hits, str(hits[:4]))
     check('link checker discloses its coverage limit',
           '83,000' in s and '8.3 万' in s and 'does not mean' in s and '并不等于' in s)
     feed = json.loads(read('assets/data/fraud-feeds-meta.json'))
