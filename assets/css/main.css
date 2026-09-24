@@ -1866,11 +1866,12 @@ html.js .stagger-children:not(.visible) > * {
     --color-shadow-strong: rgba(0, 0, 0, 0.55);
   }
 
-  /* Accent buttons keep pinned dark text (their background stays brand orange) */
+  /* Accent buttons keep pinned dark text (their background stays brand orange).
+     .nav-cta declares color with !important in light mode, so this has to match it. */
   .btn-accent,
   .nav-cta,
   .nav-cta:hover {
-    color: #1A1A2E;
+    color: #1A1A2E !important;
   }
 
   /* Sticky header is translucent white paper in light mode; in dark mode it
