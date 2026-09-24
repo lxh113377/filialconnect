@@ -29,6 +29,7 @@
     initFamilyForm();
     initRemoteCode();
     initLinkCheck();
+    initServiceWorker();
     initSmoothScroll();
     initFontScale();
     initReadAloud();
@@ -672,6 +673,19 @@
         e.preventDefault();
         check();
       }
+    });
+  }
+
+  /* ============================================================
+     Service Worker (offline shell; safe to fail — site works without it)
+     ============================================================ */
+  function initServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    var path = window.location.pathname;
+    var i = path.indexOf('/pages/');
+    var root = i !== -1 ? path.slice(0, i + 1) : path.replace(/[^/]*$/, '');
+    navigator.serviceWorker.register(root + 'sw.js', { scope: root }).catch(function () {
+      /* offline enhancement unavailable (e.g. file:// or unsupported browser) — no impact on use */
     });
   }
 

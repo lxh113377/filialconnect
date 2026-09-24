@@ -1,0 +1,75 @@
+/* FilialConnect service worker — offline shell with honest freshness rules.
+   Strategy (deliberately conservative for an elderly-audience site):
+   - HTML pages: network-first, cache fallback (offline keeps working, updates land immediately)
+   - scam-domain list: network-first, cache fallback (a stale blocklist must never win)
+   - images/manifest: cache-first (content-addressed enough, rarely change)
+   - CSS/JS: NOT intercepted — browser HTTP cache handles them, avoids stale-style lock-in
+*/
+var VERSION = 'filialconnect-v1';
+var SHELL = [
+  'index.html',
+  'manifest.json',
+  'pages/tutorials.html',
+  'pages/call-help.html',
+  'pages/fraud-database.html',
+  'pages/printable-guides.html',
+  'pages/remote-assist.html',
+  'pages/accessibility-statement.html',
+  'pages/tutorial-hospital.html',
+  'pages/tutorial-train.html',
+  'pages/tutorial-wechat.html',
+  'pages/tutorial-medical.html',
+  'pages/tutorial-banking.html',
+  'pages/tutorial-ride.html'
+];
+
+self.addEventListener('install', function (e) {
+  e.waitUntil(
+    caches.open(VERSION).then(function (cache) { return cache.addAll(SHELL); })
+      .then(function () { return self.skipWaiting(); })
+  );
+});
+
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.filter(function (k) { return k !== VERSION; }).map(function (k) { return caches.delete(k); }));
+    }).then(function () { return self.clients.claim(); })
+  );
+});
+
+function networkFirst(req) {
+  return fetch(req).then(function (res) {
+    if (res && res.ok) {
+      var clone = res.clone();
+      caches.open(VERSION).then(function (c) { c.put(req, clone); });
+    }
+    return res;
+  }).catch(function () { return caches.match(req); });
+}
+
+self.addEventListener('fetch', function (e) {
+  var req = e.request;
+  if (req.method !== 'GET') return;
+  var url;
+  try { url = new URL(req.url); } catch (err) { return; }
+  if (url.origin !== self.location.origin) return;
+  var p = url.pathname;
+  var isPage = p.slice(-1) === '/' || /\.html$/.test(p);
+  var isData = p.indexOf('/assets/data/') !== -1;
+  var isStatic = /\.(png|jpg|jpeg|webp|svg|ico|json)$/.test(p);
+  if (isPage || isData) {
+    e.respondWith(networkFirst(req));
+  } else if (isStatic) {
+    e.respondWith(caches.match(req).then(function (hit) {
+      if (hit) return hit;
+      return fetch(req).then(function (res) {
+        if (res && res.ok) {
+          var clone = res.clone();
+          caches.open(VERSION).then(function (c) { c.put(req, clone); });
+        }
+        return res;
+      });
+    }));
+  }
+});

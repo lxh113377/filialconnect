@@ -259,6 +259,7 @@ FOOTER_TMPL = FOOTER_MARK_BEG + '''
         <ul>
           <li><a href="{{P}}tutorials.html" data-i18n="footer.link.getting-started">Getting Started</a></li>
           <li><a href="{{P}}fraud-database.html" data-i18n="footer.link.safety">Safety Tips</a></li>
+          <li><a href="{{P}}accessibility-statement.html" data-i18n="footer.link.a11y">Accessibility Statement</a></li>
         </ul>
       </div>
     </div>
