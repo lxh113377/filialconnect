@@ -271,6 +271,7 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{TITLE}}">
   <meta name="twitter:description" content="{{DESC}}">
+  {{JSONLD}}
 </head>
 <body>
   <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
@@ -408,6 +409,12 @@ def render_tutorial_page(t):
     h = h.replace('{{SLUG}}', t['slug'])
     h = h.replace('{{H1_EN}}', esc_text(t['h1']['en'])).replace('{{INTRO_EN}}', esc_text(t['intro']['en']))
     h = h.replace('{{STEPS}}', steps).replace('{{RELATED}}', rel)
+    ld = {'@context': 'https://schema.org', '@type': 'HowTo',
+          'name': t['h1']['en'], 'description': t['intro']['en'],
+          'step': [{'@type': 'HowToStep', 'position': i, 'name': s['title']['en'], 'text': s['p']['en']}
+                   for i, s in enumerate(t['steps'], 1)]}
+    h = h.replace('{{JSONLD}}', '<script type="application/ld+json">'
+            + json.dumps(ld, ensure_ascii=True, separators=(',', ':')) + '</script>')
     return h.replace('{{NAV}}', nav_for(False)).replace('{{FOOTER}}', footer_for(False))
 
 
