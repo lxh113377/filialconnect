@@ -57,6 +57,11 @@ const DESKTOP_ASSERT = {
   'categories:accessibility': ['error', { minScore: 0.95 }],
   'categories:best-practices': ['error', { minScore: 0.9 }],
   'categories:seo': ['error', { minScore: 0.9 }],
+  // Category floors are too coarse to catch one contrast failure: axe's color-contrast
+  // audit is weight 7 of accessibility, so a 2.28:1 emergency button still scored 0.96
+  // and sat inside the 0.95 gate. Assert the audit itself, at every page, every theme.
+  'color-contrast': ['error', { minScore: 1 }],
+  'aria-allowed-role': ['error', { minScore: 1 }],
 };
 const MOBILE_PRIORITY = ['index.html', 'pages/tutorials.html', 'pages/fraud-database.html', 'pages/call-help.html'];
 

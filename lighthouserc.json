@@ -50,6 +50,18 @@
               {
                 "minScore": 0.9
               }
+            ],
+            "color-contrast": [
+              "error",
+              {
+                "minScore": 1
+              }
+            ],
+            "aria-allowed-role": [
+              "error",
+              {
+                "minScore": 1
+              }
             ]
           }
         },
@@ -74,7 +86,19 @@
                 "minScore": 0.9
               }
             ],
-            "categories:seo": "off"
+            "categories:seo": "off",
+            "color-contrast": [
+              "error",
+              {
+                "minScore": 1
+              }
+            ],
+            "aria-allowed-role": [
+              "error",
+              {
+                "minScore": 1
+              }
+            ]
           }
         }
       ]

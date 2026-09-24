@@ -69,6 +69,13 @@
 - **`<article role="listitem">` 是 axe 判定的非法 ARIA 组合**（`aria-allowed-role` score 0），
   命中 index 与 tutorials 两页。改为 `<div role="listitem">` 并保留 `role="list"` 容器，
   复测两页 a11y 0.99 → **1.00**
+- **类别阈值吞掉单项失败**：`color-contrast` 在 accessibility 分类里权重 7，归零后整类仍是
+  0.96，落在 0.95 的 error 门禁内 —— 这才是那处紧急按钮缺陷逃过 CI 的**已证实**机制。
+  （初稿把它归因于"CI runner 渲染浅色所以深色分支根本不执行"，该推断**未经证实且部分错误**：
+  本机注入回归后 A/B 做 `colorScheme: dark` 与 `light` 两次**都**报 0.96，说明两次渲染的都是
+  深色（Windows `AppsUseLightTheme=0x0`），Lighthouse 的 `emulatedMedia` 只是回显进
+  `configSettings`、并未改变页面实际方案。）现新增 `color-contrast` / `aria-allowed-role`
+  两项**审计级** error 满分断言，使"某一项彻底失败"不可能再被整类平均分吸收
 - **`@lhci/cli` 0.14.0 → 0.15.1**（PR#7）：第六轮以「换 Lighthouse 大版本可能翻预算」暂缓，
   本轮查到该 PR 分支 CI 已 completed success，顾虑有实测反证，按证据合并
 - **门禁静默失效**：`build.py` 交还 sw.js 后，原 SHELL 断言随之消失 —— 把 sw.js 换成空壳
