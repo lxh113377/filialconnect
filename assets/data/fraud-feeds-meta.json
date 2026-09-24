@@ -3,8 +3,10 @@
   "license": "MIT",
   "feed": "rootlist/online_root_domains.txt",
   "branch": "main",
-  "commit": "",
-  "fetched_utc": "2026-09-24T08:59:57Z",
+  "commit": "781c35330cd9057098e5e5c81448e457a18ca13b",
+  "fetched_utc": "2026-09-24T15:51:52Z",
   "domains": 83097,
-  "malformed_skipped": 0
+  "malformed_skipped": 0,
+  "coverage_note": "international phishing roots only; mainland-China domains counted below",
+  "mainland_cn_domains": 653
 }
