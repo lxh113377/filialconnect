@@ -1,0 +1,20 @@
+{
+  "name": "filialconnect-devtools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev/CI tooling manifest only. The site itself ships no third-party code and needs no build step; this file exists so the linters' transitive dependencies are pinned and Dependabot can bump them.",
+  "scripts": {
+    "lint:html": "htmlhint \"index.html\" \"404.html\" \"pages/*.html\"",
+    "links": "linkinator . --recurse --check-fragments --check-external --skip \"https://lxh113377.github.io/filialconnect.*\"",
+    "lhci": "lhci autorun --config=lighthouserc.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@lhci/cli": "0.14.0",
+    "htmlhint": "1.9.2",
+    "linkinator": "8.1.0"
+  },
+  "engines": {
+    "node": ">=22.19"
+  }
+}

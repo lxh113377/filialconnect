@@ -7,3 +7,13 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: chore(ci)
+
+  # Dev/CI tooling only (htmlhint, linkinator, @lhci/cli) — the lockfile also
+  # pins their transitive deps, which is what previously broke CI unpinned.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(devtools)

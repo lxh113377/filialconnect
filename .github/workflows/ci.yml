@@ -19,9 +19,13 @@ jobs:
           # linkinator 8 pulls undici 8, which needs >= 22.19; node 20 dies at
           # import time with `webidl.util.markAsUncloneable is not a function`.
           node-version: 22
+          cache: npm
+
+      - name: Install pinned dev tooling (site itself needs none of this)
+        run: npm ci
 
       - name: HTML validation (HTMLHint)
-        run: npx --yes htmlhint@1.9.2 "index.html" "404.html" "pages/*.html"
+        run: node_modules/.bin/htmlhint "index.html" "404.html" "pages/*.html"
 
       - name: i18n symmetry check (EN/ZH keys + HTML coverage + orphans)
         run: python3 tools/check-i18n.py
@@ -37,12 +41,12 @@ jobs:
 
       - name: Link check (linkinator, fragments + external)
         run: |
-          npx --yes linkinator@8.1.0 . \
+          node_modules/.bin/linkinator . \
             --recurse --check-fragments --check-external \
             --skip "https://lxh113377.github.io/filialconnect.*"
 
       - name: Link check (markdown docs)
-        run: npx --yes linkinator@8.1.0 README.md CONTRIBUTING.md SECURITY.md SOURCES.md --recurse
+        run: node_modules/.bin/linkinator README.md CONTRIBUTING.md SECURITY.md SOURCES.md --recurse
 
       - name: Serve site under the production subpath
         run: |
@@ -63,9 +67,7 @@ jobs:
           test "$code" = "200"
 
       - name: Lighthouse CI (performance + a11y budgets, all pages, desktop)
-        run: |
-          npm install -g @lhci/cli@0.14.0
-          lhci autorun --config=lighthouserc.json
+        run: node_modules/.bin/lhci autorun --config=lighthouserc.json
 
       - name: Lighthouse CI (mobile budgets - primary device for seniors)
         run: lhci autorun --config=lighthouserc.mobile.json

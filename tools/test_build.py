@@ -255,6 +255,22 @@ def t_output():
     check('scam-domain snapshot is attributed to an upstream commit', bool(meta.get('commit')))
     check('scam-domain snapshot carries a digest for the offline audit',
           bool(meta.get('snapshot_sha256')))
+    pkg = json.loads(read('package.json'))
+    lock = json.loads(read('package-lock.json'))
+    dev = pkg.get('devDependencies', {})
+    check('CI tooling is declared in package.json',
+          {'htmlhint', 'linkinator', '@lhci/cli'} <= set(dev), str(sorted(dev)))
+    check('dev tooling versions are exact (no ^ or ~ drift inside CI)',
+          not [k for k, v in dev.items() if v.lstrip() and v[0] in '^~*x'],
+          str({k: v for k, v in dev.items() if v[:1] in '^~*x'}))
+    check('no runtime dependency is shipped to the browser', not pkg.get('dependencies'),
+          str(sorted(pkg.get('dependencies', {}))))
+    pkgs = lock.get('packages', {})
+    drift = {k: (dev.get(k), pkgs.get('node_modules/' + k, {}).get('version')) for k in dev
+             if pkgs.get('node_modules/' + k, {}).get('version') != dev.get(k)}
+    check('lockfile pins the same dev tool versions package.json declares', not drift, str(drift))
+    check('lockfile pins transitive deps too (undici class of breakage)',
+          len(pkgs) > 50, '%d packages locked' % len(pkgs))
     # listed() walks up to the registrable root, so a free-hosting suffix in the
     # list would flag every site under it. Upstream has never listed one; keep that
     # as a canary so an upstream addition becomes a human decision, not a wave of

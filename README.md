@@ -52,6 +52,8 @@
 ```bash
 # 任一静态服务器即可，无构建步骤
 python -m http.server 8000
+# 跑门禁（可选）：npm ci 只为装 htmlhint / linkinator / lighthouse-ci 三个检查工具，
+# 站点本身不需要 npm install；lockfile 一并锁住它们的传递依赖，防上游发版把 CI 弄红
 # 浏览器打开 http://localhost:8000
 # 说明：直接双击 index.html（file://）也能浏览与切换语言，但浏览器禁止 file:// 下 fetch，
 # 因此「可疑链接自查」会提示改用网页服务器 —— 这是浏览器安全策略，非站点缺陷
@@ -106,7 +108,7 @@ WCAG 2.1 AA 之外的适老细节：`prefers-reduced-motion` 同时约束 CSS �
   尊重 `save-data` 与 2g；已评估并按实测数据**否决**了按 TLD 分片方案（.com 仅占 43.4%、
   共 527 个 TLD，分片最多多省一半且仅在查 .com 时生效）。
 - 分享卡片图 `assets/images/og-cover.png`（1200×630）由仓库外的 `_internal/make_og_image.py`
-  用 Pillow 生成后入库 —— 站点运行时仍零依赖、零图片请求（首页与教程页不引用它）。
+  用 Pillow 生成后入库 —— 站点运行时不请求任何外部资源，首页与教程页也不引用它（不产生图片请求）。
 - 教程文案里的第三方 App 名称仅指认用途，无官方关联；界面为自绘内联 SVG，非真实软件截图。
 
 ## 目录结构
@@ -121,7 +123,7 @@ filialconnect/
 │   ├── js/i18n.js    # EN/ZH 双语字典（含生成块）
 │   ├── js/main.js    # IIFE，14 个 init 模块
 │   └── data/         # 离线诈骗域名名单 + 来源元数据
-├── tools/            # 零依赖构建与门禁脚本（build/check-i18n/test_build/fetch-feeds）
+├── tools/            # 只用 Python 标准库的构建与门禁脚本（build/check-i18n/test_build/fetch-feeds）
 ├── .github/          # workflows + dependabot
 ├── lighthouserc.json
 ├── SECURITY.md       # 数据流与漏洞报告口径
