@@ -46,8 +46,10 @@
   --font-mono: 'SF Mono', 'Cascadia Code', Consolas, monospace;
 
   /* Fluid Type Scale */
-  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-  --text-sm: clamp(0.875rem, 0.8rem + 0.3vw, 1rem);
+  /* A11y floor: 16px minimum for secondary text, 18px for anything a reader
+     must actually follow (guides, steps, form hints). */
+  --text-xs: clamp(1rem, 0.95rem + 0.25vw, 1.0625rem);
+  --text-sm: clamp(1.125rem, 1.05rem + 0.35vw, 1.1875rem);
   --text-base: clamp(1.125rem, 1rem + 0.4vw, 1.25rem);
   --text-lg: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
   --text-xl: clamp(1.5rem, 1.3rem + 0.7vw, 1.875rem);
@@ -67,7 +69,7 @@
   /* Layout */
   --container-max: 1200px;
   --container-narrow: 800px;
-  --nav-height: 72px;
+  --nav-height: 4.5rem;
 
   /* Border Radius */
   --radius-sm: 8px;
@@ -168,6 +170,9 @@ h4 { font-size: var(--text-lg); }
 .step-card h3 { font-size: var(--text-lg); }
 .fraud-detail-inner h2 { font-size: var(--text-lg); }
 .tutorial-card-body h2 { font-size: var(--text-xl); }
+.step-title { font-size: var(--text-lg); }
+.guide-card h2 { font-size: var(--text-xl); }
+.feature-item h3 { font-size: var(--text-lg); }
 
 p {
   margin-bottom: var(--space-md);
@@ -222,7 +227,7 @@ strong {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border-light);
-  height: var(--nav-height);
+  min-height: var(--nav-height);
 }
 
 .nav-container {
@@ -1436,6 +1441,7 @@ label {
   box-shadow: var(--shadow-md);
   opacity: 0;
   transform: translateY(20px);
+  visibility: hidden;
   pointer-events: none;
   z-index: 900;
   cursor: pointer;
@@ -1447,6 +1453,7 @@ label {
 
 .back-to-top.visible {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0);
   pointer-events: auto;
 }
@@ -1537,7 +1544,7 @@ html.js .stagger-children:not(.visible) > * {
    ============================================================ */
 @media (max-width: 1023px) {
   :root {
-    --nav-height: 64px;
+    --nav-height: 4rem;
   }
 
   .footer-content {
@@ -1555,7 +1562,7 @@ html.js .stagger-children:not(.visible) > * {
    ============================================================ */
 @media (max-width: 767px) {
   :root {
-    --nav-height: 60px;
+    --nav-height: 3.9rem;
   }
 
   .nav-toggle {
@@ -1722,6 +1729,13 @@ html.js .stagger-children:not(.visible) > * {
    High Contrast (Forced Colors)
    ============================================================ */
 @media (forced-colors: active) {
+  /* box-shadow focus rings are discarded in forced-colors mode; only the
+     system outline survives. */
+  :focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
+
   .btn {
     border: 2px solid ButtonText;
   }
@@ -1853,8 +1867,26 @@ html.js .stagger-children:not(.visible) > * {
   }
 
   /* Accent buttons keep pinned dark text (their background stays brand orange) */
-  .btn-accent {
+  .btn-accent,
+  .nav-cta,
+  .nav-cta:hover {
     color: #1A1A2E;
+  }
+
+  /* Sticky header is translucent white paper in light mode; in dark mode it
+     has to become dark paper or the brightened nav text lands on white. */
+  .site-header {
+    background: rgba(30, 34, 44, 0.92);
+    border-bottom-color: var(--color-border);
+  }
+
+  .nav-a11y {
+    border-color: var(--color-border);
+  }
+
+  .a11y-btn {
+    background: var(--color-surface);
+    border-color: var(--color-border);
   }
 
   /* Recolor hardcoded inline-SVG colors via presentation-attribute selectors */
@@ -1866,4 +1898,156 @@ html.js .stagger-children:not(.visible) > * {
   [fill="#2D8B4E"] { fill: #5FBF82; }
   [fill="#D4820A"] { fill: #E0A34A; }
   [fill="#C0392B"] { fill: #E07B6E; }
+  /* stroke variants of the same palette were never mapped at all */
+  [stroke="#E8833A"] { stroke: #F5B880; }
+  [stroke="#D4820A"] { stroke: #E0A34A; }
+  [stroke="#2D8B4E"] { stroke: #5FBF82; }
+  [stroke="#C0392B"] { stroke: #E07B6E; }
+  /* low-opacity white line-art sits on brand-coloured fills; recolor to the
+     dark text token so it stays legible when those fills brighten */
+  [stroke="#fff"] { stroke: #1A1A2E; }
+}
+
+
+/* ============================================================
+   Reading aids (工信部《互联网网站适老化通用设计规范》放大设置要求)
+   Root-font scaling: every type/space token is rem-based, so one
+   declaration grows text and layout together instead of clipping.
+   ============================================================ */
+html {
+  font-size: 100%;
+}
+
+html[data-fontscale="lg"] {
+  font-size: 118.75%;
+}
+
+html[data-fontscale="xl"] {
+  font-size: 137.5%;
+}
+
+.nav-a11y {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-left: auto;
+  padding-left: var(--space-md);
+  border-left: 1px solid var(--color-border-light);
+}
+
+.nav-container .nav-links {
+  margin-left: var(--space-md);
+}
+
+.a11y-btn {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-primary-text-deep);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  min-height: 44px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.a11y-btn[aria-pressed="true"] {
+  color: #1A1A2E;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.read-btn[aria-pressed="true"]::before {
+  content: "\25B6 ";
+}
+
+/* ---- Family contact setup (call-help) ---- */
+.family-setup {
+  max-width: var(--container-narrow);
+  margin: var(--space-2xl) auto 0;
+  padding: 0 var(--space-lg);
+}
+
+.family-form .form-group {
+  margin-bottom: var(--space-md);
+}
+
+.family-state {
+  margin-top: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.filter-status {
+  min-height: 1.5em;
+  font-size: var(--text-sm);
+  color: var(--color-accent-text);
+}
+
+.link-check-scope {
+  margin-top: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.call-status.is-warn h2 {
+  color: var(--color-danger);
+}
+
+/* ---- 404 ---- */
+.error-page {
+  text-align: center;
+}
+
+.error-code {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--color-primary-text);
+  opacity: 0.35;
+}
+
+.error-emergency {
+  margin-top: var(--space-2xl);
+  font-size: var(--text-sm);
+  color: var(--color-accent-text);
+}
+
+@media screen and (max-width: 767px) {
+  /* Reading aids stay reachable on phones — that is where this audience reads.
+     The nav row wraps and the a11y bar becomes a full-width second row. */
+  .nav-container {
+    flex-wrap: wrap;
+    row-gap: var(--space-sm);
+  }
+
+  .nav-a11y {
+    order: 4;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    justify-content: center;
+  }
+}
+
+/* Keep scroll-revealed and collapsed content visible on paper. */
+@media print {
+  .fraud-detail {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .animate-in {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .nav-a11y,
+  .back-to-top,
+  .print-btn {
+    display: none !important;
+  }
 }

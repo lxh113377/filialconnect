@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lxh113377.github.io/filialconnect/sitemap.xml

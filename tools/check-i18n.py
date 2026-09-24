@@ -29,9 +29,9 @@ def main():
         for k in sorted(zh - en):
             failures.append('ZH-only key: %s' % k)
 
-    pages = [os.path.join(ROOT, 'index.html')]
-    pages_dir = os.path.join(ROOT, 'pages')
-    pages += [os.path.join(pages_dir, f) for f in sorted(os.listdir(pages_dir)) if f.endswith('.html')]
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import build as _build  # single page roster, keeps 404.html in scope
+    pages = [os.path.join(ROOT, fp) for fp in _build.all_pages()]
 
     used = set()
     for fp in pages:
@@ -39,7 +39,7 @@ def main():
         used |= set(re.findall(r'data-i18n(?:-placeholder|-aria-label)?="([^"]+)"', s))
 
     main_js = io.open(os.path.join(ROOT, 'assets', 'js', 'main.js'), encoding='utf-8').read()
-    js_refs = set(re.findall(r"'([A-Za-z0-9.\-]+)'", main_js))
+    js_refs = set(re.findall(r"\bt\('([A-Za-z0-9.\-]+)'\)", main_js))
     for k in sorted(used - en):
         failures.append('data-i18n key missing from dict: %s' % k)
     for k in sorted(en - used - js_refs):

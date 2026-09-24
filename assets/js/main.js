@@ -26,10 +26,115 @@
     initTutorialFilter();
     initCallHelp();
     initHelpForm();
+    initFamilyForm();
     initRemoteCode();
     initLinkCheck();
     initSmoothScroll();
+    initFontScale();
+    initReadAloud();
   });
+
+  /* ============================================================
+     Reading aids — font scale (适老化放大设置) and text-to-speech
+     ============================================================ */
+  var FONTSIZE_KEY = 'filialconnect-fontscale';
+  var FONT_LEVELS = ['base', 'lg', 'xl'];
+
+  function currentFontScale() {
+    var v = storageGet(FONTSIZE_KEY);
+    return FONT_LEVELS.indexOf(v) !== -1 ? v : 'base';
+  }
+
+  function applyFontScale(level) {
+    var root = document.documentElement;
+    if (level === 'base') root.removeAttribute('data-fontscale');
+    else root.setAttribute('data-fontscale', level);
+  }
+
+  function initFontScale() {
+    var btns = document.querySelectorAll('.font-btn');
+    if (btns.length === 0) return;
+
+    function paint(level) {
+      btns.forEach(function (b) {
+        b.setAttribute('aria-pressed', b.getAttribute('data-fontscale') === level ? 'true' : 'false');
+      });
+    }
+
+    applyFontScale(currentFontScale());
+    paint(currentFontScale());
+
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var level = b.getAttribute('data-fontscale');
+        storageSet(FONTSIZE_KEY, level);
+        applyFontScale(level);
+        paint(level);
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+      });
+    });
+  }
+
+  function initReadAloud() {
+    var btn = document.querySelector('.read-btn');
+    if (!btn) return;
+    if (!('speechSynthesis' in window)) {
+      btn.hidden = true;
+      return;
+    }
+
+    var speaking = false;
+
+    function t(key) {
+      var lang = getCurrentLang();
+      return (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
+    }
+
+    function stop() {
+      speaking = false;
+      btn.setAttribute('aria-pressed', 'false');
+      btn.textContent = t('read.btn');
+    }
+
+    btn.addEventListener('click', function () {
+      if (speaking) {
+        window.speechSynthesis.cancel();
+        stop();
+        return;
+      }
+      var main = document.getElementById('main-content');
+      if (!main) return;
+      var parts = [];
+      main.querySelectorAll('h1, h2, h3, p, li').forEach(function (el) {
+        if (el.closest('.nav-links, .footer-links, script, style')) return;
+        var txt = el.textContent.trim();
+        if (txt) parts.push(txt);
+      });
+      if (parts.length === 0) return;
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(parts.join('. '));
+      u.lang = getCurrentLang() === 'zh' ? 'zh-CN' : 'en-US';
+      u.rate = 0.9;
+      u.onend = stop;
+      u.onerror = stop;
+      speaking = true;
+      btn.setAttribute('aria-pressed', 'true');
+      btn.textContent = t('read.stop');
+      window.speechSynthesis.speak(u);
+    });
+
+    window.addEventListener('pagehide', function () { window.speechSynthesis.cancel(); });
+
+    readBtnRef = btn;
+  }
+
+  var readBtnRef = null;
+
+  // Keep the JS-owned label in sync when the language changes mid-session.
+  function refreshReadBtn() {
+    if (!readBtnRef || readBtnRef.getAttribute('aria-pressed') === 'true') return;
+    readBtnRef.textContent = t('read.btn');
+  }
 
   /* ============================================================
      i18n — Language Toggle (EN / ZH)
@@ -104,7 +209,7 @@
     var toggleBtn = document.querySelector('.lang-toggle');
     if (toggleBtn) {
       toggleBtn.querySelector('.lang-toggle-label').textContent = lang === 'en' ? 'ZH' : 'EN';
-      toggleBtn.setAttribute('aria-label', lang === 'en' ? 'ZH - Switch to Chinese' : 'EN - Switch to English');
+      toggleBtn.setAttribute('aria-label', lang === 'en' ? t('lang.to.zh') : t('lang.to.en'));
     }
   }
 
@@ -119,6 +224,8 @@
         var newLang = currentLang === 'en' ? 'zh' : 'en';
         storageSet(LANG_KEY, newLang);
         applyTranslations(newLang);
+        updateCallHint();
+        refreshReadBtn();
       });
     }
   }
@@ -234,6 +341,18 @@
   }
 
   /* ============================================================
+     Motion preference — smooth scrolling must yield to it
+     ============================================================ */
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function scrollToEl(el, block) {
+    if (!el || !el.scrollIntoView) return;
+    el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: block || 'start' });
+  }
+
+  /* ============================================================
      Back to Top Button
      ============================================================ */
   function initBackToTop() {
@@ -257,7 +376,7 @@
     }, { passive: true });
 
     btn.addEventListener('click', function () {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     });
   }
 
@@ -305,33 +424,94 @@
 
     filterTags.forEach(function (tag) {
       tag.addEventListener('click', function () {
-        filterTags.forEach(function (t) {
-          t.classList.remove('active');
-          t.setAttribute('aria-pressed', 'false');
+        filterTags.forEach(function (t0) {
+          t0.classList.remove('active');
+          t0.setAttribute('aria-pressed', 'false');
         });
         tag.classList.add('active');
         tag.setAttribute('aria-pressed', 'true');
 
         var filter = tag.getAttribute('data-filter');
+        var shown = 0;
 
         tutorialCards.forEach(function (card) {
-          if (filter === 'all') {
-            card.style.display = '';
-            return;
-          }
-          var cardCategory = card.getAttribute('data-category');
-          if (cardCategory === filter) {
-            card.style.display = '';
-          } else {
-            card.style.display = 'none';
-          }
+          var hit = filter === 'all' || card.getAttribute('data-category') === filter;
+          card.style.display = hit ? '' : 'none';
+          if (hit) shown += 1;
         });
+
+        // Announce the result count so screen-reader users are not left on silence
+        var live = document.querySelector('.filter-status');
+        if (live) live.textContent = t('filter.count').replace('{n}', String(shown));
       });
     });
   }
 
   /* ============================================================
-     Help Request Form
+     Family contact (stored on this device only) — the help tools below
+     hand off to the phone's own dialer / SMS / mail app. Nothing is sent
+     to any server, and no message leaves the device until the user presses
+     send in their own app.
+     ============================================================ */
+  var FAMILY_KEY = 'filialconnect-family';
+
+  function getFamily() {
+    var raw = storageGet(FAMILY_KEY);
+    if (!raw) return {};
+    try { return JSON.parse(raw) || {}; } catch (e) { return {}; }
+  }
+
+  function digitsOnly(v) {
+    return String(v || '').replace(/[^\d+]/g, '');
+  }
+
+  function t(key) {
+    var lang = getCurrentLang();
+    return (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
+  }
+
+  function initFamilyForm() {
+    var form = document.getElementById('family-form');
+    if (!form) return;
+    var nameEl = document.getElementById('family-name');
+    var phoneEl = document.getElementById('family-phone');
+    var mailEl = document.getElementById('family-email');
+    var f = getFamily();
+    if (nameEl) nameEl.value = f.name || '';
+    if (phoneEl) phoneEl.value = f.phone || '';
+    if (mailEl) mailEl.value = f.email || '';
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var data = {
+        name: (nameEl && nameEl.value || '').trim().slice(0, 40),
+        phone: digitsOnly(phoneEl && phoneEl.value).slice(0, 20),
+        email: (mailEl && mailEl.value || '').trim().slice(0, 120)
+      };
+      if (!data.phone && !data.email) {
+        showToast(t('family.need'), 'error');
+        return;
+      }
+      storageSet(FAMILY_KEY, JSON.stringify(data));
+      showToast(t('family.saved'), 'success');
+      updateCallHint();
+    });
+  }
+
+  function updateCallHint() {
+    var hint = document.querySelector('.family-state');
+    if (!hint) return;
+    var f = getFamily();
+    var who = f.name || t('family.unnamed');
+    if (f.phone || f.email) {
+      hint.textContent = t('family.ready').replace('{name}', who);
+    } else {
+      hint.textContent = t('family.notset');
+    }
+  }
+
+  /* ============================================================
+     Help Request Form -> SMS / mail draft hand-off (no server)
      ============================================================ */
   function initHelpForm() {
     var form = document.getElementById('help-request-form');
@@ -339,48 +519,58 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var lang = getCurrentLang();
-      var msg = (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang]['toast.help-sent'])
-        ? I18N[lang]['toast.help-sent']
-        : 'Help request sent!';
-      showToast(msg, 'success');
-      form.reset();
+      var f = getFamily();
+      var topicSel = form.querySelector('select');
+      var msgEl = form.querySelector('textarea');
+      var urgSel = document.getElementById('help-urgency');
+      var topic = topicSel && topicSel.selectedIndex > 0 ? topicSel.options[topicSel.selectedIndex].text : '';
+      var urg = urgSel && urgSel.selectedIndex >= 0 ? urgSel.options[urgSel.selectedIndex].text : '';
+      var body = [t('form.tag'), topic ? '[' + topic + ']' : '', urg,
+                  (msgEl && msgEl.value || '').trim()].filter(Boolean).join('\n');
+
+      var phone = digitsOnly(f.phone);
+      var href = null;
+      if (phone) href = 'sms:' + phone + '?&body=' + encodeURIComponent(body);
+      else if (f.email) href = 'mailto:' + f.email + '?subject=' + encodeURIComponent(t('form.subject')) + '&body=' + encodeURIComponent(body);
+
+      if (!href) {
+        showToast(t('family.need'), 'error');
+        var settings = document.getElementById('family-form');
+        if (settings) scrollToEl(settings, 'center');
+        return;
+      }
+      window.location.href = href;
+      showToast(t('toast.draft-opened'), 'success');
     });
   }
 
   /* ============================================================
-     Call Help Functionality
+     Call Help — real dial through the device phone app
      ============================================================ */
   function initCallHelp() {
     var callBtn = document.querySelector('.call-button');
     var statusEl = document.querySelector('.call-status');
-
     if (!callBtn || !statusEl) return;
 
-    function t(key) {
-      var lang = getCurrentLang();
-      return (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang][key]) ? I18N[lang][key] : key;
-    }
+    updateCallHint();
 
     callBtn.addEventListener('click', function () {
-      callBtn.disabled = true;
-      callBtn.style.opacity = '0.6';
-      callBtn.style.cursor = 'wait';
-      callBtn.querySelector('.call-text').textContent = t('call.sending');
-
-      setTimeout(function () {
-        statusEl.classList.add('visible');
-        callBtn.style.opacity = '1';
-        callBtn.style.cursor = 'pointer';
-        callBtn.querySelector('.call-text').textContent = t('call.sent');
-        callBtn.disabled = false;
-
-        showToast(t('toast.help-sent'), 'success');
-
-        setTimeout(function () {
-          callBtn.querySelector('.call-text').textContent = t('call.button');
-        }, 5000);
-      }, 1500);
+      var f = getFamily();
+      var phone = digitsOnly(f.phone);
+      var line = statusEl.querySelector('.call-status-line');
+      if (!phone) {
+        if (line) line.textContent = t('call.nofamily');
+        statusEl.classList.add('visible', 'is-warn');
+        var form = document.getElementById('family-form');
+        if (form) scrollToEl(form, 'center');
+        return;
+      }
+      if (line) {
+        line.textContent = t('call.dialing').replace('{name}', f.name || t('family.unnamed')).replace('{phone}', phone);
+      }
+      statusEl.classList.add('visible');
+      statusEl.classList.remove('is-warn');
+      window.location.href = 'tel:' + phone;
     });
   }
 
@@ -490,7 +680,7 @@
       if (i === 2) code += ' ';
     }
     codeEl.textContent = code;
-    codeEl.setAttribute('aria-label', 'Connection code: ' + code);
+    codeEl.setAttribute('aria-label', t('remote.code.aria').replace('{code}', code));
   }
 
   /* ============================================================
@@ -508,7 +698,7 @@
       if (!target) return;
 
       e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollToEl(target, 'start');
 
       target.setAttribute('tabindex', '-1');
       target.focus({ preventScroll: true });

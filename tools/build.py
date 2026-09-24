@@ -4,14 +4,18 @@
 Single source: content/tutorials.json + content/fraud-cases.json (+ templates
 in this file). Derived, committed artifacts:
   - pages/tutorial-*.html          (full-page generation)
+  - 404.html                       (full-page generation)
+  - sitemap.xml                    (generated from the page roster)
   - assets/js/i18n.js              (generated key block per language)
-  - nav (<header>) / footer on all 12 pages (partial sync)
+  - nav (<header>) / footer on all pages (marker-delimited partial sync)
+  - canonical / og:url / anti-FOUC head script on all pages
   - pages/fraud-database.html items block (between FRAUD-ITEMS markers)
 
 Commands:
   python tools/build.py extract        one-off bootstrap of content JSON + markers
   python tools/build.py build          regenerate derived artifacts
   python tools/build.py check          rebuild in memory; exit 1 on drift (CI gate)
+  python tools/build.py pages          print the generated page roster
 """
 import io
 import json
@@ -21,17 +25,56 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONTENT = os.path.join(ROOT, 'content')
-SLUGS = ['hospital', 'train', 'wechat', 'medical', 'banking', 'ride']
+SITE_BASE = 'https://lxh113377.github.io/filialconnect'
 
-TUT_KEY_RE = re.compile(r"^tut-detail\.(%s)\.(h1|p|step\d+\.title|step\d+\.p|related\d+)$" % '|'.join(SLUGS))
-FRAUD_KEY_RE = re.compile(r"^fraud\.([1-5])\.(title|how|how\.p|signs|sign[1-4]|do|do[1-3])$")
+HEAD_MARK_BEG = '  <!-- BEGIN:HEAD-META (tools/build.py) -->'
+HEAD_MARK_END = '  <!-- END:HEAD-META -->'
+NAV_MARK_BEG = '  <!-- BEGIN:NAV (tools/build.py) - do not edit, edit tools/build.py NAV_TMPL -->'
+NAV_MARK_END = '  <!-- END:NAV -->'
+FOOTER_MARK_BEG = '  <!-- BEGIN:FOOTER (tools/build.py) - do not edit, edit tools/build.py FOOTER_TMPL -->'
+FOOTER_MARK_END = '  <!-- END:FOOTER -->'
 
-I18N_BEGIN = '    // BEGIN:GENERATED (tools/build.py) - edit content/*.json instead'
-I18N_END = '    // END:GENERATED'
 FRAUD_MARK_BEG = '      <!-- BEGIN:FRAUD-ITEMS (tools/build.py) -->'
 FRAUD_MARK_END = '      <!-- END:FRAUD-ITEMS -->'
 
+I18N_BEGIN = '    // BEGIN:GENERATED (tools/build.py) - edit content/*.json instead'
+I18N_END = '    // END:GENERATED'
+
 LINE_RE = re.compile(r"^    '([^']+)':\s*'((?:[^'\\]|\\.)*)',?\s*$")
+
+INLINE_JS = '<script>document.documentElement.classList.add("js")</script>'
+FOUC_JS = ('<script>document.documentElement.classList.add("js");'
+           'try{var f=localStorage.getItem("filialconnect-fontscale");'
+           'if(f&&f!=="base"){document.documentElement.setAttribute("data-fontscale",f)}}'
+           'catch(e){}</script>')
+
+
+def load_content():
+    """Read the authoritative content JSON once; derive every roster/regex."""
+    tuts = json.load(io.open(os.path.join(CONTENT, 'tutorials.json'), encoding='utf-8'))['tutorials']
+    cases = json.load(io.open(os.path.join(CONTENT, 'fraud-cases.json'), encoding='utf-8'))['cases']
+    return tuts, cases
+
+
+def derived_slug_re():
+    slugs = [t['slug'] for t in load_content()[0]]
+    return re.compile(r"^tut-detail\.(%s)\.(h1|p|step\d+\.title|step\d+\.p|related\d+)$" % '|'.join(slugs))
+
+
+def derived_fraud_key_re():
+    cases = load_content()[1]
+    nums = '|'.join(str(c['n']) for c in cases)
+    sub = []
+    for c in cases:
+        sub += ['sign%d' % i for i in range(1, len(c['signs']) + 1)]
+        sub += ['do%d' % i for i in range(1, len(c['dos']) + 1)]
+    leaf = 'title|how|how\\.p|signs|do|' + '|'.join(sorted(set(sub), key=lambda s: (-len(s), s)))
+    return re.compile(r"^fraud\.(%s)\.(%s)$" % (nums, leaf))
+
+
+def is_generated_key(k):
+    return bool(derived_slug_re().match(k) or derived_fraud_key_re().match(k))
+
 
 
 def _unescape(v):
@@ -83,15 +126,9 @@ def parse_dict():
     return d
 
 
-def is_generated_key(k):
-    return bool(TUT_KEY_RE.match(k) or FRAUD_KEY_RE.match(k))
-
-
 def gen_pairs(lang):
     """Ordered (key, value) list for one language from content JSON."""
-    d = parse_dict() if not os.path.isdir(CONTENT) else None
-    tuts = json.load(io.open(os.path.join(CONTENT, 'tutorials.json'), encoding='utf-8'))['tutorials']
-    cases = json.load(io.open(os.path.join(CONTENT, 'fraud-cases.json'), encoding='utf-8'))['cases']
+    tuts, cases = load_content()
     L = []
     for t in tuts:
         s = t['slug']
@@ -147,7 +184,8 @@ def esc_text(t):
     return t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
-NAV_TMPL = '''  <header class="site-header" role="banner">
+NAV_TMPL = NAV_MARK_BEG + '''
+  <header class="site-header" role="banner">
     <nav class="nav-container" aria-label="Main navigation">
       <a href="{{R}}index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
         <svg class="nav-logo" viewBox="0 0 42 42" fill="none" aria-hidden="true">
@@ -161,7 +199,7 @@ NAV_TMPL = '''  <header class="site-header" role="banner">
         <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
       </a>
 
-      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+      <button type="button" class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
 
@@ -172,12 +210,20 @@ NAV_TMPL = '''  <header class="site-header" role="banner">
         <li><a href="{{P}}printable-guides.html" data-i18n="nav.guides">Guides</a></li>
         <li><a href="{{P}}remote-assist.html" data-i18n="nav.remote">Remote Help</a></li>
         <li><a href="{{P}}call-help.html" class="nav-cta" data-i18n="nav.call">Call for Help</a></li>
-        <li><button class="lang-toggle" aria-label="ZH - Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
+        <li><button type="button" class="lang-toggle" aria-label="ZH - Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
       </ul>
-    </nav>
-  </header>'''
 
-FOOTER_TMPL = '''  <footer class="site-footer" role="contentinfo">
+      <div class="nav-a11y" role="group" data-i18n-aria-label="nav.a11y.group" aria-label="Reading aids">
+        <button type="button" class="a11y-btn font-btn" data-fontscale="base" aria-pressed="false" data-i18n="font.base">Standard</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="lg" aria-pressed="false" data-i18n="font.lg">Large</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="xl" aria-pressed="false" data-i18n="font.xl">Huge</button>
+        <button type="button" class="a11y-btn read-btn" aria-pressed="false" data-i18n="read.btn">Read aloud</button>
+      </div>
+    </nav>
+  </header>''' + '\n' + NAV_MARK_END
+
+FOOTER_TMPL = FOOTER_MARK_BEG + '''
+  <footer class="site-footer" role="contentinfo">
     <div class="footer-content">
       <div class="footer-brand">
         <h3 data-i18n="footer.brand.h3">FilialConnect</h3>
@@ -204,13 +250,13 @@ FOOTER_TMPL = '''  <footer class="site-footer" role="contentinfo">
     <div class="footer-bottom">
       <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
     </div>
-  </footer>'''
+  </footer>''' + '\n' + FOOTER_MARK_END
 
 TUT_PAGE_TMPL = '''<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>document.documentElement.classList.add("js")</script>
+  ''' + INLINE_JS + '''
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#2B5797">
@@ -225,6 +271,10 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="{{TITLE}}">
   <meta name="twitter:description" content="{{DESC}}">
+''' + HEAD_MARK_BEG + '''
+  <link rel="canonical" href="{{CANON}}">
+  <meta property="og:url" content="{{CANON}}">
+''' + HEAD_MARK_END + '''
 </head>
 <body>
   <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
@@ -263,7 +313,7 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
 
 {{FOOTER}}
 
-  <button class="back-to-top" aria-label="Back to top" data-i18n="back-to-top" title="Back to top">
+  <button type="button" class="back-to-top" data-i18n-aria-label="back-to-top.aria" aria-label="Back to top">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M10 4L5 9M10 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
 
@@ -276,13 +326,13 @@ STEP_TMPL = '''      <div class="step-item">
         <div class="step-number"><span data-i18n="tut-detail.step">Step</span></div>
         <div class="step-number-value">{{N}}</div>
         <div class="step-content">
-          <h4 data-i18n="tut-detail.{{SLUG}}.step{{N}}.title">{{TITLE}}</h4>
+          <h2 class="step-title" data-i18n="tut-detail.{{SLUG}}.step{{N}}.title">{{TITLE}}</h2>
           <p data-i18n="tut-detail.{{SLUG}}.step{{N}}.p">{{BODY}}</p>
         </div>
       </div>'''
 
 RELATE_TMPL = '''        <a href="{{HREF}}" class="card">
-          <h3 data-i18n="tut-detail.{{SLUG}}.related{{N}}">{{TITLE}}</h3>
+          <h2 class="tutorial-card-title" data-i18n="tut-detail.{{SLUG}}.related{{N}}">{{TITLE}}</h2>
         </a>'''
 
 FRAUD_ITEM_TMPL = '''      <!-- Fraud {{N}} (generated) -->
@@ -320,6 +370,24 @@ def footer_for(is_index):
     return FOOTER_TMPL.replace('{{R}}', '' if is_index else '../').replace('{{P}}', 'pages/' if is_index else '')
 
 
+def canonical_for(fp):
+    return SITE_BASE + ('/' if fp == 'index.html' else '/' + fp)
+
+
+def sync_head(s, fp):
+    """Upsert the marker-delimited canonical / og:url block before </head>."""
+    block = '\n'.join([HEAD_MARK_BEG,
+                       '  <link rel="canonical" href="%s">' % canonical_for(fp),
+                       '  <meta property="og:url" content="%s">' % canonical_for(fp),
+                       HEAD_MARK_END])
+    if HEAD_MARK_BEG in s and HEAD_MARK_END in s:
+        s = re.sub(re.escape(HEAD_MARK_BEG) + r'.*?' + re.escape(HEAD_MARK_END),
+                   lambda m: block, s, flags=re.S)
+    else:
+        s = s.replace('</head>', block + '\n</head>', 1)
+    return s.replace(INLINE_JS + '\n  ', FOUC_JS + '\n  ').replace(INLINE_JS, FOUC_JS)
+
+
 def render_tutorial_page(t):
     steps = '\n'.join(
         STEP_TMPL.replace('{{N}}', str(i)).replace('{{SLUG}}', t['slug'])
@@ -336,7 +404,143 @@ def render_tutorial_page(t):
     h = h.replace('{{H1_EN}}', esc_text(t['h1']['en'])).replace('{{INTRO_EN}}', esc_text(t['intro']['en']))
     h = h.replace('{{STEPS}}', steps).replace('{{RELATED}}', rel)
     h = h.replace('{{NAV}}', nav_for(False)).replace('{{FOOTER}}', footer_for(False))
-    return h
+    return h.replace('{{CANON}}', canonical_for(t['page']))
+
+
+FOOTER_404 = '  <script src="assets/js/main.js"></script>'
+
+PAGE_404_TMPL = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  ''' + INLINE_JS + '''
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2B5797">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Page not found. FilialConnect 孝心联 - go back home or browse tutorials.">
+  <title>Page not found (404) | FilialConnect 孝心联</title>
+  <link rel="stylesheet" href="assets/css/main.css">
+  <script src="assets/js/i18n.js"></script>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FilialConnect 孝心联">
+  <meta property="og:title" content="Page not found (404) | FilialConnect 孝心联">
+''' + HEAD_MARK_BEG + '''
+  <link rel="canonical" href="{{CANON}}">
+  <meta property="og:url" content="{{CANON}}">
+''' + HEAD_MARK_END + '''
+</head>
+<body>
+  <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
+
+{{NAV}}
+
+  <main id="main-content">
+    <section class="page-header error-page" aria-labelledby="error-heading">
+      <p class="error-code" aria-hidden="true">404</p>
+      <h1 id="error-heading" data-i18n="error.h1">This page cannot be found</h1>
+      <p data-i18n="error.p">The address may be mistyped, or the page may have moved. Nothing is wrong with your phone or computer.</p>
+      <h2 data-i18n="error.where">Where to go next</h2>
+      <div class="hero-actions">
+        <a href="index.html" class="btn btn-accent btn-lg">
+          <span data-i18n="error.home">Go back to the home page</span>
+        </a>
+        <a href="pages/tutorials.html" class="btn btn-outline btn-lg">
+          <span data-i18n="error.tutorials">Browse all tutorials</span>
+        </a>
+      </div>
+      <p class="error-emergency" data-i18n="error.emergency">If this is an emergency, call 120 or 110. Ask a family member for help at any time.</p>
+    </section>
+  </main>
+
+{{FOOTER}}
+
+''' + FOOTER_404 + '''
+</body>
+</html>
+'''
+
+
+def render_404_page():
+    h = PAGE_404_TMPL.replace('{{NAV}}', nav_for(True)).replace('{{FOOTER}}', footer_for(True))
+    return h.replace('{{CANON}}', canonical_for('404.html'))
+
+
+def render_sitemap():
+    urls = ['\n  <url><loc>%s/</loc></url>' % SITE_BASE]
+    for fp in all_pages():
+        if fp in ('index.html', '404.html'):
+            continue
+        urls.append('\n  <url><loc>%s/%s</loc></url>' % (SITE_BASE, fp))
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+            + ''.join(urls) + '\n</urlset>\n')
+
+
+def all_pages():
+    pages_dir = os.path.join(ROOT, 'pages')
+    return (['index.html', '404.html']
+            + sorted('pages/' + f for f in os.listdir(pages_dir) if f.endswith('.html')))
+
+
+# ------------------------------------------------------------------ partials
+
+
+def sync_nav_footer(s, is_index):
+    """Marker-delimited where possible; unmarked pages fall back to a single
+    non-greedy header/footer swap, and `check` reports any page still unmarked."""
+    if NAV_MARK_BEG in s and NAV_MARK_END in s:
+        s = re.sub(re.escape(NAV_MARK_BEG) + r'.*?' + re.escape(NAV_MARK_END),
+                   lambda m: nav_for(is_index), s, flags=re.S)
+    else:
+        s = re.sub(r'  <header class="site-header".*?</header>', lambda m: nav_for(is_index), s, count=1, flags=re.S)
+    if FOOTER_MARK_BEG in s and FOOTER_MARK_END in s:
+        s = re.sub(re.escape(FOOTER_MARK_BEG) + r'.*?' + re.escape(FOOTER_MARK_END),
+                   lambda m: footer_for(is_index), s, flags=re.S)
+    else:
+        s = re.sub(r'  <footer class="site-footer".*?</footer>', lambda m: footer_for(is_index), s, count=1, flags=re.S)
+    return s
+
+
+def build_outputs():
+    tuts, cases = load_content()
+    out = {'assets/js/i18n.js': render_i18n(), 'sitemap.xml': render_sitemap()}
+    tut_by_file = {t['file']: t for t in tuts}
+    for t in tuts:
+        t['page'] = 'pages/' + t['file']
+    out['404.html'] = render_404_page()
+    for fp in all_pages():
+        base = os.path.basename(fp)
+        if base in tut_by_file:
+            out[fp] = render_tutorial_page(tut_by_file[base])
+            continue
+        if fp == '404.html':
+            continue
+        s = read(fp)
+        s = sync_nav_footer(s, fp == 'index.html')
+        s = sync_head(s, fp)
+        if fp == 'pages/fraud-database.html':
+            if FRAUD_MARK_BEG not in s or FRAUD_MARK_END not in s:
+                sys.exit('FAIL: fraud markers missing (run: build.py extract)')
+            block = FRAUD_MARK_BEG + '\n' + render_fraud_items(cases) + '\n' + FRAUD_MARK_END
+            s = re.sub(re.escape(FRAUD_MARK_BEG) + r'.*?' + re.escape(FRAUD_MARK_END),
+                       lambda m: block, s, flags=re.S)
+        out[fp] = s
+    return out
+
+
+def unmarked_pages():
+    """Pages whose nav/footer still rely on the blind regex fallback (they would
+    silently stop syncing once a page grows a second <header>)."""
+    bad = []
+    for fp in all_pages():
+        if fp == '404.html' or os.path.basename(fp) in [t['file'] for t in load_content()[0]]:
+            continue
+        s = read(fp)
+        if NAV_MARK_BEG not in s or FOOTER_MARK_BEG not in s:
+            bad.append(fp)
+    return bad
+
 
 
 def render_fraud_items(cases):
@@ -352,45 +556,22 @@ def render_fraud_items(cases):
 
 def all_pages():
     pages_dir = os.path.join(ROOT, 'pages')
-    return ['index.html'] + sorted('pages/' + f for f in os.listdir(pages_dir) if f.endswith('.html'))
-
-
-def sync_nav_footer(s, is_index):
-    s = re.sub(r'  <header class="site-header".*?</header>', lambda m: nav_for(is_index), s, flags=re.S)
-    s = re.sub(r'  <footer class="site-footer".*?</footer>', lambda m: footer_for(is_index), s, flags=re.S)
-    return s
-
-
-def build_outputs():
-    tuts = json.load(io.open(os.path.join(CONTENT, 'tutorials.json'), encoding='utf-8'))['tutorials']
-    cases = json.load(io.open(os.path.join(CONTENT, 'fraud-cases.json'), encoding='utf-8'))['cases']
-    out = {'assets/js/i18n.js': render_i18n()}
-    tut_by_file = {t['file']: t for t in tuts}
-    for fp in all_pages():
-        base = os.path.basename(fp)
-        if base in tut_by_file:
-            out[fp] = render_tutorial_page(tut_by_file[base])
-            continue
-        s = read(fp)
-        s = sync_nav_footer(s, fp == 'index.html')
-        if fp == 'pages/fraud-database.html':
-            if FRAUD_MARK_BEG not in s or FRAUD_MARK_END not in s:
-                sys.exit('FAIL: fraud markers missing (run: build.py extract)')
-            block = FRAUD_MARK_BEG + '\n' + render_fraud_items(cases) + '\n' + FRAUD_MARK_END
-            s = re.sub(re.escape(FRAUD_MARK_BEG) + r'.*?' + re.escape(FRAUD_MARK_END),
-                       lambda m: block, s, flags=re.S)
-        out[fp] = s
-    return out
+    return (['index.html', '404.html']
+            + sorted('pages/' + f for f in os.listdir(pages_dir) if f.endswith('.html')))
 
 
 # ------------------------------------------------------------------ extract
 
 def extract():
+    """One-off bootstrap: HTML + dictionary -> content/*.json. Not part of CI;
+    `build`/`check` are the steady state and derive their rosters from the JSON."""
     if not os.path.isdir(CONTENT):
         os.makedirs(CONTENT)
     d = parse_dict()
+    slugs = sorted(re.match(r'tutorial-(.+)\.html$', os.path.basename(p)).group(1)
+                   for p in all_pages() if '/tutorial-' in p.replace(os.sep, '/'))
     tuts = []
-    for slug in SLUGS:
+    for slug in slugs:
         fp = 'pages/tutorial-%s.html' % slug
         s = read(fp)
         title = re.search(r'<title>(.*?)</title>', s).group(1)
@@ -401,14 +582,15 @@ def extract():
                   'p': {'en': d['en']['tut-detail.%s.step%d.p' % (slug, i)],
                         'zh': d['zh']['tut-detail.%s.step%d.p' % (slug, i)]}}
                  for i in range(1, n + 1)]
-        related = []
-        for i in (1, 2):
-            m = re.search(r'<a href="([a-z\-]+\.html)" class="card">\s*<h3 data-i18n="tut-detail\.%s\.related%d">' % (slug, i), s)
+        related, i = [], 1
+        while 'tut-detail.%s.related%d' % (slug, i) in d['en']:
+            m = re.search(r'<a href="([a-z\-]+\.html)" class="card">\s*<h2 class="tutorial-card-title" data-i18n="tut-detail\.%s\.related%d">' % (slug, i), s)
             if not m:
                 sys.exit('FAIL: related%d not found in %s' % (i, fp))
             related.append({'file': m.group(1),
                             'title': {'en': d['en']['tut-detail.%s.related%d' % (slug, i)],
                                       'zh': d['zh']['tut-detail.%s.related%d' % (slug, i)]}})
+            i += 1
         tuts.append({'slug': slug, 'file': 'tutorial-%s.html' % slug,
                      'title': title, 'desc': desc,
                      'h1': {'en': d['en']['tut-detail.%s.h1' % slug], 'zh': d['zh']['tut-detail.%s.h1' % slug]},
@@ -418,8 +600,8 @@ def extract():
               ensure_ascii=False, indent=2)
 
     s = read('pages/fraud-database.html')
-    cases = []
-    for n in range(1, 6):
+    cases, n = [], 1
+    while 'fraud.%d.title' % n in d['en']:
         m = re.search(r'aria-labelledby="fraud-%d-title">\s*<div class="fraud-summary"[^>]*>\s*<span class="fraud-level ([a-z]+)" aria-label="([^"]+)">' % n, s)
         if not m:
             sys.exit('FAIL: fraud item %d level not found' % n)
@@ -437,6 +619,7 @@ def extract():
                       'signs': [{'en': d['en']['fraud.%d.sign%d' % (n, i)], 'zh': d['zh']['fraud.%d.sign%d' % (n, i)]} for i in range(1, ns + 1)],
                       'do_h': {'en': d['en']['fraud.%d.do' % n], 'zh': d['zh']['fraud.%d.do' % n]},
                       'dos': [{'en': d['en']['fraud.%d.do%d' % (n, i)], 'zh': d['zh']['fraud.%d.do%d' % (n, i)]} for i in range(1, nd + 1)]})
+        n += 1
     json.dump({'cases': cases}, io.open(os.path.join(CONTENT, 'fraud-cases.json'), 'w', encoding='utf-8', newline='\n'),
               ensure_ascii=False, indent=2)
 
@@ -458,21 +641,36 @@ def do_build():
     out = build_outputs()
     for fp, text in out.items():
         write(fp, text)
-    print('built %d files' % len(out))
+    # Second pass turns marker-less nav/footer regions into marked ones so that
+    # every later edit is caught by `check`.
+    out2 = build_outputs()
+    for fp, text in out2.items():
+        if read(fp) != text:
+            write(fp, text)
+    print('built %d files (%d pages, sitemap.xml, i18n.js)' % (len(out2), len(all_pages())))
 
 
 def do_check():
-    bad = []
-    for fp, text in build_outputs().items():
-        if read(fp) != text:
-            bad.append(fp)
-    for fp in bad:
-        print('DRIFT:', fp)
+    out = build_outputs()
+    bad = [fp for fp, text in out.items() if read(fp) != text]
     if bad:
+        for fp in sorted(bad):
+            print('DRIFT:', fp)
+        print('Fix with: python tools/build.py build')
         sys.exit(1)
-    print('check: %d derived files in sync' % len(build_outputs()))
+    unmarked = unmarked_pages()
+    if unmarked:
+        for fp in unmarked:
+            print('UNMARKED (nav/footer not yet marker-guarded):', fp)
+        sys.exit(1)
+    print('check: %d derived files in sync, 0 unmarked partials' % len(out))
+
+
+def do_pages():
+    for fp in all_pages():
+        print(fp)
 
 
 if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else 'build'
-    {'extract': extract, 'build': do_build, 'check': do_check}[cmd]()
+    {'extract': extract, 'build': do_build, 'check': do_check, 'pages': do_pages}[cmd]()

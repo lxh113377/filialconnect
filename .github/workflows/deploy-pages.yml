@@ -25,8 +25,11 @@ jobs:
       - name: Stage site (public deliverable only)
         run: |
           mkdir _site
-          cp -r index.html pages assets _site/
-          cp README.md LICENSE _site/
+          cp -r index.html 404.html pages assets sitemap.xml robots.txt _site/
+          cp README.md LICENSE SECURITY.md SOURCES.md CONTRIBUTING.md _site/
+          find _site -name '__pycache__' -type d -prune -exec rm -rf {} +
+          find _site -name '*.pyc' -delete
+          echo "staged $(du -sh _site | cut -f1), $(find _site -type f | wc -l) files"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

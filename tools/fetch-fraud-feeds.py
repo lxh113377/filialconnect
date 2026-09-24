@@ -29,7 +29,10 @@ def fetch(url):
 def main():
     info = json.loads(fetch('https://api.github.com/repos/' + OWNER_REPO).decode('utf-8'))
     branch = info['default_branch']
-    sha = info['commit']['sha'] if 'commit' in info else ''
+    # /repos/{o}/{r} carries no head commit; ask the branch explicitly so the
+    # snapshot is attributable to an upstream revision.
+    head = json.loads(fetch('https://api.github.com/repos/%s/commits/%s' % (OWNER_REPO, branch)).decode('utf-8'))
+    sha = head.get('sha', '')
     raw = fetch('https://raw.githubusercontent.com/%s/%s/%s' % (OWNER_REPO, branch, FEED_PATH)).decode('utf-8')
     seen, bad = set(), 0
     for line in raw.splitlines():
@@ -43,15 +46,18 @@ def main():
     domains = sorted(seen)
     if len(domains) < 10000:
         sys.exit('FAIL: suspiciously small feed (%d), aborting to protect existing data' % len(domains))
+    cn = sum(1 for d in domains if d.endswith('.cn') or d.endswith('.com.cn'))
     out = os.path.join(ROOT, 'assets', 'data')
     os.makedirs(out, exist_ok=True)
     io.open(os.path.join(out, 'destroylist-domains.txt'), 'w', encoding='utf-8', newline='\n').write('\n'.join(domains) + '\n')
     meta = {'source': 'https://github.com/' + OWNER_REPO, 'license': LICENSE,
             'feed': FEED_PATH, 'branch': branch, 'commit': sha,
             'fetched_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'domains': len(domains), 'malformed_skipped': bad}
+            'domains': len(domains), 'malformed_skipped': bad,
+            'coverage_note': 'international phishing roots only; mainland-China domains counted below',
+            'mainland_cn_domains': cn}
     json.dump(meta, io.open(os.path.join(out, 'fraud-feeds-meta.json'), 'w', encoding='utf-8', newline='\n'), indent=2)
-    print('refreshed: %d domains (%d malformed skipped)' % (len(domains), bad))
+    print('refreshed: %d domains (%d malformed skipped, %d mainland-CN)' % (len(domains), bad, cn))
 
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>document.documentElement.classList.add("js")</script>
+  <script>document.documentElement.classList.add("js");try{var f=localStorage.getItem("filialconnect-fontscale");if(f&&f!=="base"){document.documentElement.setAttribute("data-fontscale",f)}}catch(e){}</script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#2B5797">
@@ -17,10 +17,15 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Call for Help - FilialConnect">
   <meta name="twitter:description" content="One-tap emergency help request - instantly notify your family when you need digital assistance">
+  <!-- BEGIN:HEAD-META (tools/build.py) -->
+  <link rel="canonical" href="https://lxh113377.github.io/filialconnect/pages/call-help.html">
+  <meta property="og:url" content="https://lxh113377.github.io/filialconnect/pages/call-help.html">
+  <!-- END:HEAD-META -->
 </head>
 <body>
   <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
 
+  <!-- BEGIN:NAV (tools/build.py) - do not edit, edit tools/build.py NAV_TMPL -->
   <header class="site-header" role="banner">
     <nav class="nav-container" aria-label="Main navigation">
       <a href="../index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
@@ -35,7 +40,7 @@
         <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
       </a>
 
-      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+      <button type="button" class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
 
@@ -46,10 +51,18 @@
         <li><a href="printable-guides.html" data-i18n="nav.guides">Guides</a></li>
         <li><a href="remote-assist.html" data-i18n="nav.remote">Remote Help</a></li>
         <li><a href="call-help.html" class="nav-cta" data-i18n="nav.call">Call for Help</a></li>
-        <li><button class="lang-toggle" aria-label="ZH - Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
+        <li><button type="button" class="lang-toggle" aria-label="ZH - Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
       </ul>
+
+      <div class="nav-a11y" role="group" data-i18n-aria-label="nav.a11y.group" aria-label="Reading aids">
+        <button type="button" class="a11y-btn font-btn" data-fontscale="base" aria-pressed="false" data-i18n="font.base">Standard</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="lg" aria-pressed="false" data-i18n="font.lg">Large</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="xl" aria-pressed="false" data-i18n="font.xl">Huge</button>
+        <button type="button" class="a11y-btn read-btn" aria-pressed="false" data-i18n="read.btn">Read aloud</button>
+      </div>
     </nav>
   </header>
+  <!-- END:NAV -->
 
   <main id="main-content">
     <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -62,30 +75,61 @@
     <section class="call-help-hero" aria-labelledby="call-heading">
       <h1 id="call-heading" style="margin-bottom: var(--space-sm);" data-i18n="call.h1">Need Help Right Now?</h1>
       <p style="font-size: var(--text-lg); color: var(--color-text-secondary); margin-bottom: var(--space-2xl); max-width: 500px; margin-left: auto; margin-right: auto;" data-i18n="call.p">
-        One tap sends an alert to your family. They will see what you are looking at and call you back immediately.
+        One tap opens your own phone dialer with the family number you saved here already typed in.
+        This site has no server and cannot send a message by itself.
       </p>
 
-      <button class="call-button" data-i18n-aria-label="call.button.aria" aria-label="Call for Help - send an emergency request to your family">
+      <button type="button" class="call-button" data-i18n-aria-label="call.button.aria" aria-label="Call for Help - open the phone dialer for your saved family number">
         <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
           <path d="M8 6l10 8-4 6 14 14 6-4 8 10-4 4C24 43 12 34 10 10L8 6z" fill="currentColor"/>
         </svg>
         <span class="call-text" data-i18n="call.button">Call for Help</span>
       </button>
 
-      <div class="call-status" role="status">
-        <h2 data-i18n="call.status.h3">Help Request Sent</h2>
-        <p data-i18n="call.status.p">Your family has been notified. They will contact you shortly. If this is an emergency, please also call 120.</p>
+      <div class="call-status" role="status" aria-live="polite">
+        <h2 data-i18n="call.status.h3">Your phone app is opening</h2>
+        <p class="call-status-line" data-i18n="call.status.p">
+          This site only opens the dialer on your own phone; it cannot send anything by itself.
+          Press call there to reach your family. If nobody answers and this is an emergency, call 120.
+        </p>
       </div>
+    </section>
+
+    <!-- Family contact setup (saved on this device only) -->
+    <section class="family-setup" aria-labelledby="family-heading">
+      <h2 id="family-heading" style="margin-bottom: var(--space-sm);" data-i18n="family.h2">Step 1: Tell this page who to contact</h2>
+      <p style="margin-bottom: var(--space-lg); color: var(--color-text-secondary);" data-i18n="family.p">
+        Type a family member name and phone number once, on the device you use. This site has no server:
+        nothing is uploaded, and no message leaves your phone until you press send in your own phone app.
+      </p>
+
+      <form id="family-form" class="family-form" novalidate="novalidate">
+        <div class="form-group">
+          <label for="family-name" data-i18n="family.name.label">Family member name or nickname</label>
+          <input type="text" id="family-name" class="form-input" autocomplete="name" maxlength="40">
+        </div>
+        <div class="form-group">
+          <label for="family-phone" data-i18n="family.phone.label">Their phone number</label>
+          <input type="tel" id="family-phone" class="form-input" inputmode="tel" autocomplete="tel" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label for="family-email" data-i18n="family.email.label">Their email (used when there is no phone number)</label>
+          <input type="email" id="family-email" class="form-input" autocomplete="email" maxlength="120">
+        </div>
+        <button type="submit" class="btn btn-outline btn-lg" data-i18n="family.submit">Save on this device</button>
+      </form>
+      <p class="family-state" role="status">No family contact saved yet. Fill in the box above first.</p>
     </section>
 
     <!-- Help Request Form -->
     <section class="help-form" aria-labelledby="form-heading">
       <h2 id="form-heading" style="margin-bottom: var(--space-lg);" data-i18n="call.form.h2">Send a Detailed Request</h2>
       <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="call.form.p">
-        Describe what you need help with. Your family will see this message along with a screenshot of your screen.
+        Describe what you need help with. This writes a text message (or email) on your own phone,
+        addressed to your family. Check it, then press send.
       </p>
 
-      <form id="help-request-form" novalidate>
+      <form id="help-request-form" novalidate="novalidate">
         <div class="form-group">
           <label for="help-topic" data-i18n="call.form.topic-label">What do you need help with?</label>
           <select id="help-topic" class="form-select">
@@ -125,7 +169,7 @@
     <section class="section" aria-labelledby="how-heading">
       <div class="section-header">
         <h2 id="how-heading" data-i18n="call.how.h2">How It Works</h2>
-        <p data-i18n="call.how.p">Simple, fast, and reliable &mdash; here is what happens when you press the button</p>
+        <p data-i18n="call.how.p">Here is exactly what happens when you press the button</p>
       </div>
 
       <div class="connection-steps">
@@ -136,18 +180,19 @@
         </div>
         <div class="step-card">
           <div class="step-number">2</div>
-          <h3 data-i18n="call.step2.h4">Family Gets Alert</h3>
-          <p style="font-size: var(--text-sm);" data-i18n="call.step2.p">Your children receive a notification with a screenshot of your screen.</p>
+          <h3 data-i18n="call.step2.h4">Your Phone App Opens</h3>
+          <p style="font-size: var(--text-sm);" data-i18n="call.step2.p">Your own phone app opens with the number already typed in. Nothing leaves your phone until you press call.</p>
         </div>
         <div class="step-card">
           <div class="step-number">3</div>
-          <h3 data-i18n="call.step3.h4">They Call You Back</h3>
-          <p style="font-size: var(--text-sm);" data-i18n="call.step3.p">Your family calls you and guides you through the problem step by step.</p>
+          <h3 data-i18n="call.step3.h4">Your Family Answers</h3>
+          <p style="font-size: var(--text-sm);" data-i18n="call.step3.p">Your family answers and can guide you through the problem step by step.</p>
         </div>
       </div>
     </section>
   </main>
 
+  <!-- BEGIN:FOOTER (tools/build.py) - do not edit, edit tools/build.py FOOTER_TMPL -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-content">
       <div class="footer-brand">
@@ -176,8 +221,9 @@
       <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
     </div>
   </footer>
+  <!-- END:FOOTER -->
 
-  <button class="back-to-top" aria-label="Back to top" data-i18n="back-to-top">
+  <button type="button" class="back-to-top" data-i18n-aria-label="back-to-top.aria" aria-label="Back to top">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M10 4L5 9M10 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
 

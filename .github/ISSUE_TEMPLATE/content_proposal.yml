@@ -1,0 +1,35 @@
+name: 内容或数据源提案 / Content or data source
+about: 新增教程、新增骗局类型、更换或补充外部名单
+title: "[content] "
+labels: content
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 类型 / Type
+      options: [新增教程, 修订教程步骤, 新增骗局类型, 新增/更换外部数据源, 翻译改进]
+    validations:
+      required: true
+  - type: textarea
+    id: core
+    attributes:
+      label: 内容 / Content
+      description: |
+        教程请给出步骤标题 + 每步说明（中文为主，说明为何这样表述更适合老年人）。
+        骗局请给出「识别信号」与「马上做什么」两段——缺任一段不予收录。
+        数据源请给出上游仓库、许可证、更新频率。
+    validations:
+      required: true
+  - type: textarea
+    id: limits
+    attributes:
+      label: 它不能覆盖什么 / What it does NOT cover
+      description: 必填。任何数据源或教程都要写清边界，否则页面文案就会超过实现能力。
+    validations:
+      required: true
+  - type: input
+    id: file
+    attributes:
+      label: 应改哪个文件 / Which source file
+      description: 例如 content/tutorials.json、content/fraud-cases.json、assets/js/i18n.js 手写区。不要提议直接改生成后的 HTML。
+      placeholder: content/fraud-cases.json

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>document.documentElement.classList.add("js")</script>
+  <script>document.documentElement.classList.add("js");try{var f=localStorage.getItem("filialconnect-fontscale");if(f&&f!=="base"){document.documentElement.setAttribute("data-fontscale",f)}}catch(e){}</script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#2B5797">
@@ -17,10 +17,15 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Printable Guides - FilialConnect">
   <meta name="twitter:description" content="Printable step-by-step guides for seniors - carry clear instructions to the bank, hospital, or anywhere">
+  <!-- BEGIN:HEAD-META (tools/build.py) -->
+  <link rel="canonical" href="https://lxh113377.github.io/filialconnect/pages/printable-guides.html">
+  <meta property="og:url" content="https://lxh113377.github.io/filialconnect/pages/printable-guides.html">
+  <!-- END:HEAD-META -->
 </head>
 <body>
   <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
 
+  <!-- BEGIN:NAV (tools/build.py) - do not edit, edit tools/build.py NAV_TMPL -->
   <header class="site-header" role="banner">
     <nav class="nav-container" aria-label="Main navigation">
       <a href="../index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
@@ -35,7 +40,7 @@
         <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
       </a>
 
-      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+      <button type="button" class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
 
@@ -46,10 +51,18 @@
         <li><a href="printable-guides.html" data-i18n="nav.guides">Guides</a></li>
         <li><a href="remote-assist.html" data-i18n="nav.remote">Remote Help</a></li>
         <li><a href="call-help.html" class="nav-cta" data-i18n="nav.call">Call for Help</a></li>
-        <li><button class="lang-toggle" aria-label="ZH - Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
+        <li><button type="button" class="lang-toggle" aria-label="ZH - Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
       </ul>
+
+      <div class="nav-a11y" role="group" data-i18n-aria-label="nav.a11y.group" aria-label="Reading aids">
+        <button type="button" class="a11y-btn font-btn" data-fontscale="base" aria-pressed="false" data-i18n="font.base">Standard</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="lg" aria-pressed="false" data-i18n="font.lg">Large</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="xl" aria-pressed="false" data-i18n="font.xl">Huge</button>
+        <button type="button" class="a11y-btn read-btn" aria-pressed="false" data-i18n="read.btn">Read aloud</button>
+      </div>
     </nav>
   </header>
+  <!-- END:NAV -->
 
   <main id="main-content">
     <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -67,7 +80,7 @@
     <div class="guide-list">
       <!-- Guide 1: Hospital Visit -->
       <article class="guide-card">
-        <h3 data-i18n="guide.hospital.h3">Hospital Visit Checklist</h3>
+        <h2 data-i18n="guide.hospital.h3">Hospital Visit Checklist</h2>
         <p style="font-size: var(--text-sm); margin-bottom: var(--space-md);" data-i18n="guide.hospital.p">Everything you need for a smooth hospital appointment</p>
         <ol class="guide-steps">
           <li data-i18n="guide.hospital.1">Bring your ID card and health insurance card</li>
@@ -86,7 +99,7 @@
 
       <!-- Guide 2: Bank Visit -->
       <article class="guide-card">
-        <h3 data-i18n="guide.bank.h3">Bank Visit Checklist</h3>
+        <h2 data-i18n="guide.bank.h3">Bank Visit Checklist</h2>
         <p style="font-size: var(--text-sm); margin-bottom: var(--space-md);" data-i18n="guide.bank.p">Step-by-step for common banking tasks</p>
         <ol class="guide-steps">
           <li data-i18n="guide.bank.1">Bring your bank card and ID card</li>
@@ -105,7 +118,7 @@
 
       <!-- Guide 3: Train Station -->
       <article class="guide-card">
-        <h3 data-i18n="guide.train.h3">Taking the Train</h3>
+        <h2 data-i18n="guide.train.h3">Taking the Train</h2>
         <p style="font-size: var(--text-sm); margin-bottom: var(--space-md);" data-i18n="guide.train.p">A complete guide from ticket to destination</p>
         <ol class="guide-steps">
           <li data-i18n="guide.train.1">Arrive at the station 45 minutes early</li>
@@ -125,10 +138,10 @@
 
       <!-- Guide 4: Emergency Contacts -->
       <article class="guide-card">
-        <h3 data-i18n="guide.emergency.h3">Emergency Contact Card</h3>
+        <h2 data-i18n="guide.emergency.h3">Emergency Contact Card</h2>
         <p style="font-size: var(--text-sm); margin-bottom: var(--space-md);" data-i18n="guide.emergency.p">Important numbers to keep with you at all times</p>
         <ol class="guide-steps">
-          <li data-i18n="guide.emergency.1">Emergency (Police / Fire / Ambulance): <strong>110 / 119 / 120</strong></li>
+          <li data-i18n="guide.emergency.1">Emergency (Police / Fire / Ambulance): 110 / 119 / 120</li>
           <li data-i18n="guide.emergency.2">Family Member 1: _________________</li>
           <li data-i18n="guide.emergency.3">Family Member 2: _________________</li>
           <li data-i18n="guide.emergency.4">Your Doctor: _________________</li>
@@ -144,6 +157,7 @@
     </div>
   </main>
 
+  <!-- BEGIN:FOOTER (tools/build.py) - do not edit, edit tools/build.py FOOTER_TMPL -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-content">
       <div class="footer-brand">
@@ -172,8 +186,9 @@
       <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
     </div>
   </footer>
+  <!-- END:FOOTER -->
 
-  <button class="back-to-top" aria-label="Back to top" data-i18n="back-to-top">
+  <button type="button" class="back-to-top" data-i18n-aria-label="back-to-top.aria" aria-label="Back to top">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M10 4L5 9M10 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
 

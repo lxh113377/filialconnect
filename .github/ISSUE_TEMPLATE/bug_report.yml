@@ -1,0 +1,33 @@
+name: 缺陷报告 / Bug report
+about: 页面行为、无障碍、构建或门禁问题
+title: "[bug] "
+labels: bug
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 现象 / What happened
+      description: 页面 + 实际行为 + 期望行为。涉及文案时请同时写「这句话在承诺什么」与「代码在哪一行实现了它」。
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: 出现位置 / Where
+      options: [index.html, pages/tutorials.html, 教程详情页, pages/fraud-database.html, pages/call-help.html, pages/remote-assist.html, pages/printable-guides.html, 404.html, 构建/门禁脚本, CI]
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: 环境 / Environment
+      description: 浏览器与版本、操作系统、是否暗色模式、是否放大字号、是否开了读屏软件
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤 / Steps
+      description: 如何在不依赖网络的情况下复现（本站无后端，多数问题应可确定性复现）
+    validations:
+      required: true

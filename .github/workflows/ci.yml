@@ -19,7 +19,7 @@ jobs:
           node-version: 20
 
       - name: HTML validation (HTMLHint)
-        run: npx --yes htmlhint "index.html" "pages/*.html"
+        run: npx --yes htmlhint "index.html" "404.html" "pages/*.html"
 
       - name: i18n symmetry check (EN/ZH keys + HTML coverage + orphans)
         run: python3 tools/check-i18n.py
@@ -27,18 +27,37 @@ jobs:
       - name: Content pipeline drift check (build.py)
         run: python3 tools/build.py check
 
+      - name: Pipeline self-tests (build/check/i18n invariants)
+        run: python3 tools/test_build.py
+
       - name: Link check (linkinator, fragments + external)
         run: |
           npx --yes linkinator . \
             --recurse --check-fragments --check-external \
-            --skip "https://fonts.googleapis.com.*"
+            --skip "https://lxh113377.github.io/filialconnect.*"
 
-      - name: Serve site
+      - name: Link check (markdown docs)
+        run: npx --yes linkinator README.md CONTRIBUTING.md SECURITY.md SOURCES.md --recurse
+
+      - name: Serve site under the production subpath
         run: |
-          python3 -m http.server 8765 &
-          sleep 2
+          mkdir -p /tmp/pages-root/filialconnect
+          cp -r index.html 404.html pages assets sitemap.xml robots.txt content \
+                /tmp/pages-root/filialconnect/
+          (cd /tmp/pages-root && python3 -m http.server 8765 >/tmp/http.log 2>&1 &)
+          for i in $(seq 1 20); do
+            curl -sf "http://127.0.0.1:8765/filialconnect/index.html" >/dev/null && break
+            sleep 1
+          done
 
-      - name: Lighthouse CI (performance + a11y budgets)
+      - name: Offline scam-domain asset is reachable
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "http://127.0.0.1:8765/filialconnect/assets/data/destroylist-domains.txt")
+          echo "destroylist-domains.txt -> $code"
+          test "$code" = "200"
+
+      - name: Lighthouse CI (performance + a11y budgets, all pages)
         run: |
           npm install -g @lhci/cli@0.14.x
           lhci autorun --config=lighthouserc.json

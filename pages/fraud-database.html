@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script>document.documentElement.classList.add("js")</script>
+  <script>document.documentElement.classList.add("js");try{var f=localStorage.getItem("filialconnect-fontscale");if(f&&f!=="base"){document.documentElement.setAttribute("data-fontscale",f)}}catch(e){}</script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#2B5797">
@@ -17,10 +17,15 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Fraud Alerts - FilialConnect">
   <meta name="twitter:description" content="Fraud alert database for seniors - learn to recognize and avoid common scams targeting the elderly">
+  <!-- BEGIN:HEAD-META (tools/build.py) -->
+  <link rel="canonical" href="https://lxh113377.github.io/filialconnect/pages/fraud-database.html">
+  <meta property="og:url" content="https://lxh113377.github.io/filialconnect/pages/fraud-database.html">
+  <!-- END:HEAD-META -->
 </head>
 <body>
   <a href="#main-content" class="skip-link" data-i18n="skip-link">Skip to main content</a>
 
+  <!-- BEGIN:NAV (tools/build.py) - do not edit, edit tools/build.py NAV_TMPL -->
   <header class="site-header" role="banner">
     <nav class="nav-container" aria-label="Main navigation">
       <a href="../index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
@@ -35,7 +40,7 @@
         <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
       </a>
 
-      <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+      <button type="button" class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
 
@@ -46,10 +51,18 @@
         <li><a href="printable-guides.html" data-i18n="nav.guides">Guides</a></li>
         <li><a href="remote-assist.html" data-i18n="nav.remote">Remote Help</a></li>
         <li><a href="call-help.html" class="nav-cta" data-i18n="nav.call">Call for Help</a></li>
-        <li><button class="lang-toggle" aria-label="ZH - Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
+        <li><button type="button" class="lang-toggle" aria-label="ZH - Switch to Chinese"><span class="lang-toggle-label">ZH</span></button></li>
       </ul>
+
+      <div class="nav-a11y" role="group" data-i18n-aria-label="nav.a11y.group" aria-label="Reading aids">
+        <button type="button" class="a11y-btn font-btn" data-fontscale="base" aria-pressed="false" data-i18n="font.base">Standard</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="lg" aria-pressed="false" data-i18n="font.lg">Large</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="xl" aria-pressed="false" data-i18n="font.xl">Huge</button>
+        <button type="button" class="a11y-btn read-btn" aria-pressed="false" data-i18n="read.btn">Read aloud</button>
+      </div>
     </nav>
   </header>
+  <!-- END:NAV -->
 
   <main id="main-content">
     <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -73,7 +86,7 @@
         <div>
           <strong style="color: var(--color-danger); font-size: var(--text-lg);" data-i18n="fraud.banner.strong">Important Safety Reminder</strong>
           <p style="margin: var(--space-xs) 0 0; font-size: var(--text-base); color: var(--color-text);" data-i18n="fraud.banner.p">
-            Banks, police, and government agencies will <strong>never</strong> ask for your passwords, verification codes, or money transfers over the phone. If someone does, hang up immediately.
+            Banks, police, and government agencies will never ask for your passwords, verification codes, or money transfers over the phone. If someone does, hang up immediately.
           </p>
         </div>
       </div>
@@ -235,12 +248,14 @@
         <button type="button" id="link-check-btn" class="btn btn-primary" data-i18n="linkcheck.btn">Check Link</button>
       </div>
       <p id="link-check-result" class="link-check-result" role="status" aria-live="polite"></p>
+      <p class="link-check-scope" data-i18n="linkcheck.scope">Scope: about 83,000 international phishing domains; Chinese domains and phone scams are not covered.</p>
       <p class="link-check-note" data-i18n="linkcheck.note">Offline list from destroylist (MIT). Your input never leaves this page.</p>
     </section>
 
   </main>
 
 
+  <!-- BEGIN:FOOTER (tools/build.py) - do not edit, edit tools/build.py FOOTER_TMPL -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-content">
       <div class="footer-brand">
@@ -269,8 +284,9 @@
       <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
     </div>
   </footer>
+  <!-- END:FOOTER -->
 
-  <button class="back-to-top" aria-label="Back to top" data-i18n="back-to-top">
+  <button type="button" class="back-to-top" data-i18n-aria-label="back-to-top.aria" aria-label="Back to top">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 16V4M10 4L5 9M10 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
 

@@ -32,7 +32,6 @@ var I18N = {
     'card.tutorials.p': 'Step-by-step guides with large-print steps and simple diagrams for hospital apps, train tickets, banking, and more. No videos needed — just clear text and pictures.',
     'card.tutorials.link': 'Explore Tutorials',
     'card.call.h3': 'One-Tap Call for Help',
-    'card.call.p': 'Send an instant help request to your children. One big button, no complicated menus. Help arrives when you need it.',
     'card.call.link': 'Call for Help',
     'card.remote.h3': 'Remote Assistance',
     'card.remote.p': 'Your children can view your screen remotely and guide you through any app. Secure, private, and family-only access.',
@@ -71,7 +70,6 @@ var I18N = {
     'footer.bottom': 'FilialConnect &mdash; Digital Warmth Across the Miles',
 
     /* Back to Top */
-    'back-to-top': 'Back to top',
 
     /* Breadcrumb */
     'breadcrumb.home': 'Home',
@@ -113,13 +111,9 @@ var I18N = {
 
     /* Call Help Page */
     'call.h1': 'Need Help Right Now?',
-    'call.p': 'One tap sends an alert to your family. They will see what you are looking at and call you back immediately.',
     'call.button': 'Call for Help',
     'call.button.aria': 'Call for Help - send an emergency request to your family',
-    'call.status.h3': 'Help Request Sent',
-    'call.status.p': 'Your family has been notified. They will contact you shortly. If this is an emergency, please also call 120.',
     'call.form.h2': 'Send a Detailed Request',
-    'call.form.p': 'Describe what you need help with. Your family will see this message along with a screenshot of your screen.',
     'call.form.topic-label': 'What do you need help with?',
     'call.form.topic-placeholder': '-- Select a topic --',
     'call.form.topic.hospital': 'Hospital / Medical App',
@@ -137,13 +131,8 @@ var I18N = {
     'call.form.urgency.urgent': 'Urgent &mdash; As soon as possible',
     'call.form.submit': 'Send Help Request',
     'call.how.h2': 'How It Works',
-    'call.how.p': 'Simple, fast, and reliable &mdash; here is what happens when you press the button',
     'call.step1.h4': 'You Tap the Button',
     'call.step1.p': 'One big orange button. No menus, no confusion.',
-    'call.step2.h4': 'Family Gets Alert',
-    'call.step2.p': 'Your children receive a notification with a screenshot of your screen.',
-    'call.step3.h4': 'They Call You Back',
-    'call.step3.p': 'Your family calls you and guides you through the problem step by step.',
 
     /* Remote Assist Page */
     'remote.h1': 'Remote Assistance',
@@ -226,11 +215,8 @@ var I18N = {
     'guide.print': 'Print This Guide',
 
     /* Call Button States */
-    'call.sending': 'Sending...',
-    'call.sent': 'Sent',
 
     /* Toast */
-    'toast.help-sent': 'Help request sent! Your family has been notified.',
 
     /* Tutorial Detail — Shared */
     'tut-detail.related': 'Related Tutorials',
@@ -262,6 +248,50 @@ var I18N = {
     'linkcheck.loading': 'Loading the offline scam-domain list...',
     'linkcheck.errload': 'Cannot load the offline list. Open this site through a web server (file:// blocks data loading).',
     'linkcheck.note': 'Offline list from destroylist (MIT). Your input never leaves this page.',
+    'nav.a11y.group': 'Reading aids',
+    'font.base': 'Standard text',
+    'font.lg': 'Large text',
+    'font.xl': 'Huge text',
+    'read.btn': 'Read aloud',
+    'read.stop': 'Stop reading',
+    'back-to-top.aria': 'Back to top',
+    'lang.to.zh': 'Switch to Chinese',
+    'lang.to.en': 'Switch to English',
+    'remote.code.aria': 'Connection code: {code}',
+    'filter.count': '{n} tutorials shown',
+    'error.h1': 'This page cannot be found',
+    'error.p': 'The address may be mistyped, or the page may have moved. Nothing is wrong with your phone or computer.',
+    'error.home': 'Go back to the home page',
+    'error.tutorials': 'Browse all tutorials',
+    'error.emergency': 'If this is an emergency, call 120 or 110. Ask a family member for help at any time.',
+    'family.h2': 'Step 1: Tell this page who to contact',
+    'family.p': 'Type a family member name and phone number once, on the device you use. This site has no server: nothing is uploaded, and no message leaves your phone until you press send in your own phone app.',
+    'family.name.label': 'Family member name or nickname',
+    'family.phone.label': 'Their phone number',
+    'family.email.label': 'Their email (used when there is no phone number)',
+    'family.submit': 'Save on this device',
+    'family.saved': 'Saved on this device only.',
+    'family.need': 'Please save a family phone number or email first.',
+    'family.ready': 'Ready to contact: {name}',
+    'family.notset': 'No family contact saved yet. Fill in the box above first.',
+    'family.unnamed': 'your family',
+    'call.dialing': 'Opening your phone app to call {name} at {phone}. Press the call button there.',
+    'call.nofamily': 'Nothing has been sent, because no family phone number is saved yet. Fill in the box below, or call 120 now if you are in danger.',
+    'call.status.h3': 'Your phone app is opening',
+    'call.status.p': 'This site only opens the dialer on your own phone; it cannot send anything by itself. Press call there to reach your family. If nobody answers and this is an emergency, call 120.',
+    'call.p': 'One tap opens your own phone dialer with the family number you saved here already typed in. This site has no server and cannot send a message by itself.',
+    'card.call.p': 'One big button opens your phone dialer and calls your family. You can also write a text message yourself.',
+    'call.step2.h4': 'Your Phone App Opens',
+    'call.step2.p': 'Your own phone app opens with the number already typed in. Nothing leaves your phone until you press call.',
+    'call.step3.h4': 'Your Family Answers',
+    'call.step3.p': 'Your family answers and can guide you through the problem step by step.',
+    'call.form.p': 'Describe what you need help with. This writes a text message (or email) on your own phone, addressed to your family. Check it, then press send.',
+    'call.how.p': 'Here is exactly what happens when you press the button',
+    'form.tag': 'Help request from FilialConnect',
+    'form.subject': 'I need help',
+    'toast.draft-opened': 'Your message app is opening. Please press send there.',
+    'linkcheck.scope': 'Scope: this offline list holds about 83,000 international phishing domains. Chinese domains and phone scams are not in it, so a clean result does not mean the message is safe.',
+    'error.where': 'Where to go next',
     // BEGIN:GENERATED (tools/build.py) - edit content/*.json instead
     'tut-detail.hospital.h1': 'How to Book a Doctor Appointment',
     'tut-detail.hospital.p': 'Follow these simple steps to book a doctor appointment using your phone. No need to wait in long lines at the hospital.',
@@ -461,7 +491,6 @@ var I18N = {
     'card.tutorials.p': '超大字号分步指南，配简明图示，涵盖医院挂号、火车票、银行业务等。无需视频，只需清晰的文字和图片。',
     'card.tutorials.link': '浏览教程',
     'card.call.h3': '一键呼叫求助',
-    'card.call.p': '向子女发送即时求助请求。一个大按钮，无需复杂菜单。在您需要的时候，帮助触手可及。',
     'card.call.link': '呼叫求助',
     'card.remote.h3': '远程协助',
     'card.remote.p': '您的子女可以远程查看您的屏幕，引导您操作任何应用。安全、私密，仅家人可访问。',
@@ -500,7 +529,6 @@ var I18N = {
     'footer.bottom': '孝心联 \u2014 跨越千里，传递温暖',
 
     /* Back to Top */
-    'back-to-top': '返回顶部',
 
     /* Breadcrumb */
     'breadcrumb.home': '首页',
@@ -542,13 +570,9 @@ var I18N = {
 
     /* Call Help Page */
     'call.h1': '现在需要帮助？',
-    'call.p': '一键发送提醒给您的家人。他们将看到您正在查看的内容，并立即给您回电。',
     'call.button': '呼叫求助',
     'call.button.aria': '呼叫求助 - 向家人发送紧急求助',
-    'call.status.h3': '求助请求已发送',
-    'call.status.p': '您的家人已收到通知。他们将尽快联系您。如果情况紧急，请同时拨打 120。',
     'call.form.h2': '发送详细求助',
-    'call.form.p': '描述您需要帮助的问题。您的家人将看到此消息以及您屏幕的截图。',
     'call.form.topic-label': '您需要哪方面的帮助？',
     'call.form.topic-placeholder': '-- 请选择主题 --',
     'call.form.topic.hospital': '医院 / 医疗 App',
@@ -566,13 +590,8 @@ var I18N = {
     'call.form.urgency.urgent': '紧急 \u2014 越快越好',
     'call.form.submit': '发送求助请求',
     'call.how.h2': '工作原理',
-    'call.how.p': '简单、快速、可靠\u2014按下按钮后，将发生以下事情',
     'call.step1.h4': '您按下按钮',
     'call.step1.p': '一个大大的橙色按钮。无需菜单，无需困惑。',
-    'call.step2.h4': '家人收到提醒',
-    'call.step2.p': '您的子女会收到一条通知，附带您屏幕的截图。',
-    'call.step3.h4': '他们给您回电',
-    'call.step3.p': '您的家人会给您打电话，并一步步引导您解决问题。',
 
     /* Remote Assist Page */
     'remote.h1': '远程协助',
@@ -655,11 +674,8 @@ var I18N = {
     'guide.print': '打印此指南',
 
     /* Call Button States */
-    'call.sending': '发送中...',
-    'call.sent': '已发送',
 
     /* Toast */
-    'toast.help-sent': '求助请求已发送！您的家人已收到通知。',
 
     /* Tutorial Detail — Shared */
     'tut-detail.related': '相关教程',
@@ -688,6 +704,50 @@ var I18N = {
     'linkcheck.loading': '正在加载离线诈骗域名名单...',
     'linkcheck.errload': '无法加载离线名单（本地直接打开会受限），请通过网页服务器访问本站。',
     'linkcheck.note': '离线名单来自 destroylist（MIT 协议）。您粘贴的内容不会上传到任何地方。',
+    'nav.a11y.group': '阅读辅助工具',
+    'font.base': '标准字',
+    'font.lg': '大字',
+    'font.xl': '特大字',
+    'read.btn': '朗读本页',
+    'read.stop': '停止朗读',
+    'back-to-top.aria': '返回顶部',
+    'lang.to.zh': '切换到中文',
+    'lang.to.en': '切换到英文',
+    'remote.code.aria': '连接码：{code}',
+    'filter.count': '已显示 {n} 篇教程',
+    'error.h1': '找不到这个页面',
+    'error.p': '可能是网址输错了，或者这个页面已经换了位置。您的手机和电脑没有坏。',
+    'error.home': '返回首页',
+    'error.tutorials': '浏览全部教程',
+    'error.emergency': '如果情况紧急，请拨打 120 或 110。任何时候都可以向家人寻求帮助。',
+    'family.h2': '第一步：告诉本页该联系谁',
+    'family.p': '在您自己使用的设备上填一次家人的称呼和电话即可。本站没有服务器：不会上传任何信息；在您于自己手机上点“发送”之前，消息不会离开手机。',
+    'family.name.label': '家人的称呼',
+    'family.phone.label': '对方的手机号码',
+    'family.email.label': '对方邮箱（没有电话时使用）',
+    'family.submit': '保存在本机',
+    'family.saved': '已保存在本机。',
+    'family.need': '请先保存家人的电话或邮箱。',
+    'family.ready': '已准备联系：{name}',
+    'family.notset': '还没有保存家人联系方式。请先填写上方表格。',
+    'family.unnamed': '家人',
+    'call.dialing': '正在打开您的拨号界面，呼叫 {name}（{phone}）。请在拨号界面点击拨打。',
+    'call.nofamily': '目前还没有保存家人电话，所以什么也没有发出去。请先填写下方的联系方式；如果情况紧急，请现在就拨打 120。',
+    'call.status.h3': '正在打开拨号界面',
+    'call.status.p': '本站只会打开您自己手机上的拨号界面，不会自己发送任何信息。请到那里点击拨打。如果无人接听且情况紧急，请拨打 120。',
+    'call.p': '点一下就打开您自己手机的拨号界面，号码已经帮您填好。本站没有服务器，不会自己发消息。',
+    'card.call.p': '一个大按钮，打开您的拨号界面直接打给家人。也可以自己写一条短信。',
+    'call.step2.h4': '打开您的手机拨号',
+    'call.step2.p': '您自己手机的拨号界面打开，号码已经帮您填好。在您点击拨打之前，什么都没有离开手机。',
+    'call.step3.h4': '家人接电话',
+    'call.step3.p': '家人接到电话，可以一步一步引导您解决问题。',
+    'call.form.p': '描述您需要帮忙的问题。本页会在您自己的手机上写好一条短信（或邮件），收件人是您的家人。请检查后再点发送。',
+    'call.how.p': '按下按钮后，会发生的事情如下',
+    'form.tag': '来自孝心联的求助',
+    'form.subject': '需要帮忙',
+    'toast.draft-opened': '正在打开短信或邮件，请到那里点发送。',
+    'linkcheck.scope': '范围说明：这份离线名单是约 8.3 万条国际钓鱼域名，不含境内域名，也不监控电话诈骗。查到“未命中”并不等于这条消息安全。',
+    'error.where': '接下来可以去哪里',
     // BEGIN:GENERATED (tools/build.py) - edit content/*.json instead
     'tut-detail.hospital.h1': '如何预约挂号',
     'tut-detail.hospital.p': '按照以下简单步骤，用手机预约医生。无需在医院排长队。',
