@@ -10,7 +10,7 @@
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JS-vanilla-F7DF1E?style=flat&logo=javascript&logoColor=black)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
-![WCAG AA](https://img.shields.io/badge/WCAG-AA%20%E2%9C%93-blue)
+![WCAG 2.2 AA](https://img.shields.io/badge/WCAG%202.2-AA%20%E2%9C%93-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 **纯静态 · 零外部依赖 · 构建脚本只用 Python 标准库 · Lighthouse 无障碍 1.0（13 页 CI 门禁 ≥0.95）· 长者字号三档 + 整页朗读**

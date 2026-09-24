@@ -395,7 +395,13 @@ def canonical_for(fp):
 def sync_head(s, fp):
     """Upsert the marker-delimited canonical / og:url / social-image block
     before </head>."""
-    og = SITE_BASE + '/assets/images/og-cover.png'
+    OG_BY_PAGE = {
+        'pages/tutorials.html': ('og-tutorials.png', 'FilialConnect 孝心联 tutorials - large-print step-by-step guides'),
+        'pages/fraud-database.html': ('og-fraud.png', 'FilialConnect 孝心联 fraud alerts - scam patterns, warning signs, what to do'),
+        'pages/call-help.html': ('og-call-help.png', 'FilialConnect 孝心联 call for help - one big button to reach family'),
+    }
+    og_img, og_alt = OG_BY_PAGE.get(fp, ('og-cover.png', 'FilialConnect 孝心联 - bilingual elderly-friendly tech tutorials'))
+    og = SITE_BASE + '/assets/images/' + og_img
     up = '../' if fp.startswith('pages/') else ''
     block = '\n'.join([HEAD_MARK_BEG,
                        '  <link rel="manifest" href="%smanifest.json">' % up,
@@ -405,7 +411,7 @@ def sync_head(s, fp):
                        '  <meta property="og:image" content="%s">' % og,
                        '  <meta property="og:image:width" content="1200">',
                        '  <meta property="og:image:height" content="630">',
-                       '  <meta property="og:image:alt" content="FilialConnect 孝心联 - bilingual elderly-friendly tech tutorials">',
+                       '  <meta property="og:image:alt" content="%s">' % og_alt,
                        '  <meta name="twitter:image" content="%s">' % og,
                        HEAD_MARK_END])
     if HEAD_MARK_BEG in s and HEAD_MARK_END in s:

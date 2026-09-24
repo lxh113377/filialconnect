@@ -111,6 +111,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* WCAG 2.4.11 focus-not-obscured: anchored/focused elements land below the sticky header */
+  scroll-padding-top: calc(var(--nav-height) + var(--space-md));
   -webkit-text-size-adjust: 100%;
 }
 
