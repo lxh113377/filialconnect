@@ -9,7 +9,7 @@
     "lhci": "lhci autorun --config=lighthouserc.json"
   },
   "devDependencies": {
-    "@lhci/cli": "0.14.0",
+    "@lhci/cli": "0.15.1",
     "cheerio": "1.2.0",
     "htmlhint": "1.9.2",
     "i18next": "26.4.2",
