@@ -302,6 +302,18 @@ def t_workflows():
             check('%s: %s sha pin carries a #vX.Y.Z comment' % (fn, repo),
                   bool(comment) and comment.startswith('v'), comment or '(none)')
     check('workflow pin audit saw the steps it expects', found >= 6, '%d uses: lines' % found)
+    # The tooling lives in node_modules now; a leftover bare `lhci ...` (which used
+    # to work because of a global install) dies with exit 127 in CI.
+    for fn in sorted(os.listdir(wf_dir)):
+        if not fn.endswith('.yml'):
+            continue
+        body = [l for l in read(os.path.join('.github', 'workflows', fn)).split('\n')
+                if not l.strip().startswith('#')]
+        stray = [l.strip() for l in '\n'.join(body).split('\n')
+                 if re.search(r'(^|[^/\w.-])(lhci|htmlhint|linkinator)\s', l)
+                 and 'node_modules/.bin' not in l]
+        check('%s: no bare CI-tool invocation outside node_modules/.bin' % fn,
+              not stray, str(stray[:2]))
 
 
 def main():

@@ -70,6 +70,6 @@ jobs:
         run: node_modules/.bin/lhci autorun --config=lighthouserc.json
 
       - name: Lighthouse CI (mobile budgets - primary device for seniors)
-        run: lhci autorun --config=lighthouserc.mobile.json
+        run: node_modules/.bin/lhci autorun --config=lighthouserc.mobile.json
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
