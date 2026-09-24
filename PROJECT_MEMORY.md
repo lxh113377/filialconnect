@@ -110,4 +110,4 @@
 - [x] Chrome DevTools 手机/平板视图 —— 四断点响应式已验证，Edge headless 截图抽查通过
 - [x] WAVE/axe 无障碍检查 —— Lighthouse a11y 4 页 1.0（CI 门禁 ≥0.95）
 - [x] `assets/images/` 无漏文件 —— 全站零图片引用（内联 SVG），无缺失
-- [ ] 整个文件夹压缩为 ZIP（仅英文命名）—— 提交前最后一步执行
+- [x] 整个文件夹压缩为 ZIP（仅英文命名）—— 2026-09-24 完成：`../FilialConnect-2026-09-24.zip`（29 文件/613KB/0 非ASCII条目，剔除 .git/.github/reports/内部记忆文档）
