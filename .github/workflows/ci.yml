@@ -16,7 +16,9 @@ jobs:
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v7.0.0
         with:
-          node-version: 20
+          # linkinator 8 pulls undici 8, which needs >= 22.19; node 20 dies at
+          # import time with `webidl.util.markAsUncloneable is not a function`.
+          node-version: 22
 
       - name: HTML validation (HTMLHint)
         run: npx --yes htmlhint@1.9.2 "index.html" "404.html" "pages/*.html"

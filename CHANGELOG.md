@@ -17,7 +17,9 @@
 - **名单快照摘要与新鲜度门禁**：`fetch-fraud-feeds.py --check`（离线）复核 `snapshot_sha256`、
   条数与拉取年龄（>30 天判失败），CI 每次构建都跑，定时任务停摆会直接变红而非悄悄过期
 - **CI 工具版本固定**：`htmlhint@1.9.2` / `linkinator@8.1.0` / `@lhci/cli@0.14.0`
-  （与当日浮动的 latest 同版本，仅消除不可复现）
+  （与当日浮动的 latest 同版本，仅消除不可复现）；CI node 由 20 升至 22，
+  因 linkinator 8 的传递依赖 undici 8 要求 `node >= 22.19`——这正是浮动依赖的典型故障：
+  仓库零改动，上游发一版就把 CI 弄红
 - **匹配器一致性测试**：`test_build.py` 直接抽取浏览器实际加载的 `hostOf()`+`listed()`
   在 node 中对真实名单跑 6  fixture（含反向对照），自测由 1,331 项增至 1,342 项
 - Actions 依赖由 dependabot 生成的 5 个 PR 全部合入（checkout 7.0.1 / setup-python 7.0.0 /
