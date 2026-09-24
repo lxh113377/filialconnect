@@ -2,6 +2,10 @@
 
 > 面向老年人与其子女的跨代数字反哺教程站：手机挂号、火车票、微信、银行防骗，中英双语，适老化无障碍设计。
 
+**🌐 在线演示：https://lxh113377.github.io/filialconnect/**
+
+[![CI](https://github.com/lxh113377/filialconnect/actions/workflows/ci.yml/badge.svg)](https://github.com/lxh113377/filialconnect/actions/workflows/ci.yml)
+[![Pages](https://github.com/lxh113377/filialconnect/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/lxh113377/filialconnect/actions/workflows/deploy-pages.yml)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JS-vanilla-F7DF1E?style=flat&logo=javascript&logoColor=black)

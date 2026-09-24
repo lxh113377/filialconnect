@@ -96,7 +96,8 @@
 - D2：`tools/fetch-fraud-feeds.py` 拉 destroylist（MIT）rootlist → `assets/data/destroylist-domains.txt` 83,097 域名离线入库 + meta JSON；防骗页新增「可疑链接自查」工具（三分支实测：命中/未命中/不可解析全对，懒加载 Set）
 - **D4 揪出 P0 级 CSS 级联 bug**：`html.js .animate-in`(0-2-1) 压过 `.animate-in.visible`(0-2-0) → 开 JS 用户所有动画区永久 opacity:0（2026-09-23 P0-3 渐进增强改造引入，前次"截图验证"漏检）。修复：transition 常匹配 + `:not(.visible)` 只管隐藏态；main.js 加视口内直显兜底。CDP `Emulation.setEmulatedMedia` 真暗色像素验收：index/fraud/tutorial 三页 + 浅色回归全过，控制台零输出
 - 教训（反哺已入 lessons）：验证"动画正常触发"必须查**内容可见性终态**（computed opacity），不能只看类名/截图首屏
-- D3：见下节（公开仓 + Pages）
+- D3：lxh113377/filialconnect 已转公开并推送；deploy-pages.yml（staging 只装 index/pages/assets+README+LICENSE）；Pages build_type=workflow 启用；云端 CI ✓ Deploy ✓；线上实测 https://lxh113377.github.io/filialconnect/ 首页 16824B 与本地字节一致、1.52MB 域名名单 200（github.io 直连被墙，走本机 7897 代理验证）
+- README 顶部已挂在线演示链接 + CI/Deploy 双徽章
 
 ## 待完善（2026-09-24 实测核验后更新）
 - [x] 教程详情页内容 —— 实测 6 页全部有真实完整步骤（hospital/train/wechat/medical/banking/ride 各 6-7 步，EN+ZH 双语键全覆盖，362 键零缺失），旧记录"占位"已过时
