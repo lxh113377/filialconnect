@@ -14,8 +14,6 @@
   三类负样本（改兜底文本、改 canonical、塞入无字典键）全部指名"页面+键+期望/实际"转红，
   还原后 14 页全清。已同时挂进 `test_build.py`（1,376 → **1,377**）与 CI 步骤
 
-## [Unreleased]
-
 ### Changed
 - **派生件工具链改用成熟库**（用户 2026-09-25 撤销「零依赖」口径后）：新增 `tools/build.mjs`，
   接管 `assets/js/i18n.js`（由 `assets/locales/{en,zh}.json` 生成，JSON 成为字典唯一来源）、
