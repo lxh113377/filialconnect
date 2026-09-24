@@ -141,9 +141,12 @@ def t_promises():
     # 2026-09-25: the user revoked "zero dependency" as a goal or selling point, and it
     # had already crept back into 6 files (two of them as hard rules). This guard is the
     # machine-side lock so the phrasing cannot return silently in a future round.
-    banned_slogan = ('零依赖', '零外部依赖', 'dependency-free', 'no third-party dependency')
+    banned_slogan = ('零依赖', '零外部依赖', '保持无依赖', '不引入 CDN', 'dependency-free',
+                     'zero-dependency', 'Zero dependencies', 'dependencies-0',
+                     'no third-party dependency')
     targets = ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'CODE_OF_CONDUCT.md',
-               'SOURCES.md', 'assets/js/i18n.js'] + pages()
+               'SOURCES.md', 'manifest.json', 'sw.js', 'assets/css/main.css',
+               'assets/js/i18n.js'] + pages()
     hits = [(fp, w) for fp in targets for w in banned_slogan if w in read(fp)]
     check('no public file re-adopts the revoked "zero dependency" slogan', not hits, str(hits[:4]))
     check('link checker discloses its coverage limit',

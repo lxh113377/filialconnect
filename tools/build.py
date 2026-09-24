@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FilialConnect content pipeline (D1-A, zero-dependency build).
+"""FilialConnect content pipeline (D1-A era tooling; stdlib-only by inheritance, not by policy).
 
 Single source: content/tutorials.json + content/fraud-cases.json (+ templates
 in this file). Derived, committed artifacts:

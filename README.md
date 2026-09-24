@@ -9,7 +9,6 @@
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JS-vanilla-F7DF1E?style=flat&logo=javascript&logoColor=black)
-![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![WCAG 2.2 AA](https://img.shields.io/badge/WCAG%202.2-AA%20%E2%9C%93-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
