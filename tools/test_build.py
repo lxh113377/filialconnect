@@ -116,7 +116,7 @@ def t_i18n():
           str([k for k, v in d['zh'].items() if not re.search(r'[一-鿿]', v)][:5]))
     used = set()
     for fp in pages():
-        used |= set(re.findall(r'data-i18n(?:-(?:placeholder|aria-label))?="([^"]+)"', html_only(fp)))
+        used |= set(re.findall(r'data-i18n(?:-(?:placeholder|aria-label|alt))?="([^"]+)"', html_only(fp)))
     check('every data-i18n key exists in both dictionaries', used <= en and used <= zh,
           str(sorted(used - en)[:5]))
     js = read('assets/js/main.js')
