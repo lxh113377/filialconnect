@@ -55,10 +55,43 @@ const lhUrls = (pages) => pages.map((fp) => (fp === 'index.html' ? `${LHCI_BASE}
 const DESKTOP_ASSERT = {
   'categories:performance': ['error', { minScore: 0.9 }],
   'categories:accessibility': ['error', { minScore: 0.95 }],
-  'categories:best-practices': ['warn', { minScore: 0.9 }],
-  'categories:seo': ['warn', { minScore: 0.9 }],
+  'categories:best-practices': ['error', { minScore: 0.9 }],
+  'categories:seo': ['error', { minScore: 0.9 }],
 };
 const MOBILE_PRIORITY = ['index.html', 'pages/tutorials.html', 'pages/fraud-database.html', 'pages/call-help.html'];
+
+// The 404 page carries `noindex` on purpose, so Lighthouse's is-crawlable audit (weight
+// 4.04 of SEO's 13.04) can never pass there: seo caps out at 0.63. That was asserted at
+// `warn`, which is how it stayed invisible for six rounds of green CI. It is now `error`
+// everywhere and switched off *by name* here, so the exemption is a written decision
+// rather than a volume knob.
+const EXEMPT_URL_PATTERN = '404\\.html$';
+const NON_EXEMPT_URL_PATTERN = '^(?:(?!404\\.html).)*$';
+
+/**
+ * lhci's `assertMatrix` is the only way to vary assertions per URL, and it is mutually
+ * exclusive with a top-level `assertions` key, so both profiles go through here.
+ * @param {Record<string, unknown>} base
+ * @param {string[]} urls
+ */
+function buildAssertMatrix(base, urls) {
+  const matrix = [
+    { matchingUrlPattern: NON_EXEMPT_URL_PATTERN, assertions: base },
+    {
+      matchingUrlPattern: EXEMPT_URL_PATTERN,
+      assertions: { ...base, 'categories:seo': 'off' },
+    },
+  ];
+  // A pattern that matches nothing would silently drop a page out of every assertion,
+  // which is worse than the warn-level it replaces. Fail the build instead.
+  const uncovered = urls.filter((u) => !matrix.some((row) => new RegExp(row.matchingUrlPattern).test(u)));
+  if (uncovered.length) throw new Error(`lighthouserc: URLs matched by no assertion context: ${uncovered.join(', ')}`);
+  const doubleAsserted = urls.filter((u) => matrix.filter((row) => new RegExp(row.matchingUrlPattern).test(u)).length > 1);
+  if (doubleAsserted.length) {
+    throw new Error(`lighthouserc: URLs asserted by more than one context: ${doubleAsserted.join(', ')}`);
+  }
+  return { assertMatrix: matrix };
+}
 
 /** Page list comes from sitemap.xml, the one place that now declares it. */
 export function pagesFromSitemap() {
@@ -70,20 +103,22 @@ export function pagesFromSitemap() {
 export function buildLighthouserc() {
   const pages = pagesFromSitemap();
   const order = ['index.html', '404.html'].concat(pages.filter((p) => p !== 'index.html' && p !== '404.html'));
+  const urls = lhUrls(order);
   const cfg = {
     ci: {
-      collect: { url: lhUrls(order), numberOfRuns: 2, settings: { preset: 'desktop' } },
-      assert: { assertions: DESKTOP_ASSERT },
+      collect: { url: urls, numberOfRuns: 2, settings: { preset: 'desktop' } },
+      assert: buildAssertMatrix(DESKTOP_ASSERT, urls),
     },
   };
   return JSON.stringify(cfg, null, 2) + '\n';
 }
 
 export function buildLighthousercMobile() {
+  const urls = lhUrls(MOBILE_PRIORITY);
   const cfg = {
     ci: {
       collect: {
-        url: lhUrls(MOBILE_PRIORITY),
+        url: urls,
         numberOfRuns: 3,
         settings: {
           formFactor: 'mobile',
@@ -91,7 +126,10 @@ export function buildLighthousercMobile() {
           throttlingMethod: 'simulate',
         },
       },
-      assert: { assertions: { ...DESKTOP_ASSERT, 'categories:performance': ['error', { minScore: 0.85 }] } },
+      assert: buildAssertMatrix(
+        { ...DESKTOP_ASSERT, 'categories:performance': ['error', { minScore: 0.85 }] },
+        urls,
+      ),
     },
   };
   return JSON.stringify(cfg, null, 2) + '\n';

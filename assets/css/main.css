@@ -22,6 +22,14 @@
   --color-accent-light: #F5B880;
   --color-accent-dark: #A85212;
   --color-accent-subtle: #FFF3E8;
+  /* Foreground for anything painted on --color-accent. Deliberately absent from the
+     dark block: --color-text flips there, and three elements on brand orange were
+     failing WCAG because each re-pinned it by hand and one was forgotten. */
+  --color-on-accent: #1A1A2E;
+  /* Decorative watermark (404 code). Kept above 3:1 against both page backgrounds so
+     axe stops scoring it 0; opacity is not used because it composites against whatever
+     is behind it, which no static check can resolve. */
+  --color-watermark: #7A8296;
   --color-bg: #FAF8F5;
   --color-bg-alt: #F3EFE9;
   --color-surface: #FFFFFF;
@@ -285,7 +293,7 @@ strong {
 
 .nav-cta {
   background: var(--color-accent) !important;
-  color: var(--color-text) !important;
+  color: var(--color-on-accent) !important;
   font-weight: 700 !important;
 }
 
@@ -501,7 +509,7 @@ strong {
 
 .btn-accent {
   background: var(--color-accent);
-  color: var(--color-text);
+  color: var(--color-on-accent);
   font-weight: 700;
   box-shadow: var(--shadow-sm);
 }
@@ -774,7 +782,7 @@ strong {
   height: 200px;
   border-radius: 50%;
   background: var(--color-accent);
-  color: var(--color-text);
+  color: var(--color-on-accent);
   font-size: var(--text-xl);
   font-weight: 700;
   font-family: var(--font-body);
@@ -1889,16 +1897,12 @@ html.js .stagger-children:not(.visible) > * {
     --color-danger-bg: #3C2320;
     --color-shadow: rgba(0, 0, 0, 0.4);
     --color-shadow-strong: rgba(0, 0, 0, 0.55);
+    --color-watermark: #8FA9CC;
   }
 
-  /* Accent buttons keep pinned dark text (their background stays brand orange).
-     .nav-cta declares color with !important in light mode, so this has to match it. */
-  .btn-accent,
-  .nav-cta,
-  .nav-cta:hover {
-    color: #1A1A2E !important;
-  }
-
+  /* Accent surfaces need no re-pinning here: they read --color-on-accent, which does
+     not flip with the theme. Re-pinning per selector is what let the emergency call
+     button ship at 2.28:1. */
   /* Sticky header is translucent white paper in light mode; in dark mode it
      has to become dark paper or the brightened nav text lands on white. */
   .site-header {
@@ -1981,7 +1985,7 @@ html[data-fontscale="xl"] {
 }
 
 .a11y-btn[aria-pressed="true"] {
-  color: #1A1A2E;
+  color: var(--color-on-accent);
   background: var(--color-accent);
   border-color: var(--color-accent);
 }
@@ -2031,8 +2035,7 @@ html[data-fontscale="xl"] {
 .error-code {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
-  color: var(--color-primary-text);
-  opacity: 0.35;
+  color: var(--color-watermark);
 }
 
 .error-emergency {

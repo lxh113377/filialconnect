@@ -8,6 +8,7 @@ invariants that broke three times during development.
 
 Usage: python tools/test_build.py      (exit 0 = all pass)
 """
+import gzip
 import io
 import json
 import os
@@ -365,9 +366,106 @@ def t_vendor():
           'i18nReady()' in js and 'I18N[lang][key] !== undefined' in js)
 
 
+# ------------------------------------------------------------------- 8. budgets
+# starlight gates what a page may weigh (`size-limit`: 7 kB HTML / 27 kB JS / 16.75 kB
+# CSS, gzipped) so a regression shows up as a red check instead of a slower phone.
+# Ceilings below are calibrated against the measured gzip distribution of the shipped
+# tree on 2026-09-25, not guessed: HTML min 2.4 / median 3.7 / max 5.3 KiB, CSS 8.6 KiB,
+# largest JS 22.4 KiB (the generated dictionary), whole payload 562.8 KiB. Each ceiling
+# is ~1.5x the current worst case: loose enough not to churn, tight enough that doubling
+# a file is caught. The scam list is upstream data rather than our code, so it gets its
+# own, wider ceiling and a message that says "decide", not "shrink".
+BUDGET_PAGES_DIR = 'pages'
+BUDGETS = [
+    (r'\.html$', 8 * 1024, 'page'),
+    (r'\.css$', 16 * 1024, 'stylesheet'),
+    (r'\.js$', 30 * 1024, 'script'),
+    (r'\.json$', 12 * 1024, 'data/manifest'),
+    (r'\.png$', 64 * 1024, 'image'),
+]
+SCAM_LIST_BUDGET = 640 * 1024
+TOTAL_BUDGET_EXCLUDING_SCAM_LIST = 640 * 1024
+
+
+def shipped_files():
+    """deploy-pages.yml's `cp -r` line is the only place that declares the artifact set."""
+    wf = read(os.path.join('.github', 'workflows', 'deploy-pages.yml'))
+    m = re.search(r'cp -r ([^\n]*?)(?=\s+_site/)', wf)
+    if not m:
+        return None
+    tokens = m.group(1).split()
+    out = set()
+    for tok in tokens:
+        if tok.endswith('.md'):
+            continue  # repo docs copied beside the site, never fetched by a browser
+        path = os.path.join(ROOT, tok)
+        if os.path.isdir(path):
+            for root, dirs, files in os.walk(path):
+                dirs[:] = [d for d in dirs if d != '__pycache__']
+                for f in files:
+                    out.add(os.path.relpath(os.path.join(root, f), ROOT).replace(os.sep, '/'))
+        elif any(c in tok for c in '*?['):
+            import glob
+            for g in glob.glob(path):
+                out.add(os.path.relpath(g, ROOT).replace(os.sep, '/'))
+        elif os.path.exists(path):
+            out.add(tok.replace(os.sep, '/'))
+    return out
+
+
+def gz_size(fp):
+    with io.open(os.path.join(ROOT, fp), 'rb') as fh:
+        return len(gzip.compress(fh.read(), 9))
+
+
+def t_budgets():
+    files = shipped_files()
+    check('artifact set is discoverable from deploy-pages.yml', files is not None and len(files) > 10,
+          str(len(files) if files else None))
+    if not files:
+        return
+    total = 0
+    for fp in sorted(files):
+        size = gz_size(fp)
+        total += size
+        if 'destroylist' in fp:
+            check('scam list stays within its data ceiling (%s)' % fp, size <= SCAM_LIST_BUDGET,
+                  '%d KiB gz > %d KiB ceiling: this is upstream growth, decide on tiering or '
+                  'sharding rather than editing this number' % (size // 1024, SCAM_LIST_BUDGET // 1024))
+            continue
+        for pattern, ceiling, label in BUDGETS:
+            if re.search(pattern, fp):
+                check('%s within %s ceiling' % (fp, label), size <= ceiling,
+                      '%d KiB gz > %d KiB' % (size // 1024, ceiling // 1024))
+    check('whole site within total budget', total - gz_size('assets/data/destroylist-domains.txt')
+          <= TOTAL_BUDGET_EXCLUDING_SCAM_LIST,
+          '%d KiB gz' % (total // 1024))
+
+
+# ------------------------------------------------------------ 9. contrast tokens
+# Round 7 found the emergency call button failing WCAG contrast in dark mode because the
+# dark block re-pinned the text colour for some accent elements and not `.call-button`.
+# Any rule that paints a background from the accent token must take its foreground from
+# the paired on-accent token, or the next accent element fails the same silent way.
+def t_contrast_tokens():
+    css = read('assets/css/main.css')
+    seen = 0
+    for block in re.finditer(r'([^{}]+)\{([^{}]*)\}', css):
+        selector, body = block.group(1).strip(), block.group(2)
+        if not re.search(r'background[a-z-]*:\s*var\(--color-accent\b\)', body):
+            continue
+        seen += 1
+        uses_text_token = bool(re.search(r'(?<![-\w])color:\s*var\(--color-text\)', body))
+        pinned = 'var(--color-on-accent)' in body or '#1A1A2E' in body
+        check('accent-background rule does not inherit a theme-flipping text colour (%s)' % selector[:48],
+              pinned or not uses_text_token,
+              'background is --color-accent while color is --color-text, which inverts in dark mode')
+    check('contrast-token rule actually scanned the accent surfaces', seen >= 3, 'saw %d blocks' % seen)
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
-               t_workflows, t_vendor):
+               t_workflows, t_vendor, t_budgets, t_contrast_tokens):
         fn()
     for f in FAILS:
         print('FAIL:', f)

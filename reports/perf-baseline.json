@@ -1,0 +1,1051 @@
+{
+  "generated_utc": "2026-09-24T22:31:37.334Z",
+  "runs_per_url": 1,
+  "port": 8899,
+  "served_css_head": "4063686172736574",
+  "chrome": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "isolation": "one browser instance per URL (a shared profile lets the service worker answer later pages from an earlier cache)",
+  "profiles": {
+    "desktop": {
+      "source": "lighthouserc.json",
+      "budgets": {
+        "categories:performance": {
+          "level": "error",
+          "minScore": 0.9
+        },
+        "categories:accessibility": {
+          "level": "error",
+          "minScore": 0.95
+        },
+        "categories:best-practices": {
+          "level": "error",
+          "minScore": 0.9
+        },
+        "categories:seo": {
+          "level": "error",
+          "minScore": 0.9
+        }
+      },
+      "budget_exempt": [
+        {
+          "pattern": "404\\.html$",
+          "level": "off"
+        }
+      ],
+      "pages": [
+        {
+          "page": "index.html",
+          "url": "http://127.0.0.1:8899/filialconnect/",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.93,
+            "accessibility": 0.99,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.93,
+              "max": 0.93
+            },
+            "accessibility": {
+              "min": 0.99,
+              "max": 0.99
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 481,
+            "TBT": 40,
+            "LCP": 481,
+            "CLS": 0.1597,
+            "SI": 622
+          },
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.73,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            },
+            {
+              "audit": "aria-allowed-role",
+              "score": 0,
+              "weight": 1,
+              "cat": "accessibility",
+              "why": [
+                "main#main-content > section.section > div.card-grid > article.card ::",
+                "main#main-content > section.section > div.card-grid > article.card ::",
+                "main#main-content > section.section > div.card-grid > article.card ::",
+                "main#main-content > section.section > div.card-grid > article.card ::"
+              ]
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/404.html",
+          "url": "http://127.0.0.1:8899/filialconnect/404.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 1,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 0.63
+          },
+          "score_range": {
+            "performance": {
+              "min": 1,
+              "max": 1
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 0.63,
+              "max": 0.63
+            }
+          },
+          "cwv": {
+            "FCP": 384,
+            "TBT": 0,
+            "LCP": 424,
+            "CLS": 0,
+            "SI": 405
+          },
+          "failing_audits": [
+            {
+              "audit": "is-crawlable",
+              "score": 0,
+              "weight": 4.04,
+              "cat": "seo",
+              "why": [
+                "? ::"
+              ]
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/accessibility-statement.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/accessibility-statement.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 1,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 1,
+              "max": 1
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 463,
+            "TBT": 42,
+            "LCP": 477,
+            "CLS": 0,
+            "SI": 551
+          },
+          "failing_audits": [],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/call-help.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/call-help.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.93,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.93,
+              "max": 0.93
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 469,
+            "TBT": 0,
+            "LCP": 469,
+            "CLS": 0.1597,
+            "SI": 469
+          },
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.73,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/fraud-database.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/fraud-database.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 1,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 1,
+              "max": 1
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 542,
+            "TBT": 0,
+            "LCP": 573,
+            "CLS": 0,
+            "SI": 553
+          },
+          "failing_audits": [
+            {
+              "audit": "first-contentful-paint",
+              "score": 0.99,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/printable-guides.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/printable-guides.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.87,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.87,
+              "max": 0.87
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 465,
+            "TBT": 24,
+            "LCP": 465,
+            "CLS": 0.2617,
+            "SI": 506
+          },
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.47,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            }
+          ],
+          "budget_breach": [
+            "performance 0.87 < 0.9"
+          ]
+        },
+        {
+          "page": "filialconnect/pages/remote-assist.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/remote-assist.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 1,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 1,
+              "max": 1
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 479,
+            "TBT": 0,
+            "LCP": 513,
+            "CLS": 0,
+            "SI": 595
+          },
+          "failing_audits": [],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/tutorial-banking.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/tutorial-banking.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.93,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.93,
+              "max": 0.93
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 464,
+            "TBT": 0,
+            "LCP": 492,
+            "CLS": 0.1597,
+            "SI": 464
+          },
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.73,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/tutorial-hospital.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/tutorial-hospital.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 1,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 1,
+              "max": 1
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 489,
+            "TBT": 55,
+            "LCP": 541,
+            "CLS": 0,
+            "SI": 626
+          },
+          "failing_audits": [],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/tutorial-medical.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/tutorial-medical.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.93,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.93,
+              "max": 0.93
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 466,
+            "TBT": 19,
+            "LCP": 535,
+            "CLS": 0.1597,
+            "SI": 466
+          },
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.73,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/tutorial-ride.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/tutorial-ride.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.93,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.93,
+              "max": 0.93
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 465,
+            "TBT": 0,
+            "LCP": 465,
+            "CLS": 0.1597,
+            "SI": 465
+          },
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.73,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/tutorial-train.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/tutorial-train.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 1,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 1,
+              "max": 1
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 488,
+            "TBT": 0,
+            "LCP": 528,
+            "CLS": 0,
+            "SI": 488
+          },
+          "failing_audits": [],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/tutorial-wechat.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/tutorial-wechat.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.93,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.93,
+              "max": 0.93
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 461,
+            "TBT": 22,
+            "LCP": 529,
+            "CLS": 0.1597,
+            "SI": 469
+          },
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.73,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/tutorials.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/tutorials.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 1,
+            "accessibility": 0.99,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 1,
+              "max": 1
+            },
+            "accessibility": {
+              "min": 0.99,
+              "max": 0.99
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 484,
+            "TBT": 0,
+            "LCP": 524,
+            "CLS": 0,
+            "SI": 484
+          },
+          "failing_audits": [
+            {
+              "audit": "aria-allowed-role",
+              "score": 0,
+              "weight": 1,
+              "cat": "accessibility",
+              "why": [
+                "body > main#main-content > div.tutorial-grid > article.tutorial-card ::",
+                "body > main#main-content > div.tutorial-grid > article.tutorial-card ::",
+                "body > main#main-content > div.tutorial-grid > article.tutorial-card ::",
+                "body > main#main-content > div.tutorial-grid > article.tutorial-card ::"
+              ]
+            }
+          ],
+          "budget_breach": []
+        }
+      ]
+    },
+    "mobile": {
+      "source": "lighthouserc.mobile.json",
+      "budgets": {
+        "categories:performance": {
+          "level": "error",
+          "minScore": 0.85
+        },
+        "categories:accessibility": {
+          "level": "error",
+          "minScore": 0.95
+        },
+        "categories:best-practices": {
+          "level": "error",
+          "minScore": 0.9
+        },
+        "categories:seo": {
+          "level": "error",
+          "minScore": 0.9
+        }
+      },
+      "budget_exempt": [
+        {
+          "pattern": "404\\.html$",
+          "level": "off"
+        }
+      ],
+      "pages": [
+        {
+          "page": "index.html",
+          "url": "http://127.0.0.1:8899/filialconnect/",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.94,
+            "accessibility": 0.99,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.94,
+              "max": 0.94
+            },
+            "accessibility": {
+              "min": 0.99,
+              "max": 0.99
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 2169,
+            "TBT": 0,
+            "LCP": 2169,
+            "CLS": 0.0948,
+            "SI": 2169
+          },
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.91,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            },
+            {
+              "audit": "first-contentful-paint",
+              "score": 0.79,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "largest-contentful-paint",
+              "score": 0.95,
+              "weight": 25,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "aria-allowed-role",
+              "score": 0,
+              "weight": 1,
+              "cat": "accessibility",
+              "why": [
+                "main#main-content > section.section > div.card-grid > article.card ::",
+                "main#main-content > section.section > div.card-grid > article.card ::",
+                "main#main-content > section.section > div.card-grid > article.card ::",
+                "main#main-content > section.section > div.card-grid > article.card ::"
+              ]
+            },
+            {
+              "audit": "speed-index",
+              "score": 0.99,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/tutorials.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/tutorials.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.96,
+            "accessibility": 0.99,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.96,
+              "max": 0.96
+            },
+            "accessibility": {
+              "min": 0.99,
+              "max": 0.99
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 2167,
+            "TBT": 0,
+            "LCP": 2167,
+            "CLS": 0.0606,
+            "SI": 2167
+          },
+          "failing_audits": [
+            {
+              "audit": "first-contentful-paint",
+              "score": 0.79,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "largest-contentful-paint",
+              "score": 0.95,
+              "weight": 25,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "aria-allowed-role",
+              "score": 0,
+              "weight": 1,
+              "cat": "accessibility",
+              "why": [
+                "body > main#main-content > div.tutorial-grid > article.tutorial-card ::",
+                "body > main#main-content > div.tutorial-grid > article.tutorial-card ::",
+                "body > main#main-content > div.tutorial-grid > article.tutorial-card ::",
+                "body > main#main-content > div.tutorial-grid > article.tutorial-card ::"
+              ]
+            },
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.98,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            },
+            {
+              "audit": "speed-index",
+              "score": 0.99,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/fraud-database.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/fraud-database.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.88,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.88,
+              "max": 0.88
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 2325,
+            "TBT": 326,
+            "LCP": 2325,
+            "CLS": 0,
+            "SI": 2325
+          },
+          "failing_audits": [
+            {
+              "audit": "total-blocking-time",
+              "score": 0.76,
+              "weight": 30,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "first-contentful-paint",
+              "score": 0.73,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "largest-contentful-paint",
+              "score": 0.93,
+              "weight": 25,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "speed-index",
+              "score": 0.98,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            }
+          ],
+          "budget_breach": []
+        },
+        {
+          "page": "filialconnect/pages/call-help.html",
+          "url": "http://127.0.0.1:8899/filialconnect/pages/call-help.html",
+          "lighthouse": "12.1.0",
+          "scores": {
+            "performance": 0.9,
+            "accessibility": 1,
+            "best-practices": 1,
+            "seo": 1
+          },
+          "score_range": {
+            "performance": {
+              "min": 0.9,
+              "max": 0.9
+            },
+            "accessibility": {
+              "min": 1,
+              "max": 1
+            },
+            "best-practices": {
+              "min": 1,
+              "max": 1
+            },
+            "seo": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          "cwv": {
+            "FCP": 2225,
+            "TBT": 265,
+            "LCP": 2375,
+            "CLS": 0,
+            "SI": 2225
+          },
+          "failing_audits": [
+            {
+              "audit": "total-blocking-time",
+              "score": 0.82,
+              "weight": 30,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "first-contentful-paint",
+              "score": 0.77,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "largest-contentful-paint",
+              "score": 0.92,
+              "weight": 25,
+              "cat": "performance",
+              "why": []
+            },
+            {
+              "audit": "speed-index",
+              "score": 0.99,
+              "weight": 10,
+              "cat": "performance",
+              "why": []
+            }
+          ],
+          "budget_breach": []
+        }
+      ]
+    }
+  },
+  "summary": {
+    "desktop": {
+      "pages": 14,
+      "min": {
+        "performance": 0.87,
+        "accessibility": 0.99,
+        "best-practices": 1,
+        "seo": 0.63
+      },
+      "worst_page": "filialconnect/pages/printable-guides.html",
+      "budget_breaches": [
+        "filialconnect/pages/printable-guides.html: performance 0.87 < 0.9"
+      ],
+      "distinct_failing_audits": [
+        "aria-allowed-role",
+        "cumulative-layout-shift",
+        "first-contentful-paint",
+        "is-crawlable"
+      ]
+    },
+    "mobile": {
+      "pages": 4,
+      "min": {
+        "performance": 0.88,
+        "accessibility": 0.99,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "worst_page": "filialconnect/pages/fraud-database.html",
+      "budget_breaches": [],
+      "distinct_failing_audits": [
+        "aria-allowed-role",
+        "cumulative-layout-shift",
+        "first-contentful-paint",
+        "largest-contentful-paint",
+        "speed-index",
+        "total-blocking-time"
+      ]
+    }
+  }
+}
