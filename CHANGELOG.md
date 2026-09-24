@@ -49,6 +49,13 @@
   「不加载任何第三方脚本」改为「只从本站自身取资源，第三方库入库并锁版本，不远程拉取」
 
 ### Fixed
+- **浅色配色下状态徽标对比度 3.90:1**（本轮新断言上线后 CI 第一次跑就抓出来的）：
+  `remote-assist.html` 的 `.status-badge.status-online` 在浅色下 `color-contrast` = 0（两次同值，
+  确定性）。根因与橙底缺陷同形 —— 品牌状态色既当填充又当"自己浅色底上的文字色"，实测
+  success 3.90:1、warning 2.84:1（小字号需 4.5:1），全仓同类误用 7 处。改指新增的
+  `--color-success-text` / `--color-warning-text` / `--color-danger-text`（浅色加深、深色保留
+  现有已通过取值不顺手改），并增 6 条门禁禁止该形态（先对改前 CSS 实测命中 7 处才收录）。
+  强制浅色镜像复测 14 页 `color-contrast` 全 = 1；CI run 36074542884 在审计级断言下转绿
 - **紧急呼叫按钮在深色模式下对比度 2.28:1（WCAG AA 大字要求 3:1）**。深色块逐个选择器手工
   钉前景色（`.btn-accent` / `.nav-cta`），漏了 `.call-button` —— 它的 `color` 读 `--color-text`，
   该令牌在深色下翻成 `#ECEAF2`，而背景 `--color-accent` 不翻。改为读不随主题翻转的
