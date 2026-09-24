@@ -20,8 +20,12 @@
 - 上游：`phishdestroy/destroylist`（MIT 协议，日更）的 rootlist
 - 拉取：`python tools/fetch-fraud-feeds.py`（写 `assets/data/destroylist-domains.txt`
   与 `assets/data/fraud-feeds-meta.json`）
-- 当前入库：83,097 条根域，`fraud-feeds-meta.json` 记录上游 commit、拉取时间，以及
-  快照自身的 `snapshot_sha256`（防手工改动 / 截断）
+- 当前入库：83,097 条（其中 66,680 条是根域、16,417 条是上游按主机名收录的深层条目），
+  `fraud-feeds-meta.json` 记录上游 commit、拉取时间，以及快照自身的 `snapshot_sha256`（防手工改动 / 截断）
+- 匹配规则（`assets/js/main.js` 的 `listed()`）：把用户粘贴的 host 从完整主机名逐级上溯到
+  根域，任一级命中即判危险。**只比"末两段"是不够的**——那样 19.8% 的深层条目只能靠逐字
+  粘贴才可能命中。该规则由 `tools/test_build.py` 直接抽取浏览器实际加载的函数在 node 里
+  跑真实名单验证（含反向对照：`zz.staging.store.lilybharat.com` 旧规则漏、新规则中）
 - 离线审计：`python tools/fetch-fraud-feeds.py --check`（不联网）复核摘要、条数与
   新鲜度（>30 天判失败）；CI 每次构建都跑，因此定时任务停摆会直接变红而不是悄悄过期
 - 档位说明：取上游 **online 根域档**（DNS 实测在线，`rootlist/online_root_domains.txt`）；上游另有含未审条目的 primary 全量档（21 万+），未采用——宁缺毋滥，避免未审条目造成误报

@@ -12,7 +12,10 @@ import io
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build  # noqa: E402
@@ -144,6 +147,65 @@ def t_promises():
           'copy claims <1%%, feed measures %.2f%%' % cn_pct)
 
 
+# ------------------------------------------- 4b. shipped matcher, run under node
+MATCH_JS = re.compile(r'(function hostOf\(raw\) \{.*?\n    \}\n\n.*?function listed'
+                      r'\(set, host\) \{.*?\n    \})', re.S)
+
+
+def t_scam_matcher():
+    """Run the matcher the browser actually ships (extracted verbatim from main.js)
+    against the real snapshot, so the JS and the Python-side expectations cannot
+    drift apart the way a Python re-implementation of the rule would."""
+    src = MATCH_JS.search(read('assets/js/main.js'))
+    check('main.js exposes hostOf + listed for the parity test', src is not None)
+    if not src:
+        return
+    node = None
+    for cand in ('node', 'node.exe'):
+        node = shutil.which(cand)
+        if node:
+            break
+    if not node:
+        check('node available for matcher parity test', False,
+              'node not found on PATH — this test is a hard requirement, not optional')
+        return
+    harness = os.path.join(tempfile.mkdtemp(prefix='fc-match-'), 'harness.js')
+    with io.open(harness, 'w', encoding='utf-8', newline='\n') as fh:
+        fh.write("'use strict';\nvar fs = require('fs');\n")
+        fh.write(src.group(1) + '\n')
+        fh.write("var set = new Set(fs.readFileSync(process.argv[2], 'utf8')"
+                 ".split(/\\r?\\n/).map(function (l) { return l.trim(); })"
+                 ".filter(Boolean));\n")
+        fh.write("var out = [];\nprocess.argv.slice(3).forEach(function (inp) {\n"
+                 "  var h = hostOf(inp.toLowerCase());\n"
+                 "  out.push(h && listed(set, h) ? 'HIT' : 'MISS');\n});\n"
+                 "process.stdout.write(out.join('\\n'));\n")
+    # A deep host that upstream publishes verbatim, plus a made-up parent of it.
+    deep = next(l.strip() for l in io.open(os.path.join(ROOT, 'assets', 'data', 'destroylist-domains.txt'),
+                                           encoding='utf-8') if l.strip().count('.') >= 3)
+    probe = 'zz.' + deep
+    cases = [
+        ('https://linkvertise.com/abc', 'HIT'),        # listed root
+        ('http://x.y.github.io/repo', 'MISS'),         # free host not listed -> no wildcard FP
+        ('https://www.baidu.com/s?wd=1', 'MISS'),      # legit mainstream domain
+        ('http://' + deep + '/p', 'HIT'),              # exact deep host entry
+        ('https://' + probe + '/p', 'HIT'),            # below a deep entry (the 19.8% fix)
+        ('not a link at all', 'MISS'),                  # unparseable input
+    ]
+    argv = [node, harness, os.path.join(ROOT, 'assets', 'data', 'destroylist-domains.txt')]
+    argv += [c[0] for c in cases]
+    try:
+        proc = subprocess.run(argv, capture_output=True, text=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        check('node matcher harness completes', False, 'timeout after 120s')
+        return
+    got = proc.stdout.strip().split('\n')
+    check('node matcher harness runs cleanly', proc.returncode == 0 and len(got) == len(cases),
+          (proc.stderr or '')[:200])
+    for (inp, want), have in zip(cases, got):
+        check('matcher %-46s -> %s' % (want, inp[:38]), have == want, 'got ' + have)
+
+
 # ------------------------------------------------- 5. referenced assets exist
 def t_assets():
     """A meta tag pointing at a missing file is the same defect class as copy that
@@ -189,14 +251,14 @@ def t_output():
     check('scam-domain snapshot matches its manifest count', meta.get('domains') == len(lines),
           '%s vs %d' % (meta.get('domains'), len(lines)))
     check('scam-domain snapshot lines are bare hosts',
-          not [l for l in lines[:500] if '/' in l or ' ' in l])
-    if not meta.get('commit'):
-        print('note: fraud-feeds-meta.json has no upstream commit yet '
-              '(stays empty until the next tools/fetch-fraud-feeds.py run)')
+          not [l for l in lines if '/' in l or ' ' in l])
+    check('scam-domain snapshot is attributed to an upstream commit', bool(meta.get('commit')))
+    check('scam-domain snapshot carries a digest for the offline audit',
+          bool(meta.get('snapshot_sha256')))
 
 
 def main():
-    for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_assets, t_output):
+    for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output):
         fn()
     for f in FAILS:
         print('FAIL:', f)

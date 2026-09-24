@@ -621,7 +621,7 @@
       fetch('../assets/data/destroylist-domains.txt')
         .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
         .then(function (txt) {
-          set = new Set(txt.split(/\r?\n/).filter(Boolean));
+          set = new Set(txt.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean));
           var wait = loading; loading = null;
           wait.forEach(function (fn) { fn(set); });
         })
@@ -650,6 +650,19 @@
       return m ? m[1].toLowerCase() : null;
     }
 
+    // Listed as a suffix down to the registrable root. Comparing only the last two
+    // labels would drop the ~20% of entries upstream publishes as deep hosts
+    // (e.g. 0.feixue316p.cloudns.biz), so those could never warn below their own
+    // exact host. Walking up keeps subdomains covered without widening a root
+    // entry into a wildcard over unrelated sites.
+    function listed(set, host) {
+      var parts = host.split('.');
+      for (var i = 0; i + 2 <= parts.length; i++) {
+        if (set.has(parts.slice(i).join('.'))) return true;
+      }
+      return false;
+    }
+
     function check() {
       loadDomains(function (s) {
         var raw = input.value.trim().toLowerCase();
@@ -659,9 +672,7 @@
           out.className = 'link-check-result is-unknown';
           return;
         }
-        var parts = host.split('.');
-        var root = parts.length > 2 ? parts.slice(-2).join('.') : host;
-        var bad = s.has(host) || s.has(root) || s.has(raw);
+        var bad = listed(s, host);
         out.textContent = bad ? t('linkcheck.bad') : t('linkcheck.ok');
         out.className = 'link-check-result ' + (bad ? 'is-bad' : 'is-ok');
       });
