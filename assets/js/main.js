@@ -441,7 +441,7 @@
       if (live) {
         live.textContent = shown === 0
           ? t('search.none').replace('{q}', q || t('search.allword'))
-          : t('filter.count').replace('{n}', String(shown));
+          : (shown === 1 ? t('filter.count.one') : t('filter.count').replace('{n}', String(shown)));
       }
     }
 
