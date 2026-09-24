@@ -284,8 +284,29 @@ def t_output():
           not widened, str(widened))
 
 
+def t_workflows():
+    """Actions must be pinned to an immutable commit and annotated with the tag
+    it resolves to. A bare @v6 moves under CI without notice — that is the same
+    failure class that turned the linkinator/undici bump red. SHA-vs-tag truth is
+    re-checked against the remote by _internal/audit_action_pins.py (needs net)."""
+    wf_dir = os.path.join(ROOT, '.github', 'workflows')
+    line = re.compile(r'uses:\s*([\w.\-/]+)@(\S+)(?:\s+#\s*(\S+))?')
+    found = 0
+    for fn in sorted(os.listdir(wf_dir)):
+        if not fn.endswith('.yml'):
+            continue
+        for repo, ref, comment in line.findall(read(os.path.join('.github', 'workflows', fn))):
+            found += 1
+            check('%s: %s pinned to a commit sha' % (fn, repo), len(ref) == 40 and
+                  all(c in '0123456789abcdef' for c in ref), ref)
+            check('%s: %s sha pin carries a #vX.Y.Z comment' % (fn, repo),
+                  bool(comment) and comment.startswith('v'), comment or '(none)')
+    check('workflow pin audit saw the steps it expects', found >= 6, '%d uses: lines' % found)
+
+
 def main():
-    for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output):
+    for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
+               t_workflows):
         fn()
     for f in FAILS:
         print('FAIL:', f)
