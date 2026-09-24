@@ -5,8 +5,26 @@
 
 ## [Unreleased]
 
-正在评估：教程正文全站数据驱动化（当前 `build.py check` 只守导航/页脚/教程详情页/防骗条目，
-手维护页的正文改动仍不会触发漂移告警）。
+（无。教程正文全站数据驱动化已于 1.2.0 完成。）
+
+## [1.2.0] - 2026-09-24
+
+### Added
+- **正文 SSG 化**：`sync_fallbacks` 使字典成为全站兜底文本唯一权威源，手改正文即被 `build.py check` 拦截
+- **GitHub Pages 上线**：deploy workflow + 在线演示（lxh113377.github.io/filialconnect）
+- **移动端 Lighthouse 门禁**（412×846 仿真，perf≥0.85 / a11y≥0.95 error 级）
+- **Service Worker 离线外壳**：页面与诈骗名单 network-first（过期名单绝不赢缓存）、图片 cache-first；SHELL 由 build.py 生成，新页自动入列
+- **无障碍声明页**（第 14 页，双语，含已知局限清单）
+- **per-page OG 分享卡** ×3（教程库/防骗/呼叫求助，sync_head 单源映射）
+- **HowTo JSON-LD**（6 教程页，内容管线生成）
+- **可疑链接自查工具**：destroylist 83,097 域名离线入库（MIT，档位披露见 SOURCES）
+- **PWA**：manifest + 品牌图标（含 maskable）+ 长按 shortcuts
+- lighthouserc / lighthouserc.mobile / sw.js 全部纳入 build.py 派生件（19 件零漂移门禁）
+
+### Changed
+- 无障碍声明口径 WCAG 2.1 → **2.2 AA**（补 2.4.11 focus-not-obscured：scroll-padding 实测落地）
+- 字典实体规范化（&mdash; 等 889 行归一为纯文本）
+- 内部工作文档迁出公开仓（_internal/）
 
 ## [1.1.0] - 2026-09-24
 

@@ -3,9 +3,9 @@
     "collect": {
       "url": [
         "http://127.0.0.1:8765/filialconnect/",
-        "http://127.0.0.1:8765/filialconnect/404.html",
-        "http://127.0.0.1:8765/filialconnect/pages/call-help.html",
-        "http://127.0.0.1:8765/filialconnect/pages/fraud-database.html"
+        "http://127.0.0.1:8765/filialconnect/pages/tutorials.html",
+        "http://127.0.0.1:8765/filialconnect/pages/fraud-database.html",
+        "http://127.0.0.1:8765/filialconnect/pages/call-help.html"
       ],
       "numberOfRuns": 3,
       "settings": {
