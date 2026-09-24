@@ -95,6 +95,21 @@ def _unescape(v):
     return ''.join(out)
 
 
+# Dictionary values must be plain text (applyTranslations renders them via
+# textContent, so a literal &mdash; would show as "&mdash;" on screen).
+# HTML named entities are normalized here so the dictionary is canonical.
+_ENTITIES = [('&amp;', '&'), ('&lt;', '<'), ('&gt;', '>'), ('&quot;', '"'),
+             ('&apos;', "'"), ('&nbsp;', ' '), ('&mdash;', '—'), ('&ndash;', '–'),
+             ('&hellip;', '…'), ('&times;', '×'), ('&divide;', '÷')]
+
+
+def _normalize_entities(v):
+    v = v.replace('&amp;', '\x01')
+    for src, dst in _ENTITIES[1:]:
+        v = v.replace(src, dst)
+    return v.replace('\x01', '&')
+
+
 def _escape(v):
     return v.replace('\\', '\\\\').replace("'", "\\'")
 
@@ -122,7 +137,7 @@ def parse_dict():
         if cur:
             mk = LINE_RE.match(ln)
             if mk:
-                d[cur][mk.group(1)] = _unescape(mk.group(2))
+                d[cur][mk.group(1)] = _normalize_entities(_unescape(mk.group(2)))
     return d
 
 
@@ -512,8 +527,55 @@ def sync_nav_footer(s, is_index):
     return s
 
 
+FALLBACK_TEXT_RE = re.compile(
+    r'<([a-z0-9]+)((?:[^>"]|"[^"]*")*?)data-i18n="([^"]+)"((?:[^>"]|"[^"]*")*?)>([^<]*)</\1>')
+OPEN_TAG_RE = re.compile(r'<([a-z0-9]+)((?:[^>"]|"[^"]*")*?)>')
+ATTR_KEY_RE = re.compile(r'data-i18n-(placeholder|aria-label)="([^"]+)"')
+
+
+def sync_fallbacks(s, dict_en):
+    """One-way dictionary -> HTML fallback sync (SSG for body text).
+
+    Text nodes: replaced with the dictionary EN value (only <br> markup is
+    honored, mirroring applyTranslations). Attributes: for elements carrying
+    data-i18n-placeholder / data-i18n-aria-label, the *effective* placeholder
+    / aria-label attribute is upserted with the dictionary value (the
+    data-i18n-* key references themselves are never touched). After this,
+    tools/build.py check fails on any hand edit of fallback text.
+    """
+    def repl_text(m):
+        tag, pre, key, post, content = m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)
+        val = dict_en.get(key)
+        if val is None:
+            return m.group(0)
+        new = '<br>'.join(esc_text(part) for part in val.split('<br>'))
+        if content.strip() == new:
+            return m.group(0)
+        return '<%s%sdata-i18n="%s"%s>%s</%s>' % (tag, pre, key, post, new, tag)
+
+    def repl_tag(m):
+        tag, attrs = m.group(1), m.group(2)
+        found = ATTR_KEY_RE.findall(attrs)
+        if not found:
+            return m.group(0)
+        new_attrs = attrs
+        for kind, key in found:
+            val = dict_en.get(key)
+            if val is None:
+                continue
+            attr_name = 'placeholder' if kind == 'placeholder' else 'aria-label'
+            # (?<![-\w]) so we never strip the data-i18n-* key attribute itself
+            new_attrs = re.sub(r'(?<![-\w])\s*%s="[^"]*"' % attr_name, '', new_attrs)
+            new_attrs = new_attrs.rstrip() + ' %s="%s"' % (attr_name, esc(val))
+        return '<%s%s>' % (tag, new_attrs)
+
+    s = FALLBACK_TEXT_RE.sub(repl_text, s)
+    return OPEN_TAG_RE.sub(repl_tag, s)
+
+
 def build_outputs():
     tuts, cases = load_content()
+    dict_en = parse_dict()['en']
     out = {'assets/js/i18n.js': render_i18n(), 'sitemap.xml': render_sitemap()}
     tut_by_file = {t['file']: t for t in tuts}
     for t in tuts:
@@ -536,6 +598,10 @@ def build_outputs():
             s = re.sub(re.escape(FRAUD_MARK_BEG) + r'.*?' + re.escape(FRAUD_MARK_END),
                        lambda m: block, s, flags=re.S)
         out[fp] = s
+    # SSG pass: dictionary is the single source for every fallback text/attr
+    html_keys = [k for k in out if k.endswith('.html')] + ['404.html']
+    for fp in sorted(set(html_keys)):
+        out[fp] = sync_fallbacks(out[fp], dict_en)
     return out
 
 

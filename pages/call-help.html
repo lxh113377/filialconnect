@@ -62,9 +62,9 @@
       </ul>
 
       <div class="nav-a11y" role="group" data-i18n-aria-label="nav.a11y.group" aria-label="Reading aids">
-        <button type="button" class="a11y-btn font-btn" data-fontscale="base" aria-pressed="false" data-i18n="font.base">Standard</button>
-        <button type="button" class="a11y-btn font-btn" data-fontscale="lg" aria-pressed="false" data-i18n="font.lg">Large</button>
-        <button type="button" class="a11y-btn font-btn" data-fontscale="xl" aria-pressed="false" data-i18n="font.xl">Huge</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="base" aria-pressed="false" data-i18n="font.base">Standard text</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="lg" aria-pressed="false" data-i18n="font.lg">Large text</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="xl" aria-pressed="false" data-i18n="font.xl">Huge text</button>
         <button type="button" class="a11y-btn read-btn" aria-pressed="false" data-i18n="read.btn">Read aloud</button>
       </div>
     </nav>
@@ -81,12 +81,9 @@
     <!-- Emergency Call Section -->
     <section class="call-help-hero" aria-labelledby="call-heading">
       <h1 id="call-heading" style="margin-bottom: var(--space-sm);" data-i18n="call.h1">Need Help Right Now?</h1>
-      <p style="font-size: var(--text-lg); color: var(--color-text-secondary); margin-bottom: var(--space-2xl); max-width: 500px; margin-left: auto; margin-right: auto;" data-i18n="call.p">
-        One tap opens your own phone dialer with the family number you saved here already typed in.
-        This site has no server and cannot send a message by itself.
-      </p>
+      <p style="font-size: var(--text-lg); color: var(--color-text-secondary); margin-bottom: var(--space-2xl); max-width: 500px; margin-left: auto; margin-right: auto;" data-i18n="call.p">One tap opens your own phone dialer with the family number you saved here already typed in. This site has no server and cannot send a message by itself.</p>
 
-      <button type="button" class="call-button" data-i18n-aria-label="call.button.aria" aria-label="Call for Help - open the phone dialer for your saved family number">
+      <button type="button" class="call-button" data-i18n-aria-label="call.button.aria" aria-label="Call for Help - send an emergency request to your family">
         <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
           <path d="M8 6l10 8-4 6 14 14 6-4 8 10-4 4C24 43 12 34 10 10L8 6z" fill="currentColor"/>
         </svg>
@@ -95,20 +92,14 @@
 
       <div class="call-status" role="status" aria-live="polite">
         <h2 data-i18n="call.status.h3">Your phone app is opening</h2>
-        <p class="call-status-line" data-i18n="call.status.p">
-          This site only opens the dialer on your own phone; it cannot send anything by itself.
-          Press call there to reach your family. If nobody answers and this is an emergency, call 120.
-        </p>
+        <p class="call-status-line" data-i18n="call.status.p">This site only opens the dialer on your own phone; it cannot send anything by itself. Press call there to reach your family. If nobody answers and this is an emergency, call 120.</p>
       </div>
     </section>
 
     <!-- Family contact setup (saved on this device only) -->
     <section class="family-setup" aria-labelledby="family-heading">
       <h2 id="family-heading" style="margin-bottom: var(--space-sm);" data-i18n="family.h2">Step 1: Tell this page who to contact</h2>
-      <p style="margin-bottom: var(--space-lg); color: var(--color-text-secondary);" data-i18n="family.p">
-        Type a family member name and phone number once, on the device you use. This site has no server:
-        nothing is uploaded, and no message leaves your phone until you press send in your own phone app.
-      </p>
+      <p style="margin-bottom: var(--space-lg); color: var(--color-text-secondary);" data-i18n="family.p">Type a family member name and phone number once, on the device you use. This site has no server: nothing is uploaded, and no message leaves your phone until you press send in your own phone app.</p>
 
       <form id="family-form" class="family-form" novalidate="novalidate">
         <div class="form-group">
@@ -131,10 +122,7 @@
     <!-- Help Request Form -->
     <section class="help-form" aria-labelledby="form-heading">
       <h2 id="form-heading" style="margin-bottom: var(--space-lg);" data-i18n="call.form.h2">Send a Detailed Request</h2>
-      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="call.form.p">
-        Describe what you need help with. This writes a text message (or email) on your own phone,
-        addressed to your family. Check it, then press send.
-      </p>
+      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="call.form.p">Describe what you need help with. This writes a text message (or email) on your own phone, addressed to your family. Check it, then press send.</p>
 
       <form id="help-request-form" novalidate="novalidate">
         <div class="form-group">
@@ -152,16 +140,16 @@
 
         <div class="form-group">
           <label for="help-message" data-i18n="call.form.msg-label">Describe your problem</label>
-          <textarea id="help-message" class="form-textarea" placeholder="Example: I cannot find the appointment booking button in the hospital app..." data-i18n-placeholder="call.form.msg-placeholder"></textarea>
+          <textarea id="help-message" class="form-textarea" data-i18n-placeholder="call.form.msg-placeholder" placeholder="Example: I cannot find the appointment booking button in the hospital app..."></textarea>
           <span class="form-hint" data-i18n="call.form.msg-hint">The more details you share, the faster your family can help.</span>
         </div>
 
         <div class="form-group">
           <label for="help-urgency" data-i18n="call.form.urgency-label">How urgent is this?</label>
           <select id="help-urgency" class="form-select">
-            <option value="normal" data-i18n="call.form.urgency.normal">Normal &mdash; I can wait</option>
-            <option value="soon" data-i18n="call.form.urgency.soon">Soon &mdash; Within a few hours</option>
-            <option value="urgent" data-i18n="call.form.urgency.urgent">Urgent &mdash; As soon as possible</option>
+            <option value="normal" data-i18n="call.form.urgency.normal">Normal — I can wait</option>
+            <option value="soon" data-i18n="call.form.urgency.soon">Soon — Within a few hours</option>
+            <option value="urgent" data-i18n="call.form.urgency.urgent">Urgent — As soon as possible</option>
           </select>
         </div>
 
@@ -225,7 +213,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
+      <p data-i18n="footer.bottom">FilialConnect — Digital Warmth Across the Miles</p>
     </div>
   </footer>
   <!-- END:FOOTER -->

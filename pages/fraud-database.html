@@ -62,9 +62,9 @@
       </ul>
 
       <div class="nav-a11y" role="group" data-i18n-aria-label="nav.a11y.group" aria-label="Reading aids">
-        <button type="button" class="a11y-btn font-btn" data-fontscale="base" aria-pressed="false" data-i18n="font.base">Standard</button>
-        <button type="button" class="a11y-btn font-btn" data-fontscale="lg" aria-pressed="false" data-i18n="font.lg">Large</button>
-        <button type="button" class="a11y-btn font-btn" data-fontscale="xl" aria-pressed="false" data-i18n="font.xl">Huge</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="base" aria-pressed="false" data-i18n="font.base">Standard text</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="lg" aria-pressed="false" data-i18n="font.lg">Large text</button>
+        <button type="button" class="a11y-btn font-btn" data-fontscale="xl" aria-pressed="false" data-i18n="font.xl">Huge text</button>
         <button type="button" class="a11y-btn read-btn" aria-pressed="false" data-i18n="read.btn">Read aloud</button>
       </div>
     </nav>
@@ -80,7 +80,7 @@
 
     <header class="page-header" aria-labelledby="page-title">
       <h1 id="page-title" data-i18n="fraud.h1">Fraud Alert Database</h1>
-      <p data-i18n="fraud.p">Knowledge is your best defense. Learn to recognize common scams before they reach you.</p>
+      <p data-i18n="fraud.p">Knowledge is your best defense. Learn to recognize scams before they find you.</p>
     </header>
 
     <!-- Warning Banner -->
@@ -92,9 +92,7 @@
         </svg>
         <div>
           <strong style="color: var(--color-danger); font-size: var(--text-lg);" data-i18n="fraud.banner.strong">Important Safety Reminder</strong>
-          <p style="margin: var(--space-xs) 0 0; font-size: var(--text-base); color: var(--color-text);" data-i18n="fraud.banner.p">
-            Banks, police, and government agencies will never ask for your passwords, verification codes, or money transfers over the phone. If someone does, hang up immediately.
-          </p>
+          <p style="margin: var(--space-xs) 0 0; font-size: var(--text-base); color: var(--color-text);" data-i18n="fraud.banner.p">Banks, police, and government agencies will NEVER call to ask for your password, verification code, or to transfer money. If someone does, hang up immediately.</p>
         </div>
       </div>
     </div>
@@ -242,20 +240,20 @@
 
     <!-- Report Section -->
     <section class="section" style="text-align:center;" aria-labelledby="report-heading">
-      <h2 id="report-heading" style="margin-bottom: var(--space-md);" data-i18n="fraud.report.h2">Think You Have Been Targeted?</h2>
-      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="fraud.report.p">If you suspect a scam, tell your family immediately. They can help you verify and report it.</p>
-      <a href="call-help.html" class="btn btn-accent btn-lg" data-i18n="fraud.report.btn">Alert Your Family Now</a>
+      <h2 id="report-heading" style="margin-bottom: var(--space-md);" data-i18n="fraud.report.h2">Suspect You Have Been Targeted?</h2>
+      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="fraud.report.p">If you think you have encountered a scam, tell your family immediately. They can help you verify and report it.</p>
+      <a href="call-help.html" class="btn btn-accent btn-lg" data-i18n="fraud.report.btn">Alert My Family Now</a>
     </section>
     <!-- Suspicious Link Self-Check -->
     <section class="link-check" aria-labelledby="linkcheck-heading">
       <h2 id="linkcheck-heading" data-i18n="linkcheck.h2">Suspicious Link Self-Check</h2>
       <p class="link-check-desc" data-i18n="linkcheck.p">Paste a link or domain from a text message or stranger. It is checked offline against a list of known scam domains. No internet connection needed.</p>
       <div class="link-check-form">
-        <input type="text" id="link-check-input" class="link-check-input" inputmode="url" data-i18n-placeholder="linkcheck.placeholder" placeholder="Paste a link or domain here" data-i18n-aria-label="linkcheck.aria" aria-label="Link or domain to check">
+        <input type="text" id="link-check-input" class="link-check-input" inputmode="url" data-i18n-placeholder="linkcheck.placeholder" data-i18n-aria-label="linkcheck.aria" placeholder="Paste a link or domain here" aria-label="Link or domain to check">
         <button type="button" id="link-check-btn" class="btn btn-primary" data-i18n="linkcheck.btn">Check Link</button>
       </div>
       <p id="link-check-result" class="link-check-result" role="status" aria-live="polite"></p>
-      <p class="link-check-scope" data-i18n="linkcheck.scope">Scope: about 83,000 international phishing domains; Chinese domains and phone scams are not covered.</p>
+      <p class="link-check-scope" data-i18n="linkcheck.scope">Scope: this offline list holds about 83,000 international phishing domains. Chinese domains and phone scams are not in it, so a clean result does not mean the message is safe.</p>
       <p class="link-check-note" data-i18n="linkcheck.note">Offline list from destroylist (MIT). Your input never leaves this page.</p>
     </section>
 
@@ -288,7 +286,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
+      <p data-i18n="footer.bottom">FilialConnect — Digital Warmth Across the Miles</p>
     </div>
   </footer>
   <!-- END:FOOTER -->

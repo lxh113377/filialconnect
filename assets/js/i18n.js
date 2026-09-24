@@ -12,21 +12,17 @@ var I18N = {
     'nav.guides': 'Guides',
     'nav.remote': 'Remote Help',
     'nav.call': 'Call for Help',
-
     /* Navigation Brand */
     'nav.brand': 'FilialConnect',
     'nav.brand.aria': 'FilialConnect Home',
-
     /* Hero */
     'hero.h1': 'Digital Warmth<br>Across the Miles',
     'hero.p': 'Bridging the digital divide for seniors. One click connects them to the help they need, when they need it most.',
     'hero.cta-call': 'Call for Help',
     'hero.cta-tutorials': 'Browse Tutorials',
-
     /* Features */
     'features.h2': 'Everything You Need, Right Here',
     'features.p': 'Five core tools designed to make digital life easier for seniors and their families',
-
     /* Cards */
     'card.tutorials.h3': 'Tutorial Library',
     'card.tutorials.p': 'Step-by-step guides with large-print steps and simple diagrams for hospital apps, train tickets, banking, and more. No videos needed — just clear text and pictures.',
@@ -42,7 +38,6 @@ var I18N = {
     'card.guides.h3': 'Printable Guides',
     'card.guides.p': 'Download and print clear instructions to take to the bank, hospital, or anywhere. Large print, simple steps, always ready.',
     'card.guides.link': 'Download & Print',
-
     /* Trust Section */
     'trust.h2': 'Designed with Care',
     'trust.p': 'Every detail is crafted for accessibility, clarity, and peace of mind',
@@ -54,7 +49,6 @@ var I18N = {
     'trust.touch.p': 'All buttons are at least 48x48px. Easy to tap, even with unsteady hands.',
     'trust.privacy.h4': 'Privacy First',
     'trust.privacy.p': 'All connections are family-only. No data leaves your trusted circle.',
-
     /* Footer */
     'footer.brand.h3': 'FilialConnect',
     'footer.brand.p': 'Bridging generations through thoughtful technology. Designed for seniors, built with care.',
@@ -67,8 +61,7 @@ var I18N = {
     'footer.link.guides': 'Printable Guides',
     'footer.link.getting-started': 'Getting Started',
     'footer.link.safety': 'Safety Tips',
-    'footer.bottom': 'FilialConnect &mdash; Digital Warmth Across the Miles',
-
+    'footer.bottom': 'FilialConnect — Digital Warmth Across the Miles',
     /* Back to Top */
 
     /* Breadcrumb */
@@ -78,10 +71,9 @@ var I18N = {
     'breadcrumb.remote': 'Remote Help',
     'breadcrumb.fraud': 'Fraud Alerts',
     'breadcrumb.guides': 'Printable Guides',
-
     /* Tutorials Page */
     'tutorials.h1': 'Tutorial Library',
-    'tutorials.p': 'Clear, step-by-step guides in large print with simple diagrams. No videos, no jargon\u2014just simple instructions you can follow at your own pace.',
+    'tutorials.p': 'Clear, step-by-step guides in large print with simple diagrams. No videos, no jargon—just simple instructions you can follow at your own pace.',
     'filter.all': 'All Topics',
     'filter.health': 'Healthcare',
     'filter.transport': 'Transportation',
@@ -107,8 +99,7 @@ var I18N = {
     'tut.medical.p': 'How to read and understand common medical reports and test results. Learn what the numbers mean before your doctor visit.',
     'tut.ride.tag1': 'Transportation',
     'tut.ride.h3': 'Using Ride-Hailing Apps',
-    'tut.ride.p': 'Call a taxi with your phone. Setting pickup location, choosing payment method, and tracking your ride\u2014all explained clearly.',
-
+    'tut.ride.p': 'Call a taxi with your phone. Setting pickup location, choosing payment method, and tracking your ride—all explained clearly.',
     /* Call Help Page */
     'call.h1': 'Need Help Right Now?',
     'call.button': 'Call for Help',
@@ -126,14 +117,13 @@ var I18N = {
     'call.form.msg-placeholder': 'Example: I cannot find the appointment booking button in the hospital app...',
     'call.form.msg-hint': 'The more details you share, the faster your family can help.',
     'call.form.urgency-label': 'How urgent is this?',
-    'call.form.urgency.normal': 'Normal &mdash; I can wait',
-    'call.form.urgency.soon': 'Soon &mdash; Within a few hours',
-    'call.form.urgency.urgent': 'Urgent &mdash; As soon as possible',
+    'call.form.urgency.normal': 'Normal — I can wait',
+    'call.form.urgency.soon': 'Soon — Within a few hours',
+    'call.form.urgency.urgent': 'Urgent — As soon as possible',
     'call.form.submit': 'Send Help Request',
     'call.how.h2': 'How It Works',
     'call.step1.h4': 'You Tap the Button',
     'call.step1.p': 'One big orange button. No menus, no confusion.',
-
     /* Remote Assist Page */
     'remote.h1': 'Remote Assistance',
     'remote.p': 'Let your children see your screen and guide you through any digital task. Secure, private, and only your family can connect.',
@@ -162,7 +152,6 @@ var I18N = {
     'remote.cta.h2': 'Need Urgent Help?',
     'remote.cta.p': 'If you cannot wait for remote assistance, send an instant help request.',
     'remote.cta.btn': 'Call for Help Now',
-
     /* Fraud Database Page */
     'fraud.h1': 'Fraud Alert Database',
     'fraud.p': 'Knowledge is your best defense. Learn to recognize scams before they find you.',
@@ -171,7 +160,6 @@ var I18N = {
     'fraud.report.h2': 'Suspect You Have Been Targeted?',
     'fraud.report.p': 'If you think you have encountered a scam, tell your family immediately. They can help you verify and report it.',
     'fraud.report.btn': 'Alert My Family Now',
-
     /* Guides Page */
     'guides.h1': 'Printable Guides',
     'guides.p': 'Download and print step-by-step instructions. Take them to the bank, hospital, or anywhere you need. Large print, simple steps, always ready.',
@@ -213,7 +201,6 @@ var I18N = {
     'guide.emergency.6': 'Your Blood Type: _________________',
     'guide.emergency.7': 'Allergies: _________________',
     'guide.print': 'Print This Guide',
-
     /* Call Button States */
 
     /* Toast */
@@ -222,7 +209,6 @@ var I18N = {
     'tut-detail.related': 'Related Tutorials',
     'tut-detail.guides-link': 'View Printable Guide',
     'tut-detail.step': 'Step',
-
     /* Tutorial Detail — Hospital */
 
     /* Tutorial Detail — Train */
@@ -476,21 +462,17 @@ var I18N = {
     'nav.guides': '打印指南',
     'nav.remote': '远程协助',
     'nav.call': '呼叫求助',
-
     /* Navigation Brand */
     'nav.brand': '孝心联',
     'nav.brand.aria': '孝心联首页',
-
     /* Hero */
     'hero.h1': '跨越千里<br>传递温暖',
     'hero.p': '为长者架起数字桥梁。一键连接，让他们在最需要的时候，得到最及时的帮助。',
     'hero.cta-call': '呼叫求助',
     'hero.cta-tutorials': '浏览教程',
-
     /* Features */
     'features.h2': '您需要的一切，都在这里',
     'features.p': '五大核心工具，专为老年用户及其家人设计，让数字生活更轻松',
-
     /* Cards */
     'card.tutorials.h3': '教程库',
     'card.tutorials.p': '超大字号分步指南，配简明图示，涵盖医院挂号、火车票、银行业务等。无需视频，只需清晰的文字和图片。',
@@ -506,7 +488,6 @@ var I18N = {
     'card.guides.h3': '可打印指南',
     'card.guides.p': '下载并打印清晰的说明，带到银行、医院或任何您需要的地方。大字印刷，步骤简单，随时可用。',
     'card.guides.link': '下载并打印',
-
     /* Trust Section */
     'trust.h2': '用心设计',
     'trust.p': '每一个细节都为无障碍、清晰度和安心感而精心打造',
@@ -518,7 +499,6 @@ var I18N = {
     'trust.touch.p': '所有按钮至少 48x48px。即使手抖，也能轻松点击。',
     'trust.privacy.h4': '隐私优先',
     'trust.privacy.p': '所有连接仅限家人。数据不会离开您的信任圈。',
-
     /* Footer */
     'footer.brand.h3': '孝心联',
     'footer.brand.p': '用科技传递温暖，连接代际。专为老年人设计，用心打造。',
@@ -531,8 +511,7 @@ var I18N = {
     'footer.link.guides': '打印指南',
     'footer.link.getting-started': '快速入门',
     'footer.link.safety': '安全提示',
-    'footer.bottom': '孝心联 \u2014 跨越千里，传递温暖',
-
+    'footer.bottom': '孝心联 — 跨越千里，传递温暖',
     /* Back to Top */
 
     /* Breadcrumb */
@@ -542,10 +521,9 @@ var I18N = {
     'breadcrumb.remote': '远程协助',
     'breadcrumb.fraud': '防骗提醒',
     'breadcrumb.guides': '打印指南',
-
     /* Tutorials Page */
     'tutorials.h1': '使用教程库',
-    'tutorials.p': '清晰、逐步的图文指南。无需视频，无需术语\u2014只需简单说明，按您自己的节奏学习。',
+    'tutorials.p': '清晰、逐步的图文指南。无需视频，无需术语—只需简单说明，按您自己的节奏学习。',
     'filter.all': '全部主题',
     'filter.health': '医疗健康',
     'filter.transport': '交通出行',
@@ -571,8 +549,7 @@ var I18N = {
     'tut.medical.p': '如何阅读和理解常见医疗报告和检查结果。在就诊前了解各项指标的含义。',
     'tut.ride.tag1': '交通出行',
     'tut.ride.h3': '使用网约车 App',
-    'tut.ride.p': '用手机叫出租车。设置上车地点、选择支付方式、追踪行程\u2014一切说明清晰易懂。',
-
+    'tut.ride.p': '用手机叫出租车。设置上车地点、选择支付方式、追踪行程—一切说明清晰易懂。',
     /* Call Help Page */
     'call.h1': '现在需要帮助？',
     'call.button': '呼叫求助',
@@ -590,14 +567,13 @@ var I18N = {
     'call.form.msg-placeholder': '例如：我在医院 App 里找不到预约挂号按钮...',
     'call.form.msg-hint': '您提供的信息越详细，家人就能越快帮助您。',
     'call.form.urgency-label': '紧急程度？',
-    'call.form.urgency.normal': '普通 \u2014 我可以等待',
-    'call.form.urgency.soon': '尽快 \u2014 几小时内',
-    'call.form.urgency.urgent': '紧急 \u2014 越快越好',
+    'call.form.urgency.normal': '普通 — 我可以等待',
+    'call.form.urgency.soon': '尽快 — 几小时内',
+    'call.form.urgency.urgent': '紧急 — 越快越好',
     'call.form.submit': '发送求助请求',
     'call.how.h2': '工作原理',
     'call.step1.h4': '您按下按钮',
     'call.step1.p': '一个大大的橙色按钮。无需菜单，无需困惑。',
-
     /* Remote Assist Page */
     'remote.h1': '远程协助',
     'remote.p': '让您的子女看到您的屏幕，引导您完成任何数字操作。安全、私密，只有您的家人可以连接。',
@@ -626,7 +602,6 @@ var I18N = {
     'remote.cta.h2': '需要紧急帮助？',
     'remote.cta.p': '如果您无法等待远程协助，请发送即时求助请求。',
     'remote.cta.btn': '立即呼叫求助',
-
     /* Fraud Database Page */
     'fraud.h1': '防骗数据库',
     'fraud.p': '知识是最好的防线。在骗局找到您之前，先学会识别它们。',
@@ -635,7 +610,6 @@ var I18N = {
     'fraud.report.h2': '怀疑您已被盯上？',
     'fraud.report.p': '如果您怀疑遇到骗局，请立即告诉您的家人。他们可以帮您核实并举报。',
     'fraud.report.btn': '立即提醒家人',
-
     /* Guides Page */
     'guides.h1': '可打印指南',
     'guides.p': '下载并打印逐步说明。带到银行、医院或任何您需要的地方。大字印刷，步骤简单，随时可用。',
@@ -677,7 +651,6 @@ var I18N = {
     'guide.emergency.6': '您的血型：_________________',
     'guide.emergency.7': '过敏史：_________________',
     'guide.print': '打印此指南',
-
     /* Call Button States */
 
     /* Toast */
@@ -686,7 +659,6 @@ var I18N = {
     'tut-detail.related': '相关教程',
     'tut-detail.guides-link': '查看打印指南',
     'tut-detail.step': '步骤',
-
     /* Tutorial Detail — Hospital */
 
     /* Tutorial Detail — Train */
