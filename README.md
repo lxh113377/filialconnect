@@ -13,7 +13,7 @@
 ![WCAG 2.2 AA](https://img.shields.io/badge/WCAG%202.2-AA%20%E2%9C%93-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**纯静态 · 零外部依赖 · 构建脚本只用 Python 标准库 · Lighthouse 无障碍 1.0（13 页 CI 门禁 ≥0.95）· 长者字号三档 + 整页朗读**
+**纯静态 · 无构建步骤 · 构建脚本只用 Python 标准库 · Lighthouse 无障碍 1.0（13 页 CI 门禁 ≥0.95）· 长者字号三档 + 整页朗读**
 
 ## 功能模块
 

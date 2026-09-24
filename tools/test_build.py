@@ -263,8 +263,9 @@ def t_output():
     check('dev tooling versions are exact (no ^ or ~ drift inside CI)',
           not [k for k, v in dev.items() if v.lstrip() and v[0] in '^~*x'],
           str({k: v for k, v in dev.items() if v[:1] in '^~*x'}))
-    check('no runtime dependency is shipped to the browser', not pkg.get('dependencies'),
-          str(sorted(pkg.get('dependencies', {}))))
+    # Deliberately NO assertion that `dependencies` stays empty: that would re-encode
+    # "hand-roll everything" as a machine rule. Whether to add a library is a judgement
+    # call, not a gate. (2026-09-25 user revoked the zero-dependency stance.)
     pkgs = lock.get('packages', {})
     drift = {k: (dev.get(k), pkgs.get('node_modules/' + k, {}).get('version')) for k in dev
              if pkgs.get('node_modules/' + k, {}).get('version') != dev.get(k)}
