@@ -14,3 +14,7 @@ node_modules/
 
 # Archives
 *.zip
+
+# Python tooling
+__pycache__/
+*.pyc
