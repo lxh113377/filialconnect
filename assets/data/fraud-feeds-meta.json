@@ -8,5 +8,6 @@
   "domains": 83097,
   "malformed_skipped": 0,
   "coverage_note": "international phishing roots only; mainland-China domains counted below",
-  "mainland_cn_domains": 653
+  "mainland_cn_domains": 653,
+  "snapshot_sha256": "87251fcbdece0603e92eb637b9bc2a28407ce77f2a6290e30c97a93a8c667c78"
 }

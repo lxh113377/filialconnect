@@ -135,7 +135,13 @@ def t_promises():
     check('no unimplementable help-delivery promises in copy',
           not [b for b in banned if b in s], str([b for b in banned if b in s]))
     check('help flow states it cannot send by itself', 'cannot send' in s or '不会自己发' in s)
-    check('link checker discloses its coverage limit', 'not covered' in s or '不含境内' in s)
+    check('link checker discloses its coverage limit',
+          '83,000' in s and '8.3 万' in s and 'does not mean' in s and '并不等于' in s)
+    feed = json.loads(read('assets/data/fraud-feeds-meta.json'))
+    cn_pct = 100.0 * feed['mainland_cn_domains'] / feed['domains']
+    check('mainland-coverage wording matches the measured feed (<1% claim)',
+          'fewer than 1%' in s and '不到 1%' in s and cn_pct < 1.0,
+          'copy claims <1%%, feed measures %.2f%%' % cn_pct)
 
 
 # ------------------------------------------------- 5. referenced assets exist

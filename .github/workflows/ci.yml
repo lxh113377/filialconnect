@@ -19,7 +19,7 @@ jobs:
           node-version: 20
 
       - name: HTML validation (HTMLHint)
-        run: npx --yes htmlhint "index.html" "404.html" "pages/*.html"
+        run: npx --yes htmlhint@1.9.2 "index.html" "404.html" "pages/*.html"
 
       - name: i18n symmetry check (EN/ZH keys + HTML coverage + orphans)
         run: python3 tools/check-i18n.py
@@ -30,14 +30,17 @@ jobs:
       - name: Pipeline self-tests (build/check/i18n invariants)
         run: python3 tools/test_build.py
 
+      - name: Scam-list provenance and freshness check
+        run: python3 tools/fetch-fraud-feeds.py --check
+
       - name: Link check (linkinator, fragments + external)
         run: |
-          npx --yes linkinator . \
+          npx --yes linkinator@8.1.0 . \
             --recurse --check-fragments --check-external \
             --skip "https://lxh113377.github.io/filialconnect.*"
 
       - name: Link check (markdown docs)
-        run: npx --yes linkinator README.md CONTRIBUTING.md SECURITY.md SOURCES.md --recurse
+        run: npx --yes linkinator@8.1.0 README.md CONTRIBUTING.md SECURITY.md SOURCES.md --recurse
 
       - name: Serve site under the production subpath
         run: |
@@ -59,7 +62,7 @@ jobs:
 
       - name: Lighthouse CI (performance + a11y budgets, all pages, desktop)
         run: |
-          npm install -g @lhci/cli@0.14.x
+          npm install -g @lhci/cli@0.14.0
           lhci autorun --config=lighthouserc.json
 
       - name: Lighthouse CI (mobile budgets - primary device for seniors)
