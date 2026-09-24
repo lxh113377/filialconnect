@@ -255,6 +255,17 @@ def t_output():
     check('scam-domain snapshot is attributed to an upstream commit', bool(meta.get('commit')))
     check('scam-domain snapshot carries a digest for the offline audit',
           bool(meta.get('snapshot_sha256')))
+    # listed() walks up to the registrable root, so a free-hosting suffix in the
+    # list would flag every site under it. Upstream has never listed one; keep that
+    # as a canary so an upstream addition becomes a human decision, not a wave of
+    # false alarms for grandma's blog.
+    public_suffixes = {'blogspot.com', 'github.io', 'netlify.app', 'vercel.app', 'pages.dev',
+                       'web.app', 'appspot.com', 'herokuapp.com', 'wixsite.com', 'weebly.com',
+                       'wordpress.com', 'substack.com', 'notion.site', 'glitch.me', 'repl.co',
+                       'ngrok.io', 'cloudfront.net', 'amazonaws.com', 't.me', 'bit.ly'}
+    widened = sorted(set(lines) & public_suffixes)
+    check('no public-hosting suffix listed (would widen to mass false positives)',
+          not widened, str(widened))
 
 
 def main():
