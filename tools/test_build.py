@@ -745,10 +745,34 @@ def t_no_duplicate_defs():
         check('no duplicate top-level def in tools/%s' % name, not dup, str(dup))
 
 
+def t_changelog_shape():
+    """Two long-line editing accidents this session (rounds 12 and 14) ate a neighbouring bullet's
+    lead line while adding an entry. The damage always looks the same: the orphaned continuation
+    survives under a *different* bullet, and two bullets end up sharing one lead-in. That is
+    structurally detectable, so it should not depend on the editor noticing."""
+    log = read('CHANGELOG.md')
+    section, seen, dup = None, set(), []
+    for ln in log.split('\n'):
+        if ln.startswith('## ['):
+            section, seen = ln.strip(), set()
+            continue
+        if not ln.startswith('- ') or section is None:
+            continue
+        lead = ln[2:42].strip().lower().rstrip(':：')
+        if lead and lead in seen:
+            dup.append('%s :: %s' % (section, lead))
+        seen.add(lead)
+    check('no duplicated bullet lead-in inside a CHANGELOG section', not dup, str(dup[:3]))
+    orphans = [i for i, ln in enumerate(log.split('\n')[1:], 1)
+               if ln.startswith('  ') and log.split('\n')[i - 1].strip() == '']
+    check('no continuation line orphaned after a blank line', not orphans, str(orphans[:3]))
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
-               t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs):
+               t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs,
+               t_changelog_shape):
         fn()
     for f in FAILS:
         print('FAIL:', f)
