@@ -471,9 +471,36 @@ def t_contrast_tokens():
             check('no %s brand token doubles as text on its own tint' % status, not hits, str(hits[:2]))
 
 
+def t_contrast_pairs():
+    """Both palettes, every declared fg/bg pair, on any machine, with no browser.
+
+    This replaces the plan of teaching CI to render dark mode: that needed the 28-token dark
+    block duplicated behind a data-theme hook, i.e. a new drift surface to close a checking
+    gap. Two guards below exist because this resolver produced a plausible-looking table twice
+    while it was broken (light and dark resolving to the same numbers), and a green row from a
+    check that measures one palette twice is worse than no check.
+    """
+    import contrast_audit as ca
+    import contextlib
+    import io as _io
+    with contextlib.redirect_stdout(_io.StringIO()):
+        agrees = ca.selfcheck() is True
+    check('contrast model agrees with axe on 3 measured pairs', agrees)
+    css = read('assets/css/main.css')
+    _light, _dark, overridden = ca.token_tables(css)
+    check('dark palette really overrides tokens (else both columns prove the same thing)',
+          overridden >= 20, '%d overridden' % overridden)
+    entries = ca.pairs(css)
+    opaque = [e for e in entries if e['opaque']]
+    check('contrast resolver still parses the stylesheet', len(opaque) >= 30, '%d of %d' % (len(opaque), len(entries)))
+    for e in ca.failures(entries):
+        check('contrast AA in both palettes: %s' % e['selector'], False,
+              'light %.2f / dark %.2f, needs %.1f' % (e['light'], e['dark'], e['required']))
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
-               t_workflows, t_vendor, t_budgets, t_contrast_tokens):
+               t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs):
         fn()
     for f in FAILS:
         print('FAIL:', f)
