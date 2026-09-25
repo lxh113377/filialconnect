@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Changed
+- **`xmlbuilder2` 3.1.1 → 4.0.3**（#132，9 项直接依赖里唯一落后的那一个，且是一个主版本）。
+  验收方式不是"装得上就算过"：`node tools/build.mjs build` 后对 `sitemap.xml` 做**逐字节比对**，
+  与升级前完全一致（XML 声明、转义还原那两行、换行都不差），`node tools/build.mjs check` 与
+  1,879 条门禁全绿。过程中本仓的"精确锁版本"判据还把我自己拦了一次——
+  `npm i -D xmlbuilder2@4` 默认写进 `^4.0.3`，判据立刻报
+  `lockfile pins the same dev tool versions package.json declares: {'xmlbuilder2': ('^4.0.3', '4.0.3')}`，
+  改用 `--save-exact` 才通过（这正是该判据该干的活）。
+  纯构建期依赖、产物零变化 ⇒ 按规矩留 Unreleased 随下次内容发版带走，不另开版本号。
+
 ## [1.6.1] - 2026-09-25
 
 ### Added

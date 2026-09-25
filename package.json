@@ -17,7 +17,7 @@
     "linkinator": "8.1.0",
     "pagefind": "1.5.2",
     "workbox-build": "7.4.1",
-    "xmlbuilder2": "3.1.1"
+    "xmlbuilder2": "4.0.3"
   },
   "engines": {
     "node": ">=22.19"
