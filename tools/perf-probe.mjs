@@ -264,7 +264,15 @@ async function main() {
       const cfg = profileConfig(name);
       const rows = [];
       const only = argv.only ? String(argv.only) : null;
-      for (const url of cfg.urls.filter((u) => !only || u.includes(only))) {
+      const targets = cfg.urls.filter((u) => !only || u.includes(only));
+      // Never let a filter that matches nothing print a clean sheet. Measured: `--only tutorials`
+      // reported "0 pages" followed by "All declared budgets met" and still wrote a baseline,
+      // which is a pass purchased by measuring nothing.
+      if (targets.length === 0) {
+        throw new Error(`${name}: measured 0 of ${cfg.urls.length} URLs (filter=${only || 'none'})`
+          + ' - refusing to report a vacuous pass');
+      }
+      for (const url of targets) {
         const r = await probeUrl(url, { chromePath, lighthouse: cfg.lighthouse });
         const page = url.replace(/^https?:\/\/127\.0\.0\.1:\d+\//, '').replace(/^filialconnect\/?$/, 'index.html');
         const breach = [];
