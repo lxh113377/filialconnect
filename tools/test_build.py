@@ -854,11 +854,42 @@ def t_feedback_exit():
           and 'footer.report' in json.loads(read('assets/locales/zh.json')))
 
 
+def t_deterministic_sw():
+    """sw.js must not depend on the order the filesystem hands back.
+
+    workbox emits its precache manifest in glob-crawl order. Locally that order was
+    `index.html, 404.html, pages/tutorials.html, pages/tutorial-wechat.html`; on CI's Linux runner
+    the same checkout produces a different crawl sequence, so the "regenerate and compare" drift
+    gate failed in CI while passing on every developer machine - the shape of bug that ends a
+    release. build.mjs now sorts via manifestTransforms; these checks keep it that way.
+    """
+    import hashlib
+    body = read('sw.js')
+    pairs = re.findall(r'url:"([^"]+)",revision:"([0-9a-f]{32})"', body)
+    urls = [u for u, _ in pairs]
+    check('sw.js precaches every html page plus the manifest',
+          len(urls) == len([p for p in build.all_pages()]) + 1, '%d entries' % len(urls))
+    check('sw.js precache entries are in url order, not crawl order', urls == sorted(urls),
+          'first out-of-order: %s' % next((a for a, b in zip(urls, sorted(urls)) if a != b), '-'))
+    wrong = []
+    for url, rev in pairs:
+        fp = url.lstrip('./')
+        if not os.path.exists(os.path.join(ROOT, fp)):
+            wrong.append(url + ' (missing)')
+        elif hashlib.md5(read_bytes(fp)).hexdigest() != rev:
+            wrong.append(url + ' (revision differs)')
+    check('every precache revision is the md5 of the shipped file', not wrong, str(wrong[:3]))
+
+
+def read_bytes(fp):
+    return open(os.path.join(ROOT, fp), 'rb').read()
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
                t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs,
-               t_changelog_shape, t_last_updated, t_feedback_exit):
+               t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw):
         fn()
     for f in FAILS:
         print('FAIL:', f)

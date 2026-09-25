@@ -182,6 +182,14 @@ export async function buildSw(dest = ROOT) {
     // input rather than a page (measured: precache jumped 15 -> 26 entries and shipped all 11
     // _search/zh pages into the offline shell).
     globIgnores: ['_search/**', 'pagefind/**', 'node_modules/**', 'tools/**', 'reports/**', '.github/**'],
+    // Determinism, not cosmetics. workbox emits the precache manifest in glob-crawl order, which
+    // is a property of the filesystem: the same checkout on Windows and on Linux produced two
+    // byte sequences (measured local order: index.html, 404.html, pages/tutorials.html,
+    // pages/tutorial-wechat.html - not alphabetical), so the "regenerate and compare" gate went
+    // red in CI while passing locally. Sorting via the library's own hook keeps sw.js reproducible.
+    manifestTransforms: [(manifest) => ({
+      manifest: manifest.slice().sort((a, b) => (a.url < b.url ? -1 : a.url > b.url ? 1 : 0)),
+    })],
     cacheId: 'filialconnect-v1',
     skipWaiting: true,
     clientsClaim: true,
