@@ -19,6 +19,12 @@
   `--allow-pending`（HEAD 只动发布元数据时用）。三态均在真实提交上取证：
   `052dd92`→red、`7e494b9`→green、运行中的 HEAD→pending
 
+### Added
+- **交付物终于有版本标记**：`manifest.json` 加 `"version"`，并由 `t_release` 断言它等于
+  `package.json` 的 version。根因是本轮取证发现的：离线 ZIP 实测 70 个文件里**没有** `package.json`，
+  `manifest.json` 又是 PWA 与离线包都会带的那一个 —— 发出去的一份拷贝此前无法回答"这是哪一版"。
+  变异体实测：只把 `package.json` 改成 1.4.2 → 门禁红（同时报 CHANGELOG 与 manifest 两处漂移）
+
 ## [1.4.0] - 2026-09-25
 
 ### Added

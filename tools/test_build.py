@@ -644,6 +644,12 @@ def t_release():
         check('latest released version is datestamped', bool(date), '## [%s] lacks " - YYYY-MM-DD"' % latest)
     for name, d in released[1:]:
         check('released version %s is datestamped' % name, bool(d))
+    # The offline ZIP ships manifest.json and no package.json, so this is the only version marker
+    # a delivered copy carries. Untended, it drifts the moment package.json moves.
+    man = json.loads(read('manifest.json').lstrip('﻿'))
+    check('manifest.json carries the same version as package.json',
+          man.get('version') == ver,
+          'manifest %s vs package.json %s' % (man.get('version'), ver))
     check('released versions descend from package.json version downward',
           not released or released[0][0] == ver)
 
