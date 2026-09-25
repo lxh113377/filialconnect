@@ -490,11 +490,20 @@ def t_contrast_tokens():
               pinned or not uses_text_token,
               'background is --color-accent while color is --color-text, which inverts in dark mode')
     check('contrast-token rule actually scanned the accent surfaces', seen >= 3, 'saw %d blocks' % seen)
+    # Cross-block inheritance, the hole that hid the footer link for seven rounds: a rule that
+    # declares only a colour sits on a background declared by an ancestor rule. Measured false
+    # positives on this stylesheet = 0 (3 pairs, all reachable), so it is wired as blocking.
+    import contrast_audit as ca
+    inh = ca.inherited_pairs(css)
+    check('inherited-colour audit resolved at least three pairs', len([e for e in inh if e['opaque']]) >= 3,
+          'saw %d pairs, %d unresolved' % (len(inh), len([e for e in inh if not e['opaque']])))
+    bad = ca.inherited_failures(inh)
+    check('no inherited text colour falls below AA on its ancestor surface', not bad,
+          str(['%s %s/%s need %s' % (e['selector'], e['light'], e['dark'], e['required']) for e in bad][:3]))
     # Third shape of the same mistake, found by axe in CI only: a link placed on the footer's dark
     # surface inherited the global blue and measured 1.55:1 (round 16's "report this page" link).
     # Reuses contrast_audit's own primitives on purpose - a second copy of the ratio math would be
     # the same "two implementations, one fixed" defect this repo keeps hitting.
-    import contrast_audit as ca
     footer = re.search(r'\.site-footer a \{[^}]*?color:\s*rgba\(\s*255,\s*255,\s*255,\s*([0-9.]+)\s*\)', css)
     check('footer links carry their own colour (not the inherited global blue)', bool(footer),
           'no `.site-footer a` colour rule; on --color-primary-dark the global blue is 1.55:1')
@@ -505,7 +514,7 @@ def t_contrast_tokens():
             if not bg:
                 check('%s footer surface resolves to a hex colour' % pal, False, '')
                 continue
-            fg = tuple(round(alpha * 255 + (1 - alpha) * c) for c in bg)
+            fg = ca.composite('rgba(255, 255, 255, %s)' % alpha, table, bg)
             check('%s footer link clears 4.5:1 on the footer surface' % pal,
                   ca.ratio(fg, bg) >= 4.5, '%.2f:1' % ca.ratio(fg, bg))
     # Same mistake shape, second occurrence in one round: a brand status colour used as
@@ -903,10 +912,27 @@ def read_bytes(fp):
     return open(os.path.join(ROOT, fp), 'rb').read()
 
 
+def t_no_control_bytes():
+    """No stray control characters in tracked sources.
+
+    A patch script with a non-raw string wrote a literal backspace (U+0008) into a regex here,
+    which silently disabled the pseudo-class filter: the audit kept working and reported numbers,
+    just for the wrong set of selectors. Byte-level, cheap, and it fails loudly.
+    """
+    for folder in ('tools', os.path.join('assets', 'js'), os.path.join('assets', 'css')):
+        for name in sorted(os.listdir(os.path.join(ROOT, folder))):
+            fp = os.path.join(ROOT, folder, name)
+            if not os.path.isfile(fp) or not name.endswith(('.py', '.js', '.mjs', '.cjs', '.css')):
+                continue
+            data = open(fp, 'rb').read()
+            hits = sorted({b for b in data if b < 32 and b not in (9, 10, 13)})
+            check('no control bytes in %s/%s' % (folder, name), not hits, str(hits))
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
-               t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs,
+               t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
                t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw):
         fn()
     for f in FAILS:

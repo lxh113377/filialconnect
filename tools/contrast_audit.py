@@ -231,10 +231,123 @@ def selfcheck():
     return True
 
 
+
+STATE_RE = re.compile(r':(hover|focus|focus-visible|focus-within|active|visited|link)\b')
+
+
+def composite(value, table, bg):
+    """RGB of a possibly translucent colour painted over a known solid backdrop.
+
+    One implementation on purpose: the footer gate in tools/test_build.py used to do its own
+    alpha math, which is the same "two implementations, one fixed" shape this repo keeps hitting.
+    """
+    v = (value or '').strip()
+    m = re.match(r'rgba?\(([^)]*)\)$', v)
+    if m:
+        nums = re.findall(r'[\d.]+', m.group(1))
+        if len(nums) >= 4 and bg is not None:
+            a = float(nums[3])
+            fg = tuple(int(float(n)) for n in nums[:3])
+            return tuple(round(a * f + (1 - a) * b) for f, b in zip(fg, bg))
+        if len(nums) >= 4:
+            return None
+    return resolve(v, table)
+
+
+def surfaces(css, table):
+    """selector -> opaque RGB, for rules that paint a solid background."""
+    out = {}
+    for sel, body in blocks(css):
+        decl = re.search(r'background(?:-color)?:\s*([^;]+);', body)
+        if not decl or STATE_RE.search(sel):
+            continue
+        val = decl.group(1).strip()
+        if 'gradient' in val or 'url(' in val:
+            continue                      # cannot be reduced to one colour; skip, do not guess
+        rgb = resolve(val, table)
+        if rgb is None:
+            continue
+        for one in sel.split(','):
+            one = one.strip()
+            if one:
+                out[one] = rgb
+    return out
+
+
+def surface_for(selector, surf_map):
+    """Longest surface selector that this selector is nested inside (selector-prefix ancestry)."""
+    best = None
+    for s, rgb in surf_map.items():
+        for prefix in (s + ' ', s + ' > ', s + ' + ', s + ' ~ '):
+            if selector.startswith(prefix) and (best is None or len(s) > len(best[0])):
+                best = (s, rgb)
+    return best
+
+
+def inherited_pairs(css):
+    """Foreground declared in one block, background coming from an ancestor block.
+
+    `pairs()` only sees a rule that declares both, which is exactly how the 1.55:1 footer link
+    stayed invisible to the static audit and only axe in CI caught it. Limitation to keep in mind:
+    ancestry here is *selector-prefix* ancestry, not DOM ancestry - a link that sits on the footer
+    only because the footer wraps it is covered when the footer itself declares a link colour.
+    """
+    light, dark, _over = token_tables(css)
+    surf = {'light': surfaces(css, light), 'dark': surfaces(css, dark)}
+    out = []
+    for sel, body in blocks(css):
+        fg_decl = re.search(r'(?<![-\w])color:\s*([^;]+);', body)
+        if not fg_decl or STATE_RE.search(sel):
+            continue
+        if re.search(r'background(?:-color)?:', body):
+            continue                        # already covered by pairs()
+        for one in (x.strip() for x in sel.split(',')):
+            parents = {name: surface_for(one, surf[name]) for name in ('light', 'dark')}
+            if not any(parents.values()):
+                continue
+            entry = {'selector': one[:60], 'foreground': fg_decl.group(1).strip(),
+                     'via': {k: (v[0] if v else None) for k, v in parents.items()}}
+            ok = True
+            for name, table in (('light', light), ('dark', dark)):
+                pair = parents[name]
+                if not pair:
+                    entry[name] = None
+                    ok = False
+                    continue
+                fg = composite(entry['foreground'], table, pair[1])
+                entry[name] = None if fg is None else round(ratio(fg, pair[1]), 2)
+                if entry[name] is None:
+                    ok = False
+            req, size_class = required_for(body, light)
+            entry['required'] = req
+            entry['size_class'] = size_class
+            entry['opaque'] = ok
+            out.append(entry)
+            break
+    return out
+
+
+def inherited_failures(entries):
+    return [e for e in entries if e['opaque'] and min(e['light'], e['dark']) < e['required']]
+
 def main():
     as_json = '--json' in sys.argv
     if '--selfcheck' in sys.argv:
         sys.exit(0 if selfcheck() else 1)
+    if '--inherited' in sys.argv:
+        css = read(CSS)
+        entries = inherited_pairs(css)
+        bad = inherited_failures(entries)
+        for e in entries:
+            print('%-42s via %-26s light %-6s dark %-6s need %s (%s)%s' % (
+                e['selector'], str(e['via'].get('light') or e['via'].get('dark')),
+                e['light'], e['dark'], e['required'], e['size_class'],
+                '' if e['opaque'] else ' [UNRESOLVED]'))
+        print('inherited pairs: %d resolvable, %d unresolved, %d below threshold' % (
+            len([e for e in entries if e['opaque']]), len([e for e in entries if not e['opaque']]), len(bad)))
+        for e in bad:
+            print('  BELOW: %s light=%s dark=%s need>=%s' % (e['selector'], e['light'], e['dark'], e['required']))
+        sys.exit(0)          # advisory by contract: measuring false positives must not gate
     entries = pairs(read(CSS))
     opaque = [e for e in entries if e['opaque']]
     unresolved = [e for e in entries if not e['opaque']]
