@@ -1,6 +1,6 @@
 {
   "name": "filialconnect-devtools",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "private": true,
   "description": "Dev/CI tooling manifest only (htmlhint, linkinator, lighthouse-ci). The site is plain HTML/CSS/JS served statically; this file exists so the checkers and their transitive dependencies are pinned and Dependabot can bump them.",
   "scripts": {

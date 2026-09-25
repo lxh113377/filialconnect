@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-09-25
+
 ### Added
 - **加一篇教程 = 改一个文件**（第十三轮可扩展性实测）。旧行为：往 `content/tutorials.json`
   追加第 7 篇后重跑 `tools/build.py build`，磁盘**零变化、零警告**（14 built files），
