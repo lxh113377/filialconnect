@@ -1048,6 +1048,11 @@ def t_perf_measurement():
     tuts, _cases = build.load_content()
     roster = len(build.page_roster(tuts))
     expect = {'desktop': roster, 'mobile': 4}
+    # Calibrated 2026-09-25 on the committed baseline (desktop worst sample 526 ms, mobile 2,406 ms)
+    # with ~1.7x headroom, so a slower laptop re-measuring cannot trip it by itself. Its job is to
+    # fail when something starts racing paint again - the fraud list pre-warm once moved a page's
+    # desktop LCP from 523 ms to 1,685 ms and mobile from 2.25 s to 9.75 s, and every median hid it.
+    lcp_ceiling = {'desktop': 900, 'mobile': 4000}
     for name, prof in sorted(b['profiles'].items()):
         pages = prof['pages']
         budget = (prof.get('budgets') or {}).get('categories:performance', {}).get('minScore')
@@ -1063,6 +1068,11 @@ def t_perf_measurement():
                 worst = (p.get('worst_sample') or {}).get('performance')
                 check('%s/%s clears its budget on the worst sample' % (name, p['page']),
                       worst is not None and worst >= budget, 'worst %s < budget %s' % (worst, budget))
+            lcp = (p.get('worst_sample') or {}).get('lcp')
+            ceiling = lcp_ceiling.get(name)
+            check('%s/%s worst-sample LCP under %sms' % (name, p['page'], ceiling),
+                  lcp is not None and ceiling is not None and lcp <= ceiling,
+                  'worst LCP %s ms (ceiling %s ms)' % (lcp, ceiling))
         flagged = sorted(p['page'] for p in pages if p.get('unstable'))
         listed = sorted(s.split(':')[0] for s in summ.get('unstable_pages') or [])
         check('%s lists every unstable page' % name, flagged == listed,
@@ -1075,6 +1085,15 @@ def t_perf_measurement():
     check('the fraud-list pre-warm keeps its fetch priority split',
           "priority: silent ? 'low' : 'high'" in js,
           'a background 1.5 MB download must not share urgency with the page that is rendering')
+    # The warm-up must be paid for by intent, not by reading the page: 0 bytes on load was measured
+    # after LCP was found to swing to 9.7 s on 3 of 13 runs. A timer/idle hook would undo that, so
+    # the check is scoped to the warm-up itself rather than banning requestIdleCallback outright.
+    idle_hooks = [ln.strip() for ln in js.split('\n')
+                  if 'warmOnIntent' in ln and ('setTimeout' in ln or 'requestIdleCallback' in ln)]
+    check('the fraud-list warm-up has no timer or idle trigger', not idle_hooks, str(idle_hooks[:2]))
+    for ev in ("'focus'", "'paste'", "'input'", "'pointerdown'"):
+        check('the fraud list warms on %s intent' % ev,
+              'addEventListener(%s, warmOnIntent' % ev in js, ev)
 
 
 def main():

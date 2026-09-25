@@ -648,16 +648,16 @@
     var set = null;
     var loading = null;
 
-    // silent = background pre-warm: never touches the live status region
+    // silent = speculative warm-up: never touches the live status region
     function loadDomains(cb, silent) {
       if (set) { cb(set); return; }
       if (loading) { loading.push(cb); return; }
       loading = [cb];
       if (!silent) out.textContent = t('linkcheck.loading');
-      // Only the pre-warm goes low: it fires while the visitor is still reading, and at the
-      // default priority its 1.5 MB body raced the page's own render - 3 of 13 Lighthouse runs
-      // put LCP at ~9.7 s instead of 2.25 s (score 0.73 vs 0.96). Someone who pressed 检查 is
-      // waiting on purpose, so that path keeps its urgency.
+      // The warm-up is still background work (someone may only be tabbing through), so it stays
+      // low: at default priority this 1.5 MB body raced the render, and 3 of 13 Lighthouse runs
+      // put LCP at ~9.7 s instead of 2.25 s (score 0.73 vs 0.96). Pressing 检查 is a wait the
+      // visitor chose, so that path keeps its urgency.
       fetch('../assets/data/destroylist-domains.txt', { priority: silent ? 'low' : 'high' })
         .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
         .then(function (txt) {
@@ -674,16 +674,20 @@
         });
     }
 
-    // The list is 532 KB gzipped; fetching it while the visitor reads the page
-    // removes the wait from the moment they actually press 检查.
-    function prewarm() {
+    // The list is 532 KB gzipped (1.5 MB raw, 83,097 domains). It used to be fetched while the
+    // visitor merely read the page, and that speculative download raced the render: LCP went from
+    // 2.25 s to 9.75 s on 3 of 13 samples. Nothing is downloaded until they touch the checker -
+    // and then it is a download they asked for, so it keeps normal urgency.
+    function warmOnIntent() {
       var conn = navigator.connection || {};
       if (conn.saveData || /2g/.test(conn.effectiveType || '')) return;
       loadDomains(function () {}, true);
     }
 
-    if (window.requestIdleCallback) window.requestIdleCallback(prewarm, { timeout: 4000 });
-    else window.setTimeout(prewarm, 1500);
+    input.addEventListener('focus', warmOnIntent, { once: true });
+    input.addEventListener('paste', warmOnIntent, { once: true });
+    input.addEventListener('input', warmOnIntent, { once: true });
+    btn.addEventListener('pointerdown', warmOnIntent, { once: true });
 
     function hostOf(raw) {
       var m = raw.match(/^(?:https?|ftp):\/\/(?:[^@/]*@)?([^/?#:]+)/i) || raw.match(/^([a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?:[/:?#]|$)/i);

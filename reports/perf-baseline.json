@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-25T10:11:19.476Z",
+  "generated_utc": "2026-09-25T10:46:47.701Z",
   "runs_per_url": 3,
   "port": 8899,
   "browser_lang": "(browser default)",
@@ -81,12 +81,12 @@
           },
           "cwv_range": {
             "FCP": {
-              "min": 482,
+              "min": 483,
               "median": 483,
               "max": 483
             },
             "LCP": {
-              "min": 482,
+              "min": 523,
               "median": 523,
               "max": 523
             },
@@ -101,7 +101,7 @@
               "max": 0
             },
             "SI": {
-              "min": 482,
+              "min": 483,
               "median": 483,
               "max": 483
             }
@@ -144,22 +144,22 @@
             }
           },
           "cwv": {
-            "FCP": 362,
+            "FCP": 363,
             "TBT": 0,
-            "LCP": 402,
+            "LCP": 403,
             "CLS": 0,
-            "SI": 362
+            "SI": 363
           },
           "cwv_range": {
             "FCP": {
               "min": 362,
               "median": 362,
-              "max": 362
+              "max": 363
             },
             "LCP": {
               "min": 402,
               "median": 402,
-              "max": 402
+              "max": 403
             },
             "CLS": {
               "min": 0,
@@ -174,13 +174,13 @@
             "SI": {
               "min": 362,
               "median": 362,
-              "max": 362
+              "max": 363
             }
           },
           "unstable": null,
           "worst_sample": {
             "performance": 1,
-            "lcp": 402
+            "lcp": 403
           },
           "failing_audits": [
             {
@@ -208,7 +208,7 @@
           },
           "score_range": {
             "performance": {
-              "min": 1,
+              "min": 0.93,
               "max": 1
             },
             "accessibility": {
@@ -225,27 +225,27 @@
             }
           },
           "cwv": {
-            "FCP": 443,
+            "FCP": 444,
             "TBT": 0,
-            "LCP": 483,
+            "LCP": 484,
             "CLS": 0,
-            "SI": 443
+            "SI": 444
           },
           "cwv_range": {
             "FCP": {
               "min": 443,
-              "median": 443,
+              "median": 444,
               "max": 444
             },
             "LCP": {
-              "min": 483,
-              "median": 483,
+              "min": 443,
+              "median": 484,
               "max": 484
             },
             "CLS": {
               "min": 0,
               "median": 0,
-              "max": 0
+              "max": 0.1597
             },
             "TBT": {
               "min": 0,
@@ -254,13 +254,15 @@
             },
             "SI": {
               "min": 443,
-              "median": 443,
+              "median": 444,
               "max": 444
             }
           },
-          "unstable": null,
+          "unstable": {
+            "performance_spread": 0.07
+          },
           "worst_sample": {
-            "performance": 1,
+            "performance": 0.93,
             "lcp": 484
           },
           "failing_audits": [],
@@ -279,7 +281,7 @@
           },
           "score_range": {
             "performance": {
-              "min": 1,
+              "min": 0.93,
               "max": 1
             },
             "accessibility": {
@@ -298,25 +300,25 @@
           "cwv": {
             "FCP": 484,
             "TBT": 0,
-            "LCP": 484,
+            "LCP": 524,
             "CLS": 0,
             "SI": 484
           },
           "cwv_range": {
             "FCP": {
-              "min": 482,
+              "min": 484,
               "median": 484,
               "max": 484
             },
             "LCP": {
               "min": 484,
-              "median": 522,
+              "median": 484,
               "max": 524
             },
             "CLS": {
               "min": 0,
               "median": 0,
-              "max": 0
+              "max": 0.1597
             },
             "TBT": {
               "min": 0,
@@ -324,17 +326,29 @@
               "max": 0
             },
             "SI": {
-              "min": 482,
+              "min": 484,
               "median": 484,
               "max": 484
             }
           },
-          "unstable": null,
+          "unstable": {
+            "performance_spread": 0.07
+          },
           "worst_sample": {
-            "performance": 1,
+            "performance": 0.93,
             "lcp": 524
           },
-          "failing_audits": [],
+          "failing_audits": [
+            {
+              "audit": "cumulative-layout-shift",
+              "score": 0.73,
+              "weight": 25,
+              "cat": "performance",
+              "why": [
+                "? ::"
+              ]
+            }
+          ],
           "budget_breach": []
         },
         {
@@ -343,14 +357,14 @@
           "lighthouse": "12.6.1",
           "runs": 3,
           "scores": {
-            "performance": 0.94,
+            "performance": 1,
             "accessibility": 1,
             "best-practices": 1,
             "seo": 1
           },
           "score_range": {
             "performance": {
-              "min": 0.94,
+              "min": 0.93,
               "max": 1
             },
             "accessibility": {
@@ -369,25 +383,25 @@
           "cwv": {
             "FCP": 483,
             "TBT": 0,
-            "LCP": 1684,
+            "LCP": 523,
             "CLS": 0,
             "SI": 483
           },
           "cwv_range": {
             "FCP": {
               "min": 483,
-              "median": 483,
-              "max": 483
+              "median": 484,
+              "max": 484
             },
             "LCP": {
-              "min": 523,
-              "median": 1684,
-              "max": 1685
+              "min": 484,
+              "median": 523,
+              "max": 524
             },
             "CLS": {
               "min": 0,
               "median": 0,
-              "max": 0
+              "max": 0.1597
             },
             "TBT": {
               "min": 0,
@@ -396,26 +410,18 @@
             },
             "SI": {
               "min": 483,
-              "median": 483,
-              "max": 483
+              "median": 484,
+              "max": 484
             }
           },
           "unstable": {
-            "performance_spread": 0.06
+            "performance_spread": 0.07
           },
           "worst_sample": {
-            "performance": 0.94,
-            "lcp": 1685
+            "performance": 0.93,
+            "lcp": 524
           },
-          "failing_audits": [
-            {
-              "audit": "largest-contentful-paint",
-              "score": 0.74,
-              "weight": 25,
-              "cat": "performance",
-              "why": []
-            }
-          ],
+          "failing_audits": [],
           "budget_breach": []
         },
         {
@@ -448,21 +454,21 @@
             }
           },
           "cwv": {
-            "FCP": 445,
+            "FCP": 444,
             "TBT": 0,
-            "LCP": 485,
+            "LCP": 484,
             "CLS": 0,
-            "SI": 445
+            "SI": 444
           },
           "cwv_range": {
             "FCP": {
               "min": 444,
-              "median": 444,
+              "median": 445,
               "max": 445
             },
             "LCP": {
               "min": 484,
-              "median": 484,
+              "median": 485,
               "max": 485
             },
             "CLS": {
@@ -477,7 +483,7 @@
             },
             "SI": {
               "min": 444,
-              "median": 444,
+              "median": 445,
               "max": 445
             }
           },
@@ -502,7 +508,7 @@
           },
           "score_range": {
             "performance": {
-              "min": 0.93,
+              "min": 1,
               "max": 1
             },
             "accessibility": {
@@ -519,27 +525,27 @@
             }
           },
           "cwv": {
-            "FCP": 445,
+            "FCP": 444,
             "TBT": 0,
-            "LCP": 485,
+            "LCP": 444,
             "CLS": 0,
-            "SI": 445
+            "SI": 444
           },
           "cwv_range": {
             "FCP": {
-              "min": 442,
-              "median": 445,
-              "max": 445
+              "min": 443,
+              "median": 444,
+              "max": 444
             },
             "LCP": {
-              "min": 442,
-              "median": 485,
-              "max": 485
+              "min": 444,
+              "median": 483,
+              "max": 484
             },
             "CLS": {
               "min": 0,
               "median": 0,
-              "max": 0.1597
+              "max": 0
             },
             "TBT": {
               "min": 0,
@@ -547,17 +553,15 @@
               "max": 0
             },
             "SI": {
-              "min": 442,
-              "median": 445,
-              "max": 445
+              "min": 443,
+              "median": 444,
+              "max": 444
             }
           },
-          "unstable": {
-            "performance_spread": 0.07
-          },
+          "unstable": null,
           "worst_sample": {
-            "performance": 0.93,
-            "lcp": 485
+            "performance": 1,
+            "lcp": 484
           },
           "failing_audits": [],
           "budget_breach": []
@@ -592,21 +596,21 @@
             }
           },
           "cwv": {
-            "FCP": 483,
+            "FCP": 484,
             "TBT": 0,
-            "LCP": 523,
+            "LCP": 524,
             "CLS": 0,
-            "SI": 483
+            "SI": 484
           },
           "cwv_range": {
             "FCP": {
-              "min": 483,
-              "median": 483,
+              "min": 484,
+              "median": 484,
               "max": 484
             },
             "LCP": {
-              "min": 523,
-              "median": 523,
+              "min": 524,
+              "median": 524,
               "max": 524
             },
             "CLS": {
@@ -620,8 +624,8 @@
               "max": 0
             },
             "SI": {
-              "min": 483,
-              "median": 483,
+              "min": 484,
+              "median": 484,
               "max": 484
             }
           },
@@ -673,12 +677,12 @@
             "FCP": {
               "min": 483,
               "median": 483,
-              "max": 483
+              "max": 484
             },
             "LCP": {
               "min": 523,
               "median": 523,
-              "max": 523
+              "max": 524
             },
             "CLS": {
               "min": 0,
@@ -693,13 +697,13 @@
             "SI": {
               "min": 483,
               "median": 483,
-              "max": 483
+              "max": 484
             }
           },
           "unstable": null,
           "worst_sample": {
             "performance": 1,
-            "lcp": 523
+            "lcp": 524
           },
           "failing_audits": [],
           "budget_breach": []
@@ -742,14 +746,14 @@
           },
           "cwv_range": {
             "FCP": {
-              "min": 482,
+              "min": 483,
               "median": 483,
-              "max": 483
+              "max": 484
             },
             "LCP": {
-              "min": 503,
-              "median": 522,
-              "max": 523
+              "min": 523,
+              "median": 523,
+              "max": 524
             },
             "CLS": {
               "min": 0,
@@ -762,15 +766,15 @@
               "max": 0
             },
             "SI": {
-              "min": 482,
+              "min": 483,
               "median": 483,
-              "max": 483
+              "max": 484
             }
           },
           "unstable": null,
           "worst_sample": {
             "performance": 1,
-            "lcp": 523
+            "lcp": 524
           },
           "failing_audits": [],
           "budget_breach": []
@@ -815,11 +819,11 @@
             "FCP": {
               "min": 483,
               "median": 483,
-              "max": 483
+              "max": 484
             },
             "LCP": {
               "min": 503,
-              "median": 523,
+              "median": 504,
               "max": 523
             },
             "CLS": {
@@ -835,7 +839,7 @@
             "SI": {
               "min": 483,
               "median": 483,
-              "max": 483
+              "max": 484
             }
           },
           "unstable": null,
@@ -876,20 +880,20 @@
             }
           },
           "cwv": {
-            "FCP": 483,
+            "FCP": 484,
             "TBT": 0,
-            "LCP": 523,
+            "LCP": 504,
             "CLS": 0,
-            "SI": 483
+            "SI": 484
           },
           "cwv_range": {
             "FCP": {
-              "min": 482,
+              "min": 483,
               "median": 483,
-              "max": 483
+              "max": 484
             },
             "LCP": {
-              "min": 522,
+              "min": 504,
               "median": 523,
               "max": 523
             },
@@ -904,9 +908,9 @@
               "max": 0
             },
             "SI": {
-              "min": 482,
+              "min": 483,
               "median": 483,
-              "max": 483
+              "max": 484
             }
           },
           "unstable": null,
@@ -930,7 +934,7 @@
           },
           "score_range": {
             "performance": {
-              "min": 0.93,
+              "min": 1,
               "max": 1
             },
             "accessibility": {
@@ -947,27 +951,27 @@
             }
           },
           "cwv": {
-            "FCP": 483,
+            "FCP": 484,
             "TBT": 0,
-            "LCP": 523,
+            "LCP": 524,
             "CLS": 0,
-            "SI": 483
+            "SI": 484
           },
           "cwv_range": {
             "FCP": {
-              "min": 482,
-              "median": 483,
-              "max": 483
+              "min": 484,
+              "median": 484,
+              "max": 484
             },
             "LCP": {
-              "min": 522,
-              "median": 523,
-              "max": 563
+              "min": 524,
+              "median": 524,
+              "max": 524
             },
             "CLS": {
               "min": 0,
               "median": 0,
-              "max": 0.1597
+              "max": 0
             },
             "TBT": {
               "min": 0,
@@ -975,29 +979,17 @@
               "max": 0
             },
             "SI": {
-              "min": 482,
-              "median": 483,
-              "max": 483
+              "min": 484,
+              "median": 484,
+              "max": 484
             }
           },
-          "unstable": {
-            "performance_spread": 0.07
-          },
+          "unstable": null,
           "worst_sample": {
-            "performance": 0.93,
-            "lcp": 563
+            "performance": 1,
+            "lcp": 524
           },
-          "failing_audits": [
-            {
-              "audit": "cumulative-layout-shift",
-              "score": 0.73,
-              "weight": 25,
-              "cat": "performance",
-              "why": [
-                "? ::"
-              ]
-            }
-          ],
+          "failing_audits": [],
           "budget_breach": []
         },
         {
@@ -1030,22 +1022,22 @@
             }
           },
           "cwv": {
-            "FCP": 523,
+            "FCP": 526,
             "TBT": 0,
-            "LCP": 523,
+            "LCP": 526,
             "CLS": 0,
-            "SI": 523
+            "SI": 526
           },
           "cwv_range": {
             "FCP": {
-              "min": 523,
-              "median": 524,
-              "max": 524
+              "min": 525,
+              "median": 526,
+              "max": 526
             },
             "LCP": {
-              "min": 523,
-              "median": 524,
-              "max": 524
+              "min": 525,
+              "median": 526,
+              "max": 526
             },
             "CLS": {
               "min": 0,
@@ -1058,15 +1050,15 @@
               "max": 0
             },
             "SI": {
-              "min": 523,
-              "median": 524,
-              "max": 524
+              "min": 525,
+              "median": 526,
+              "max": 526
             }
           },
           "unstable": null,
           "worst_sample": {
             "performance": 1,
-            "lcp": 524
+            "lcp": 526
           },
           "failing_audits": [],
           "budget_breach": []
@@ -1114,14 +1106,14 @@
           "lighthouse": "12.6.1",
           "runs": 3,
           "scores": {
-            "performance": 0.96,
+            "performance": 0.95,
             "accessibility": 1,
             "best-practices": 1,
             "seo": 1
           },
           "score_range": {
             "performance": {
-              "min": 0.94,
+              "min": 0.95,
               "max": 0.96
             },
             "accessibility": {
@@ -1140,25 +1132,25 @@
           "cwv": {
             "FCP": 2254,
             "TBT": 0,
-            "LCP": 2254,
+            "LCP": 2404,
             "CLS": 0,
             "SI": 2254
           },
           "cwv_range": {
             "FCP": {
-              "min": 2254,
-              "median": 2255,
-              "max": 2255
+              "min": 2253,
+              "median": 2254,
+              "max": 2254
             },
             "LCP": {
               "min": 2254,
-              "median": 2255,
-              "max": 2255
+              "median": 2403,
+              "max": 2404
             },
             "CLS": {
               "min": 0,
               "median": 0,
-              "max": 0.0948
+              "max": 0
             },
             "TBT": {
               "min": 0,
@@ -1166,15 +1158,15 @@
               "max": 0
             },
             "SI": {
-              "min": 2254,
-              "median": 2255,
-              "max": 2255
+              "min": 2253,
+              "median": 2254,
+              "max": 2254
             }
           },
           "unstable": null,
           "worst_sample": {
-            "performance": 0.94,
-            "lcp": 2255
+            "performance": 0.95,
+            "lcp": 2404
           },
           "failing_audits": [
             {
@@ -1186,7 +1178,7 @@
             },
             {
               "audit": "largest-contentful-paint",
-              "score": 0.94,
+              "score": 0.91,
               "weight": 25,
               "cat": "performance",
               "why": []
@@ -1231,22 +1223,22 @@
             }
           },
           "cwv": {
-            "FCP": 2405,
+            "FCP": 2403,
             "TBT": 0,
-            "LCP": 2405,
+            "LCP": 2403,
             "CLS": 0,
-            "SI": 2405
+            "SI": 2403
           },
           "cwv_range": {
             "FCP": {
-              "min": 2404,
-              "median": 2405,
-              "max": 2407
+              "min": 2403,
+              "median": 2404,
+              "max": 2406
             },
             "LCP": {
-              "min": 2404,
-              "median": 2405,
-              "max": 2407
+              "min": 2403,
+              "median": 2404,
+              "max": 2406
             },
             "CLS": {
               "min": 0,
@@ -1259,15 +1251,15 @@
               "max": 0
             },
             "SI": {
-              "min": 2404,
-              "median": 2405,
-              "max": 2407
+              "min": 2403,
+              "median": 2404,
+              "max": 2406
             }
           },
           "unstable": null,
           "worst_sample": {
             "performance": 0.95,
-            "lcp": 2407
+            "lcp": 2406
           },
           "failing_audits": [
             {
@@ -1300,15 +1292,15 @@
           "lighthouse": "12.6.1",
           "runs": 3,
           "scores": {
-            "performance": 0.95,
+            "performance": 0.96,
             "accessibility": 1,
             "best-practices": 1,
             "seo": 1
           },
           "score_range": {
             "performance": {
-              "min": 0.95,
-              "max": 0.95
+              "min": 0.96,
+              "max": 0.96
             },
             "accessibility": {
               "min": 1,
@@ -1324,22 +1316,22 @@
             }
           },
           "cwv": {
-            "FCP": 2261,
+            "FCP": 2254,
             "TBT": 0,
-            "LCP": 2411,
+            "LCP": 2254,
             "CLS": 0,
-            "SI": 2261
+            "SI": 2254
           },
           "cwv_range": {
             "FCP": {
               "min": 2254,
-              "median": 2256,
-              "max": 2261
+              "median": 2254,
+              "max": 2254
             },
             "LCP": {
-              "min": 2404,
-              "median": 2406,
-              "max": 2411
+              "min": 2254,
+              "median": 2254,
+              "max": 2254
             },
             "CLS": {
               "min": 0,
@@ -1353,14 +1345,14 @@
             },
             "SI": {
               "min": 2254,
-              "median": 2256,
-              "max": 2261
+              "median": 2254,
+              "max": 2254
             }
           },
           "unstable": null,
           "worst_sample": {
-            "performance": 0.95,
-            "lcp": 2411
+            "performance": 0.96,
+            "lcp": 2254
           },
           "failing_audits": [
             {
@@ -1372,7 +1364,7 @@
             },
             {
               "audit": "largest-contentful-paint",
-              "score": 0.91,
+              "score": 0.94,
               "weight": 25,
               "cat": "performance",
               "why": []
@@ -1400,8 +1392,8 @@
           },
           "score_range": {
             "performance": {
-              "min": 0.96,
-              "max": 0.97
+              "min": 0.95,
+              "max": 0.96
             },
             "accessibility": {
               "min": 1,
@@ -1417,22 +1409,22 @@
             }
           },
           "cwv": {
-            "FCP": 2256,
+            "FCP": 2254,
             "TBT": 0,
-            "LCP": 2256,
+            "LCP": 2254,
             "CLS": 0,
-            "SI": 2256
+            "SI": 2254
           },
           "cwv_range": {
             "FCP": {
-              "min": 2146,
-              "median": 2256,
-              "max": 2256
+              "min": 2253,
+              "median": 2254,
+              "max": 2254
             },
             "LCP": {
-              "min": 2146,
-              "median": 2256,
-              "max": 2256
+              "min": 2254,
+              "median": 2254,
+              "max": 2403
             },
             "CLS": {
               "min": 0,
@@ -1445,15 +1437,15 @@
               "max": 0
             },
             "SI": {
-              "min": 2146,
-              "median": 2256,
-              "max": 2256
+              "min": 2253,
+              "median": 2254,
+              "max": 2254
             }
           },
           "unstable": null,
           "worst_sample": {
-            "performance": 0.96,
-            "lcp": 2256
+            "performance": 0.95,
+            "lcp": 2403
           },
           "failing_audits": [
             {
@@ -1465,7 +1457,7 @@
             },
             {
               "audit": "largest-contentful-paint",
-              "score": 0.94,
+              "score": 0.91,
               "weight": 25,
               "cat": "performance",
               "why": []
@@ -1487,23 +1479,22 @@
     "desktop": {
       "pages": 14,
       "min": {
-        "performance": 0.94,
+        "performance": 1,
         "accessibility": 1,
         "best-practices": 1,
         "seo": 0.63
       },
-      "worst_page": "filialconnect/pages/fraud-database.html",
+      "worst_page": "index.html",
       "budget_breaches": [],
       "unstable_pages": [
-        "filialconnect/pages/fraud-database.html: perf 0.94-1 / LCP 523-1685ms",
-        "filialconnect/pages/remote-assist.html: perf 0.93-1 / LCP 442-485ms",
-        "filialconnect/pages/tutorial-wechat.html: perf 0.93-1 / LCP 522-563ms"
+        "filialconnect/pages/accessibility-statement.html: perf 0.93-1 / LCP 443-484ms",
+        "filialconnect/pages/call-help.html: perf 0.93-1 / LCP 484-524ms",
+        "filialconnect/pages/fraud-database.html: perf 0.93-1 / LCP 484-524ms"
       ],
       "worst_sample_breaches": [],
       "distinct_failing_audits": [
         "cumulative-layout-shift",
-        "is-crawlable",
-        "largest-contentful-paint"
+        "is-crawlable"
       ]
     },
     "mobile": {
@@ -1514,7 +1505,7 @@
         "best-practices": 1,
         "seo": 1
       },
-      "worst_page": "filialconnect/pages/tutorials.html",
+      "worst_page": "index.html",
       "budget_breaches": [],
       "unstable_pages": [],
       "worst_sample_breaches": [],
