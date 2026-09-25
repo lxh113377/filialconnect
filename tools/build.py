@@ -58,7 +58,7 @@ def load_content():
 
 def derived_slug_re():
     slugs = [t['slug'] for t in load_content()[0]]
-    return re.compile(r"^tut-detail\.(%s)\.(h1|p|step\d+\.title|step\d+\.p|related\d+)$" % '|'.join(slugs))
+    return re.compile(r"^tut-detail\.(%s)\.(h1|p|img\.alt|step\d+\.title|step\d+\.p|related\d+)$" % '|'.join(slugs))
 
 
 def derived_fraud_key_re():
@@ -74,6 +74,34 @@ def derived_fraud_key_re():
 
 def is_generated_key(k):
     return bool(derived_slug_re().match(k) or derived_fraud_key_re().match(k))
+
+
+# Namespace pattern that does NOT depend on the current content, so keys left behind by a deleted
+# tutorial or a shortened step list can still be recognised as derived.
+DERIVED_NS_RE = re.compile(r'^(?:tut-detail\.[a-z-]+\.(?:h1|p|img\.alt|step\d+\.(?:title|p)'
+                           r'|related\d+)|fraud\.\d+\.[a-z0-9.]+)$')
+
+
+def locale_outputs():
+    """{path: text} for assets/locales/*.json with the content-derived keys synced in.
+
+    Those keys used to be a hand-pasted copy of content/*.json - 19+ per tutorial per language -
+    which is both the main cost of adding a tutorial and a standing drift risk (edit the content,
+    leave the old string in the dictionary). Hand-written keys (nav, cards, UI) are never touched.
+    """
+    out = {}
+    for lang in ('en', 'zh'):
+        fp = 'assets/locales/%s.json' % lang
+        pairs = gen_pairs(lang)
+        d = json.loads(read(fp))
+        for k, v in pairs:
+            if d.get(k) != v:
+                d[k] = v
+        keep = {k for k, _ in pairs}
+        for k in [k for k in d if DERIVED_NS_RE.match(k) and k not in keep]:
+            del d[k]
+        out[fp] = json.dumps(d, ensure_ascii=False, indent=2) + '\n'
+    return out
 
 
 
@@ -140,6 +168,7 @@ def gen_pairs(lang):
         s = t['slug']
         L.append(('tut-detail.%s.h1' % s, t['h1'][lang]))
         L.append(('tut-detail.%s.p' % s, t['intro'][lang]))
+        L.append(('tut-detail.%s.img.alt' % s, t['img_alt'][lang]))
         for i, st in enumerate(t['steps'], 1):
             L.append(('tut-detail.%s.step%d.title' % (s, i), st['title'][lang]))
             L.append(('tut-detail.%s.step%d.p' % (s, i), st['p'][lang]))
@@ -508,10 +537,7 @@ def render_sitemap():
             + ''.join(urls) + '\n</urlset>\n')
 
 
-def all_pages():
-    pages_dir = os.path.join(ROOT, 'pages')
-    return (['index.html', '404.html']
-            + sorted('pages/' + f for f in os.listdir(pages_dir) if f.endswith('.html')))
+# all_pages() is defined once, next to build_outputs() which is its only caller.
 
 
 # ------------------------------------------------------------------ partials
@@ -696,7 +722,7 @@ def build_outputs():
     for t in tuts:
         t['page'] = 'pages/' + t['file']
     out['404.html'] = sync_head(render_404_page(), '404.html')
-    for fp in all_pages():
+    for fp in page_roster(tuts):
         base = os.path.basename(fp)
         if base in tut_by_file:
             out[fp] = sync_head(render_tutorial_page(tut_by_file[base]), fp)
@@ -749,6 +775,29 @@ def all_pages():
     pages_dir = os.path.join(ROOT, 'pages')
     return (['index.html', '404.html']
             + sorted('pages/' + f for f in os.listdir(pages_dir) if f.endswith('.html')))
+
+
+def page_roster(tuts):
+    """Pages on disk, plus pages the content roster promises but nobody created yet.
+
+    The walk used to come from the filesystem alone, so adding a tutorial to
+    content/tutorials.json rebuilt zero files and printed zero warnings: the new entry simply
+    was not in the walk. Content is the roster; the disk is what has been rendered.
+    """
+    roster = list(all_pages())
+    for t in tuts:
+        fp = 'pages/' + t['file']
+        if fp not in roster:
+            roster.append(fp)
+    return roster
+
+
+def stale_tutorial_pages(tuts):
+    """pages/tutorial-*.html that no content entry claims - a deleted tutorial whose page,
+    sitemap entry, precache entry and search shard would otherwise stay published."""
+    claimed = set('pages/' + t['file'] for t in tuts)
+    return [fp for fp in all_pages()
+            if fp.startswith('pages/tutorial-') and fp not in claimed]
 
 
 # ------------------------------------------------------------------ extract
@@ -829,25 +878,38 @@ def extract():
 
 
 def do_build():
-    out = build_outputs()
+    out = locale_outputs()
+    out.update(build_outputs())
     for fp, text in out.items():
         write(fp, text)
     # Second pass turns marker-less nav/footer regions into marked ones so that
     # every later edit is caught by `check`.
-    out2 = build_outputs()
+    out2 = locale_outputs()
+    out2.update(build_outputs())
     for fp, text in out2.items():
         if read(fp) != text:
             write(fp, text)
-    print('built %d files (%d pages; node owns i18n.js/sitemap/lighthouserc/sw.js)' % (len(out2), len(all_pages())))
+    print('built %d files (%d html, %d locales; node owns i18n.js/sitemap/lighthouserc/sw.js)'
+          % (len(out2), sum(1 for fp in out2 if fp.endswith('.html')),
+             sum(1 for fp in out2 if fp.startswith('assets/locales/'))))
 
 
 def do_check():
-    out = build_outputs()
-    bad = [fp for fp, text in out.items() if read(fp) != text]
-    if bad:
+    tuts, _cases = load_content()
+    out = locale_outputs()
+    out.update(build_outputs())
+    missing = [fp for fp in out if not os.path.exists(os.path.join(ROOT, fp))]
+    bad = [fp for fp, text in out.items()
+           if os.path.exists(os.path.join(ROOT, fp)) and read(fp) != text]
+    stale = stale_tutorial_pages(tuts)
+    if missing or bad or stale:
+        for fp in sorted(missing):
+            print('MISSING (content promises this page but it was never built):', fp)
         for fp in sorted(bad):
             print('DRIFT:', fp)
-        print('Fix with: python tools/build.py build')
+        for fp in sorted(stale):
+            print('STALE (page is published, no content entry claims it):', fp)
+        print('Fix with: python tools/build.py build; delete STALE pages by hand')
         sys.exit(1)
     unmarked = unmarked_pages()
     if unmarked:

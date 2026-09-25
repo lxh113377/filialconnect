@@ -636,7 +636,14 @@ def t_release():
     log = read('CHANGELOG.md')
     headings = re.findall(r'^## \[([\w.]+)\](?: - (\d{4}-\d{2}-\d{2}))?', log, re.M)
     check('CHANGELOG keeps an [Unreleased] section', headings and headings[0][0] == 'Unreleased', str(headings[:1]))
+    # Same family as the duplicate all_pages() def: a heading that appears twice parses "fine"
+    # and quietly splits the notes for one release across two places.
+    unreleased = [h for h, _ in headings if h == 'Unreleased']
+    check('exactly one [Unreleased] heading', len(unreleased) == 1, '%d found' % len(unreleased))
     released = [h for h in headings if h[0] != 'Unreleased']
+    released_names = [h for h, _ in released]
+    check('no released version heading is duplicated',
+          len(released_names) == len(set(released_names)), str(released_names))
     check('CHANGELOG has at least one released version', bool(released))
     if released:
         latest, date = released[0]
@@ -654,10 +661,81 @@ def t_release():
           not released or released[0][0] == ver)
 
 
+def t_content_roster():
+    """Extensibility, measured by actually adding a tutorial: the generator used to walk the
+    filesystem, so a 7th entry in content/tutorials.json rebuilt zero files and warned about
+    nothing. Card grid, filter taxonomy, illustration files and cross-links are the other exits
+    where the same silence reproduces."""
+    tuts, _cases = build.load_content()
+    html = read('pages/tutorials.html')
+    starts = [m.start() for m in re.finditer(r'<div class="tutorial-card" data-category="', html)]
+    bounds = starts[1:] + [len(html)]
+    cards = {}
+    for a, b in zip(starts, bounds):
+        chunk = html[a:b]
+        href = re.search(r'href="tutorial-([a-z]+)\.html"', chunk)
+        cat = re.search(r'data-category="([a-z]+)"', chunk)
+        if href:
+            cards[href.group(1)] = cat.group(1) if cat else None
+    slugs = sorted(t['slug'] for t in tuts)
+    check('content tutorials and library cards are the same set',
+          sorted(cards) == slugs,
+          'content %s vs cards %s' % (slugs, sorted(cards)))
+    check('card grid has one card per tutorial', len(starts) == len(tuts),
+          '%d cards vs %d tutorials' % (len(starts), len(tuts)))
+    chips = set(re.findall(r'data-filter="([a-z]+)"', html)) - {'all'}
+    check('every filter chip is a real category', 
+          not {c for c in cards.values() if c not in chips},
+          'unreachable filter chips: %s' % sorted({c for c in cards.values() if c not in chips}))
+    for t in tuts:
+        slug = t['slug']
+        for field in ('file', 'category', 'title', 'desc', 'h1', 'intro', 'steps', 'related',
+                      'illustration', 'img_alt'):
+            check('%s declares %s' % (slug, field), field in t)
+        check('%s card category matches content' % slug, cards.get(slug) == t.get('category'),
+              'card %s vs content %s' % (cards.get(slug), t.get('category')))
+        check('%s illustration exists' % slug,
+              os.path.exists(os.path.join(ROOT, t.get('illustration', ''))),
+              t.get('illustration'))
+        check('%s has steps' % slug, bool(t.get('steps')) and all(
+            s.get('title') and s.get('p') for s in t['steps']))
+        # Cross-links may leave the tutorial set (several point at the fraud page); what they may
+        # not do is dangle.
+        pages = {os.path.basename(fp) for fp in build.all_pages()}
+        for rel in t.get('related', []):
+            check('%s related target is a real page' % slug, rel.get('file') in pages,
+                  str(rel.get('file')))
+    # One implementation, exercised here rather than re-derived: build.py owns the roster rules.
+    check('no published tutorial page lacks a content entry',
+          not build.stale_tutorial_pages(tuts), str(build.stale_tutorial_pages(tuts)))
+    roster = build.page_roster(tuts)
+    check('page roster covers every content page',
+          all('pages/' + t['file'] in roster for t in tuts),
+          str([t['file'] for t in tuts if 'pages/' + t['file'] not in roster]))
+    for fp, text in build.locale_outputs().items():
+        check('%s is in sync with content/*.json' % fp, read(fp) == text,
+              'run: python tools/build.py build')
+
+
+def t_no_duplicate_defs():
+    """A duplicate top-level def is not a syntax error in Python - the later one silently wins and
+    the earlier edit becomes a no-op. tools/build.py shipped two all_pages() that way."""
+    import ast
+    import collections
+    tools = os.path.join(ROOT, 'tools')
+    for name in sorted(os.listdir(tools)):
+        if not name.endswith('.py'):
+            continue
+        tree = ast.parse(io.open(os.path.join(tools, name), encoding='utf-8').read())
+        top = [n.name for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        dup = sorted(k for k, v in collections.Counter(top).items() if v > 1)
+        check('no duplicate top-level def in tools/%s' % name, not dup, str(dup))
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
-               t_search_corpus, t_search_ui):
+               t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs):
         fn()
     for f in FAILS:
         print('FAIL:', f)

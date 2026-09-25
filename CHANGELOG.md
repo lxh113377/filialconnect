@@ -5,6 +5,27 @@
 
 ## [Unreleased]
 
+### Added
+- **加一篇教程 = 改一个文件**（第十三轮可扩展性实测）。旧行为：往 `content/tutorials.json`
+  追加第 7 篇后重跑 `tools/build.py build`，磁盘**零变化、零警告**（14 built files），
+  因为页面清单来自 `os.listdir('pages')`，内容来自 JSON，两者从不核对 —— 新条目根本没进那条遍历。
+  现在 `page_roster()` 取「磁盘 ∪ 内容」，缺的页直接生成；`locale_outputs()` 把 content 里
+  已带 `{en,zh}` 的派生键（每篇每语言 18 个：h1/intro/img.alt/每步 title+正文/related）
+  同步进 `assets/locales/*.json`，手写键一律不碰；`do_check` 三向报错
+  （MISSING 有内容无页 / DRIFT 内容改了没重跑 / STALE 有页无内容）
+- **卡片与分类进数据**：`pages/tutorials.html` 的卡片含每篇手绘 SVG，仍由人写（这是刻意保留的，
+  不打算把插画降级成占位图），但 `category` 字段进了 content，且三条门禁钉住两侧一致：
+  slug 集合相等、每卡 `data-category` 等于 `content.category`、category 必须存在于筛选 chips。
+  此前分类口径只活在 HTML 里，内容侧完全不知道
+- **`tools/*.py` 顶层 def 重名门禁**（ast 扫全部脚本）。触发它的实测缺陷：`build.py` 里有
+  **两个** `all_pages()`（第 511 行是死代码，第 748 行才生效），改前者等于没改
+
+### Fixed
+- **同类出口本轮逐条核过**（不只是修被点名那一处）：content→页（已生成 + 双向 check）、
+  页→字典键（已派生）、页→sitemap/precache/Lighthouse URL 矩阵（Node 侧按磁盘遍历且 `checkSw`
+  断言每个磁盘页都在 precache 里）、页→部署（`cp -r pages` 是目录）、页→离线 ZIP（`os.walk`）、
+  内容↔卡片与↔筛选口径（新门禁）。结论：只有卡片需要人手，其余全自动，且忘了会被指名
+
 ## [1.4.1] - 2026-09-25
 
 ### Fixed
