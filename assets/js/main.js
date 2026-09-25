@@ -674,10 +674,10 @@
         });
     }
 
-    // The list is 532 KB gzipped (1.5 MB raw, 83,097 domains). It used to be fetched while the
-    // visitor merely read the page, and that speculative download raced the render: LCP went from
-    // 2.25 s to 9.75 s on 3 of 13 samples. Nothing is downloaded until they touch the checker -
-    // and then it is a download they asked for, so it keeps normal urgency.
+    // The list is 83,097 domains: 1,523,537 bytes raw, 530,652 bytes at gzip -9 (both measured
+    // 2026-09-25). It used to be fetched while the visitor merely read the page, and that
+    // speculative download raced the render: LCP went from 2.25 s to 9.75 s on 3 of 13 samples.
+    // Nothing is downloaded until they touch the checker - and then it is a download they asked for.
     function warmOnIntent() {
       var conn = navigator.connection || {};
       if (conn.saveData || /2g/.test(conn.effectiveType || '')) return;
@@ -687,7 +687,9 @@
     input.addEventListener('focus', warmOnIntent, { once: true });
     input.addEventListener('paste', warmOnIntent, { once: true });
     input.addEventListener('input', warmOnIntent, { once: true });
-    btn.addEventListener('pointerdown', warmOnIntent, { once: true });
+    // Deliberately not on the button's pointerdown: that is a visitor who has already decided to
+    // wait, and pre-warming there would start the silent low-priority download the click then
+    // queues behind, throwing away the urgency the click path is supposed to have.
 
     function hostOf(raw) {
       var m = raw.match(/^(?:https?|ftp):\/\/(?:[^@/]*@)?([^/?#:]+)/i) || raw.match(/^([a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?:[/:?#]|$)/i);
@@ -708,14 +710,17 @@
     }
 
     function check() {
+      // Parse first, download second: the 1.5 MB list must not be paid for by an empty box or a
+      // string that is not a host at all. Measured before the reorder - one click with no input
+      // transferred the whole list (1,523,537 bytes) and then reported "无法识别网址".
+      var raw = input.value.trim().toLowerCase();
+      var host = hostOf(raw);
+      if (!host) {
+        out.textContent = t('linkcheck.parse');
+        out.className = 'link-check-result is-unknown';
+        return;
+      }
       loadDomains(function (s) {
-        var raw = input.value.trim().toLowerCase();
-        var host = hostOf(raw);
-        if (!host) {
-          out.textContent = t('linkcheck.parse');
-          out.className = 'link-check-result is-unknown';
-          return;
-        }
         var bad = listed(s, host);
         out.textContent = bad ? t('linkcheck.bad') : t('linkcheck.ok');
         out.className = 'link-check-result ' + (bad ? 'is-bad' : 'is-ok');

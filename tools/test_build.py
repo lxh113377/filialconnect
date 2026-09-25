@@ -195,6 +195,24 @@ def t_promises():
     check('mainland-coverage wording matches the measured feed (<1% claim)',
           'fewer than 1%' in s and '不到 1%' in s and cn_pct < 1.0,
           'copy claims <1%%, feed measures %.2f%%' % cn_pct)
+    # README quotes the list's size, and that quote started life as an estimate. Pin it to the file:
+    # a feed refresh must move the number, not leave the doc advertising bytes nobody measured.
+    body = open(os.path.join(ROOT, 'assets', 'data', 'destroylist-domains.txt'), 'rb').read()
+    gz = len(gzip.compress(body, 9))
+    readme = read('README.md')
+    cited = [int(m.replace(',', '')) for m in re.findall(r'([\d,]{3,7}) 条', readme)]
+    check('README domain count matches the shipped list', feed['domains'] in cited, str(cited[:4]))
+    kb = [int(x) for x in re.findall(r'gzip 后 (\d+) KB', readme)]
+    check('README gzip quote within 2% of the measured size',
+          bool(kb) and abs(kb[0] * 1000 - gz) <= 0.02 * gz, 'cited %s KB, measured %d B' % (kb, gz))
+    # The docs promised an idle-time pre-fetch of this list for a day; the download is now
+    # intent-gated (v1.6.1), so that sentence became false while still reading like documentation.
+    stale_warm = [fp for fp in ('README.md', 'SECURITY.md', 'CONTRIBUTING.md', 'SOURCES.md')
+                  if '空闲时预取' in read(fp) or '空闲预取' in read(fp)]
+    check('no doc still promises an idle-time pre-fetch of the fraud list',
+          not stale_warm, str(stale_warm))
+    check('README describes the intent-gated warm-up',
+          '意图触发' in readme or '才下载' in readme, 'README must match the shipped trigger')
 
 
 # ------------------------------------------- 4b. shipped matcher, run under node
@@ -254,6 +272,15 @@ def t_scam_matcher():
           (proc.stderr or '')[:200])
     for (inp, want), have in zip(cases, got):
         check('matcher %-46s -> %s' % (want, inp[:38]), have == want, 'got ' + have)
+    # The click path must parse before it downloads. Ordering was previously the other way round,
+    # so one click on an empty box spent 1,523,537 bytes and *then* said "无法识别网址".
+    js = read('assets/js/main.js')
+    start = js.find('    function check() {')
+    block = js[start:js.find('\n    }', start)] if start >= 0 else ''
+    check('check() body was found in main.js', bool(block))
+    check('check() parses the host before downloading the list',
+          0 <= block.find('hostOf(') < block.find('loadDomains('),
+          'hostOf at %s, loadDomains at %s' % (block.find('hostOf('), block.find('loadDomains(')))
 
 
 # ------------------------------------------------- 5. referenced assets exist
@@ -1091,9 +1118,15 @@ def t_perf_measurement():
     idle_hooks = [ln.strip() for ln in js.split('\n')
                   if 'warmOnIntent' in ln and ('setTimeout' in ln or 'requestIdleCallback' in ln)]
     check('the fraud-list warm-up has no timer or idle trigger', not idle_hooks, str(idle_hooks[:2]))
-    for ev in ("'focus'", "'paste'", "'input'", "'pointerdown'"):
+    for ev in ("'focus'", "'paste'", "'input'"):
         check('the fraud list warms on %s intent' % ev,
               'addEventListener(%s, warmOnIntent' % ev in js, ev)
+    # The button is not a pre-warm trigger: it is a visitor who has already decided to wait, and
+    # warming there starts the silent low-priority download the click then queues behind.
+    check('the 检查 button itself never triggers the silent warm-up',
+          "btn.addEventListener('pointerdown', warmOnIntent" not in js
+          and "btn.addEventListener('mousedown', warmOnIntent" not in js,
+          'the click path must load the list with its own urgency')
 
 
 def main():

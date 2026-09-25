@@ -17,7 +17,7 @@
  */
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, normalize, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { create } from 'xmlbuilder2';
 import { generateSW } from 'workbox-build';
@@ -154,6 +154,62 @@ export function buildI18nJs() {
 
 const SW_SOURCES = ['**/*.html', 'manifest.json'];
 
+/**
+ * The worker's cache routes, named so the offline-shell check can ask the *same* predicates the
+ * shipped worker asks. Asset URLs here are not content-hashed (new HTML can arrive next to an old
+ * cached main.js), so scripts and styles revalidate in the background instead of being served
+ * CacheFirst - offline still works, staleness does not win.
+ */
+export const RUNTIME_ROUTES = [
+  { urlPattern: ({ sameOrigin, request }) => sameOrigin
+      && (request.destination === 'document' || request.url.includes('/assets/data/')),
+    handler: 'NetworkFirst', options: { cacheName: 'fc-network-first', networkTimeoutSeconds: 4 } },
+  { urlPattern: ({ sameOrigin, request }) => sameOrigin
+      && (request.destination === 'script' || request.destination === 'style'),
+    handler: 'StaleWhileRevalidate', options: { cacheName: 'fc-runtime-assets' } },
+  { urlPattern: ({ sameOrigin, request }) => sameOrigin
+      && /\/assets\/images\/.*\.(png|jpg|jpeg|webp|svg)$/.test(request.url),
+    handler: 'CacheFirst', options: { cacheName: 'fc-images' } },
+  { urlPattern: ({ sameOrigin, request }) => sameOrigin && request.url.endsWith('/manifest.json'),
+    handler: 'CacheFirst', options: { cacheName: 'fc-manifest' } },
+];
+const DEST_BY_EXT = { '.js': 'script', '.mjs': 'script', '.css': 'style' };
+
+function routeCovers(url, destination) {
+  const ctx = { sameOrigin: true, request: { url, destination } };
+  // NetworkOnly matches requests but keeps nothing, so it is no help offline; counting it as
+  // coverage would let the check pass on the exact hole it exists to find.
+  return RUNTIME_ROUTES.some((r) => r.handler !== 'NetworkOnly' && r.urlPattern(ctx));
+}
+
+/** Every same-origin stylesheet/script the pages reference, derived from the pages themselves. */
+export function pageAssetRefs() {
+  const refs = new Set();
+  for (const fp of allPages()) {
+    const html = read(fp);
+    for (const m of html.match(/(?:src|href)="([^"]+\.(?:css|js))"/g) || []) {
+      const raw = /"([^"]+)"/.exec(m)[1];
+      if (/^(?:https?:)?\/\//.test(raw) || raw.startsWith('data:')) continue;
+      const clean = raw.replace(/^\/+/, '').replace(/^filialconnect\//, '').split('?')[0];
+      refs.add(normalize(join(dirname(fp), clean)).replace(/\\/g, '/'));
+    }
+  }
+  return [...refs].sort();
+}
+
+/**
+ * Every referenced asset has to be reachable with no network, from the precache or from a route.
+ * Enumerated from the pages on purpose: a hand kept list goes stale exactly the way the
+ * "offline available" sentence did.
+ */
+export function offlineShellGaps() {
+  const swText = read('sw.js');
+  const precached = new Set((swText.match(/url:"[^"]+",revision/g) || [])
+    .map((m) => m.slice(6, -9).replace(/^\.\//, '')));
+  return pageAssetRefs().filter((url) => !precached.has(url)
+    && !routeCovers('/' + url, DEST_BY_EXT[extname(url)] || 'unknown'));
+}
+
 /** Copy the runtime i18n libraries into the site so nothing is fetched remotely. */
 export function copyVendor() {
   const files = [
@@ -196,16 +252,7 @@ export async function buildSw(dest = ROOT) {
     cleanupOutdatedCaches: true,
     sourcemap: false,
     // Honest freshness rules: a stale scam list or page must never beat the network.
-    runtimeCaching: [
-      { urlPattern: ({ sameOrigin, request }) => sameOrigin
-          && (request.destination === 'document' || request.url.includes('/assets/data/')),
-        handler: 'NetworkFirst', options: { cacheName: 'fc-network-first', networkTimeoutSeconds: 4 } },
-      { urlPattern: ({ sameOrigin, request }) => sameOrigin
-          && /\/assets\/images\/.*\.(png|jpg|jpeg|webp|svg)$/.test(request.url),
-        handler: 'CacheFirst', options: { cacheName: 'fc-images' } },
-      { urlPattern: ({ sameOrigin, request }) => sameOrigin && request.url.endsWith('/manifest.json'),
-        handler: 'CacheFirst', options: { cacheName: 'fc-manifest' } },
-    ],
+    runtimeCaching: RUNTIME_ROUTES,
   });
   if (warnings && warnings.length) console.log('workbox warnings:', warnings.join('; '));
   return count;
@@ -231,6 +278,21 @@ export async function checkSw() {
     if (gen !== committed) return 'sw.js differs from workbox output (run: node tools/build.mjs)';
     const missing = allPages().filter((p) => !committed.includes(p.replace(/'/g, '')));
     if (missing.length) return `sw.js precache is missing: ${missing.join(', ')}`;
+    // workbox writes its runtime chunk next to sw.js and names it by content hash, so every
+    // regeneration can leave the previous one behind. An orphan is not cosmetic here: the offline
+    // ZIP ships whatever is on disk, and three chunks looked like three different workers.
+    const wanted = (committed.match(/\.\/(workbox-[0-9a-f]+)/g) || []).map((s) => s.slice(2) + '.js');
+    const onDisk = readdirSync(ROOT).filter((f) => /^workbox-[0-9a-f]+\.js$/.test(f));
+    if (!wanted.length) return 'sw.js references no workbox runtime chunk (gutted output?)';
+    const dangling = wanted.filter((f) => !onDisk.includes(f));
+    if (dangling.length) return `sw.js imports a missing chunk: ${dangling.join(', ')}`;
+    const orphans = onDisk.filter((f) => !wanted.includes(f));
+    if (orphans.length) return `stale workbox chunks on disk (delete or re-import): ${orphans.join(', ')}`;
+    // Floor first: a broken enumerator would "pass" by finding nothing at all.
+    const refs = pageAssetRefs();
+    if (refs.length < 5) return `offline shell enumeration found ${refs.length} asset refs, expected >= 5`;
+    const gaps = offlineShellGaps();
+    if (gaps.length) return `offline shell leaves referenced assets unreachable: ${gaps.join(', ')}`;
     return null;
   } finally {
     rmSync(tmp, { recursive: true, force: true });
