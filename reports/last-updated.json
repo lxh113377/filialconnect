@@ -1,0 +1,26 @@
+{
+  "pages/tutorial-banking.html": {
+    "date": "2026-09-25",
+    "hash": "9ac799f589b8358d"
+  },
+  "pages/tutorial-hospital.html": {
+    "date": "2026-09-25",
+    "hash": "144edb48582c421b"
+  },
+  "pages/tutorial-medical.html": {
+    "date": "2026-09-25",
+    "hash": "d09eeb9b38c28519"
+  },
+  "pages/tutorial-ride.html": {
+    "date": "2026-09-25",
+    "hash": "5a7d538afea9c1c9"
+  },
+  "pages/tutorial-train.html": {
+    "date": "2026-09-25",
+    "hash": "e647bfceb7718080"
+  },
+  "pages/tutorial-wechat.html": {
+    "date": "2026-09-25",
+    "hash": "9fb90c632e2684df"
+  }
+}

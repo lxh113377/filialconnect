@@ -23,9 +23,14 @@
    一个：`health` / `transport` / `banking` / `daily`），每段文案带 `{en, zh}`。
 2. `python tools/build.py build`：教程页 **和** 两侧字典键都由这一步生成（实测一篇 = 18 键 × 2 语言），
    不要手抄文案，也不要改 `assets/js/i18n.js`。
-3. 在 `pages/tutorials.html` 手写一张卡片：`<div class="tutorial-card" data-category="…">` + 该篇的
+3. `python tools/last-updated.py --write` 更新「最近更新」账本（`reports/last-updated.json`），
+   然后再跑一次 `python tools/build.py build` 把日期渲染进页面。**这一步必须在本地做**：
+   CI 的 `actions/checkout` 是浅克隆（实测：一个有 12 次提交历史的页面上只剩 1 条、日期=构建当天），
+   在 CI 现算 git 日期会让全站都声称"今天刚更新"。账本按每篇内容自己的哈希决定要不要换日期，
+   改一篇不会把另五篇的"最近更新"一起刷新（实测：改 hospital 只有它 refreshed，其余 unchanged）。
+4. 在 `pages/tutorials.html` 手写一张卡片：`<div class="tutorial-card" data-category="…">` + 该篇的
    内联 SVG 插画。卡片是刻意保留的手绘件（每篇有自己的画）；忘了它门禁会直接点名，不会再静默。
-4. `node tools/build.mjs build` 更新 `sitemap.xml` / `sw.js` precache / Lighthouse URL 矩阵，
+5. `node tools/build.mjs build` 更新 `sitemap.xml` / `sw.js` precache / Lighthouse URL 矩阵，
    然后三条检查全绿再提：`python tools/build.py check`、`node tools/build.mjs check`、
    `python tools/test_build.py`。
 
@@ -64,8 +69,8 @@ python -m http.server 8765       # 再用 Chrome DevTools 看四个断点与暗�
 
 1. 从 `main` 开分支 → 修改 → 本地过上述检查。
 2. Commit 遵循 [Conventional Commits](https://www.conventionalcommits.org/)（`feat(tutorial): ...` / `fix(a11y): ...`）。
-3. 提 PR，等待 CI 全绿：HTMLHint（13 页）→ i18n → 管线漂移 → 管线自测 →
-   链接检查（HTML + Markdown）→ 子路径起服务 → Lighthouse CI（13 页，
+3. 提 PR，等待 CI 全绿：HTMLHint（14 页）→ i18n → 管线漂移 → 管线自测 →
+   链接检查（HTML + Markdown）→ 子路径起服务 → Lighthouse CI（14 页，
    Performance ≥0.9、Accessibility ≥0.95 为 error 级）。
 4. 附修改前后截图（桌面 + 手机两个断点；改到颜色时补暗色模式各一张）。
 

@@ -725,9 +725,13 @@ def t_content_roster():
           'python tools/build.py build' in doc and 'node tools/build.mjs build' in doc,
           'pages come from python, sitemap/precache/lighthouserc from node')
     check('CONTRIBUTING keeps the card step visible', 'tutorial-card' in doc)
-    check('CONTRIBUTING page count matches the roster',
-          ('全站 %d 页' % len(build.all_pages())) in doc,
-          'roster is %d pages' % len(build.all_pages()))
+    check('CONTRIBUTING keeps the stamp step visible', 'last-updated.py --write' in doc)
+    # Every "N 页" in the contributor doc must match the roster. Two of them were stale (13) in the
+    # same session, which is how a doc that nobody checks ends up teaching the wrong command.
+    stale_counts = sorted({n for n in re.findall(r'(\d+) 页', doc)
+                           if n != '404' and n != str(len(build.all_pages()))})
+    check('CONTRIBUTING page counts match the roster', not stale_counts,
+          'roster is %d pages, doc says %s' % (len(build.all_pages()), stale_counts))
 
 
 def t_no_duplicate_defs():
@@ -768,11 +772,54 @@ def t_changelog_shape():
     check('no continuation line orphaned after a blank line', not orphans, str(orphans[:3]))
 
 
+def t_last_updated():
+    """The 'last updated' stamp, checked without asking git anything.
+
+    CI checks out with fetch-depth 1, where every file's last commit date is the build day
+    (measured: a page with 12 commits reports 1). So the dates are produced locally by
+    tools/last-updated.py and committed; the gate re-derives each tutorial's content hash and
+    fails when the page carries a date that no longer matches the text it sits under.
+    """
+    import datetime
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        'last_updated_tool', os.path.join(ROOT, 'tools', 'last-updated.py'))
+    tool = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tool)
+    ledger = json.loads(read('reports/last-updated.json'))
+    tuts = json.loads(read('content/tutorials.json'))['tutorials']
+    today = datetime.date.today().isoformat()
+    check('every tutorial page carries a stamp entry',
+          sorted(ledger) == sorted('pages/' + t['file'] for t in tuts),
+          'ledger %s vs content %s' % (sorted(ledger), sorted('pages/' + t['file'] for t in tuts)))
+    check('stamps exist only where a source can be named',
+          all(fp.startswith('pages/tutorial-') for fp in ledger),
+          'hand-written pages are not stamped - "updated" there would have no source')
+    for t in tuts:
+        fp = 'pages/' + t['file']
+        ent = ledger.get(fp) or {}
+        check('%s ledger hash matches its current content' % fp,
+              ent.get('hash') == tool.entry_hash(t),
+              'stale stamp: run python tools/last-updated.py --write (content changed, date did not)')
+        d = ent.get('date', '')
+        check('%s date is ISO and not in the future' % fp,
+              bool(re.fullmatch(r'\d{4}-\d{2}-\d{2}', d)) and d <= today, d)
+        html = read(fp)
+        check('%s shows the ledger date to readers' % fp,
+              '<time datetime="%s">%s</time>' % (d, d) in html)
+        check('%s schema.org dateModified agrees with the visible stamp' % fp,
+              '"dateModified":"%s"' % d in html,
+              'two answers to "when was this updated" is the defect class this repo keeps hunting')
+    check('the stamp label exists in both dictionaries',
+          'meta.updated' in json.loads(read('assets/locales/en.json'))
+          and 'meta.updated' in json.loads(read('assets/locales/zh.json')))
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
                t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs,
-               t_changelog_shape):
+               t_changelog_shape, t_last_updated):
         fn()
     for f in FAILS:
         print('FAIL:', f)

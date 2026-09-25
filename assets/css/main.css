@@ -1559,6 +1559,14 @@ html.js .stagger-children:not(.visible) > * {
 
 /* Full-text search results (Pagefind). Sized for the site's audience: the panel is a
    destination, not a decoration, so it uses body size and a visible focus ring. */
+/* "Last updated" stamp on generated tutorial pages. Only secondary-on-base colours, both already
+   audited, so the static contrast resolver keeps covering it without a new pairing. */
+.page-meta {
+  margin: var(--space-md) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
 .fulltext-results {
   margin: 0 0 var(--space-lg);
   padding: var(--space-lg);

@@ -444,6 +444,7 @@ var I18N = {
     "tut.wechat.tag1": "Daily Life",
     "tutorials.h1": "Tutorial Library",
     "tutorials.p": "Clear, step-by-step guides in large print with simple diagrams. No videos, no jargon—just simple instructions you can follow at your own pace.",
+    "meta.updated": "Last updated",
   },
   zh: {
     "a11s.feedback.h2": "发现障碍？",
@@ -885,5 +886,6 @@ var I18N = {
     "tut.wechat.tag1": "日常生活",
     "tutorials.h1": "使用教程库",
     "tutorials.p": "清晰、逐步的图文指南。无需视频，无需术语—只需简单说明，按您自己的节奏学习。",
+    "meta.updated": "最近更新",
   }
 };

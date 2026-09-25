@@ -56,6 +56,19 @@ def load_content():
     return tuts, cases
 
 
+LEDGER = 'reports/last-updated.json'
+
+
+def last_updated():
+    """{page: {'date': ..., 'hash': ...}}, written by tools/last-updated.py.
+
+    That tool is the only place git dates are read, and it runs locally where the full history
+    exists; CI has a shallow checkout (measured: 12 commits of a page collapse to 1). A missing
+    ledger simply means no stamp; a *wrong* stamp is what the gate catches.
+    """
+    return json.loads(read(LEDGER)) if os.path.exists(os.path.join(ROOT, LEDGER)) else {}
+
+
 def derived_slug_re():
     slugs = [t['slug'] for t in load_content()[0]]
     return re.compile(r"^tut-detail\.(%s)\.(h1|p|img\.alt|step\d+\.title|step\d+\.p|related\d+)$" % '|'.join(slugs))
@@ -338,7 +351,7 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
     <section class="step-list" aria-label="Tutorial steps">
 {{STEPS}}
     </section>
-
+{{UPDATED}}
     <section class="section" aria-labelledby="related-heading">
       <h2 id="related-heading" data-i18n="tut-detail.related">Related Tutorials</h2>
       <div class="card-grid">
@@ -462,10 +475,19 @@ def render_tutorial_page(t):
     h = h.replace('{{H1_EN}}', esc_text(t['h1']['en'])).replace('{{INTRO_EN}}', esc_text(t['intro']['en']))
     h = h.replace('{{STEPS}}', steps).replace('{{RELATED}}', rel)
     h = h.replace('{{IMG}}', t['illustration']).replace('{{IMG_ALT_EN}}', esc(t['img_alt']['en']))
+    # The stamp comes from reports/last-updated.json (see tools/last-updated.py): a hash of this
+    # tutorial's own content decides whether the date moves, so an unrelated edit republishes
+    # nothing. Same value feeds the human-visible <time> and the schema.org dateModified.
+    stamp = last_updated().get('pages/' + t['file'], {}).get('date')
+    h = h.replace('{{UPDATED}}',
+                  ('    <p class="page-meta"><span data-i18n="meta.updated">Last updated</span>: '
+                   '<time datetime="%s">%s</time></p>' % (stamp, stamp)) if stamp else '')
     ld = {'@context': 'https://schema.org', '@type': 'HowTo',
           'name': t['h1']['en'], 'description': t['intro']['en'],
           'step': [{'@type': 'HowToStep', 'position': i, 'name': s['title']['en'], 'text': s['p']['en']}
                    for i, s in enumerate(t['steps'], 1)]}
+    if stamp:
+        ld['dateModified'] = stamp
     h = h.replace('{{JSONLD}}', '<script type="application/ld+json">'
             + json.dumps(ld, ensure_ascii=True, separators=(',', ':')) + '</script>')
     return h.replace('{{NAV}}', nav_for(False)).replace('{{FOOTER}}', footer_for(False))
