@@ -281,6 +281,7 @@
   "remote.steps.p": "只需三个简单步骤，无论他们在哪里，都能获得家人的帮助",
   "search.allword": "那个",
   "search.label": "搜索教程",
+  "search.fulltext.label": "全文匹配",
   "search.none": "没有找到与「{q}」匹配的教程。换个更短的词试试。",
   "search.placeholder": "输入关键词，例如：挂号、火车票、微信",
   "skip-link": "跳过导航",

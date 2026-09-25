@@ -384,7 +384,10 @@ BUDGETS = [
     (r'\.png$', 64 * 1024, 'image'),
 ]
 SCAM_LIST_BUDGET = 640 * 1024
-TOTAL_BUDGET_EXCLUDING_SCAM_LIST = 640 * 1024
+TOTAL_BUDGET_EXCLUDING_SCAM_LIST = 1100 * 1024   # measured 953 KiB gz after the search index shipped
+# Pagefind's index is fetched on first query, never on first paint. Ceiling is 1.36x the
+# measured 468.9 KiB gz of 52 files, so growth is caught without forbidding an extra locale.
+PAGEFIND_BUDGET = 640 * 1024
 
 
 def shipped_files():
@@ -425,9 +428,13 @@ def t_budgets():
     if not files:
         return
     total = 0
+    pagefind_gz = 0
     for fp in sorted(files):
         size = gz_size(fp)
         total += size
+        if fp.startswith('pagefind/'):
+            pagefind_gz += size
+            continue
         if 'destroylist' in fp:
             check('scam list stays within its data ceiling (%s)' % fp, size <= SCAM_LIST_BUDGET,
                   '%d KiB gz > %d KiB ceiling: this is upstream growth, decide on tiering or '
@@ -437,6 +444,9 @@ def t_budgets():
             if re.search(pattern, fp):
                 check('%s within %s ceiling' % (fp, label), size <= ceiling,
                       '%d KiB gz > %d KiB' % (size // 1024, ceiling // 1024))
+    check('search index within its own ceiling', pagefind_gz <= PAGEFIND_BUDGET,
+          '%d KiB gz > %d KiB (pagefind/ is 52 files; re-measure before raising this)'
+          % (pagefind_gz // 1024, PAGEFIND_BUDGET // 1024))
     check('whole site within total budget', total - gz_size('assets/data/destroylist-domains.txt')
           <= TOTAL_BUDGET_EXCLUDING_SCAM_LIST,
           '%d KiB gz' % (total // 1024))
@@ -488,6 +498,41 @@ def t_search_corpus():
           'name="robots" content="noindex"' in head and 'lang="${lang}"' in head)
     check('corpus targets zh only (English already exists on disk)',
           "LANGS = ['zh']" in head)
+
+
+def t_search_ui():
+    """The search feature is only real if the page that hosts the input also loads the code
+    that queries the index, and the index actually ships. Each clause below is a way this
+    could quietly stop working while every other gate stayed green."""
+    html = read('pages/tutorials.html')
+    js = 'assets/js/search.js'
+    check('search.js exists', os.path.exists(os.path.join(ROOT, js)))
+    check('tutorials page loads search.js', 'assets/js/search.js' in html)
+    for el in ('id="fulltext-results"', 'id="fulltext-list"', 'id="fulltext-status"'):
+        check('tutorials page has the results panel element (%s)' % el, el in html)
+    check('results panel starts hidden',
+          re.search('<div class="fulltext-results"', html) is not None and html.split('<div class="fulltext-results"', 1)[1].split('>', 1)[0].endswith('hidden="hidden"'),
+          'hidden must carry a value: .htmlhintrc attr-value-not-empty')
+    check('search.js degrades instead of throwing', "['catch']" in read(js) and 'clear()' in read(js))
+    check('search.js picks the index by UI language', "indexOf('zh')" in read(js))
+    en = json.loads(read(os.path.join('assets', 'locales', 'en.json')))
+    zh = json.loads(read(os.path.join('assets', 'locales', 'zh.json')))
+    check('panel label exists in both dictionaries',
+          'search.fulltext.label' in en and 'search.fulltext.label' in zh)
+    wf = read(os.path.join('.github', 'workflows', 'deploy-pages.yml'))
+    # Anchor on the real staging command, not on `cp -r` anywhere: the comment above it also
+    # contains that phrase, and an assertion satisfied by prose is not an assertion.
+    stage = 'cp -r index.html'
+    check('deploy stages the search index', re.search(stage + r' [^\n]*pagefind', wf) is not None)
+    check('deploy builds the index before staging it',
+          'build-search.mjs index' in wf and wf.index('build-search.mjs index') < wf.index(stage),
+          'pagefind/ is a gitignored build output; a checkout has none')
+    zipline = read(os.path.join('..', '_internal', 'build_zip.py'))
+    check('offline ZIP excludes the index it cannot use',
+          "'pagefind'" in zipline and "'_search'" in zipline,
+          'Pagefind fetches over HTTP, which file:// blocks')
+    sw = read('sw.js')
+    check('service worker does not precache the index', 'pagefind/' not in sw)
 
 
 def t_contrast_pairs():
@@ -546,7 +591,7 @@ def t_release():
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
-               t_search_corpus):
+               t_search_corpus, t_search_ui):
         fn()
     for f in FAILS:
         print('FAIL:', f)

@@ -99,6 +99,11 @@
       <input type="search" id="tutorial-search-input" class="form-input tutorial-search-input" autocomplete="off" data-i18n-placeholder="search.placeholder" placeholder="Type a word such as hospital, train ticket or WeChat">
     </div>
 
+    <div class="fulltext-results" id="fulltext-results" hidden="hidden">
+      <h2 class="fulltext-title"><span data-i18n="search.fulltext.label">Full-text matches</span>: <span id="fulltext-status"></span></h2>
+      <ul class="fulltext-list" id="fulltext-list"></ul>
+    </div>
+
     <div class="tutorial-grid" role="list">
       <!-- Tutorial 1: Hospital -->
       <div class="tutorial-card" data-category="health" role="listitem">
@@ -296,5 +301,6 @@
   </button>
 
   <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/search.js"></script>
 </body>
 </html>

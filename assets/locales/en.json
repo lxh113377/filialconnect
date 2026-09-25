@@ -281,6 +281,7 @@
   "remote.steps.p": "Get help from your family no matter where they are, in three simple steps",
   "search.allword": "that",
   "search.label": "Search tutorials",
+  "search.fulltext.label": "Full-text matches",
   "search.none": "No tutorial matches {q}. Try a shorter word.",
   "search.placeholder": "Type a word such as hospital, train ticket or WeChat",
   "skip-link": "Skip to main content",

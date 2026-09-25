@@ -1556,6 +1556,35 @@ html.js .stagger-children:not(.visible) > * {
 }
 
 
+
+/* Full-text search results (Pagefind). Sized for the site's audience: the panel is a
+   destination, not a decoration, so it uses body size and a visible focus ring. */
+.fulltext-results {
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-lg);
+  border-left: 4px solid var(--color-primary);
+}
+
+.fulltext-title {
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-sm);
+}
+
+.fulltext-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.fulltext-list a {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-primary-text);
+  text-decoration: underline;
+}
+
 /* ============================================================
    Responsive — Tablet (<1024px)
    ============================================================ */

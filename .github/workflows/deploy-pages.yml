@@ -22,10 +22,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install pinned dev tooling
+        run: npm ci
+
+      # pagefind/ and _search/ are gitignored build outputs, so a checkout has no index to
+      # copy: staging without this step would fail the moment `cp -r pagefind` ran.
+      - name: Build search corpus and dual index
+        run: node tools/build-search.mjs index
+
       - name: Stage site (public deliverable only)
         run: |
           mkdir _site
-          cp -r index.html 404.html pages assets sitemap.xml robots.txt manifest.json sw.js workbox-*.js _site/
+          cp -r index.html 404.html pages assets sitemap.xml robots.txt manifest.json sw.js workbox-*.js pagefind _site/
           cp README.md LICENSE SECURITY.md SOURCES.md CONTRIBUTING.md _site/
           find _site -name '__pycache__' -type d -prune -exec rm -rf {} +
           find _site -name '*.pyc' -delete
