@@ -715,6 +715,19 @@ def t_content_roster():
     for fp, text in build.locale_outputs().items():
         check('%s is in sync with content/*.json' % fp, read(fp) == text,
               'run: python tools/build.py build')
+    # Contributor docs rot the same way copy does: CONTRIBUTING.md told people to hand-edit
+    # assets/js/i18n.js (a generated bundle) and to expect one command to add a tutorial,
+    # which is exactly the step that silently did nothing.
+    doc = read('CONTRIBUTING.md')
+    check('CONTRIBUTING points hand-written copy at the locale JSONs, not the bundle',
+          'assets/js/i18n.js` 手写区' not in doc and '不要改 `assets/js/i18n.js`' in doc)
+    check('CONTRIBUTING names both generators',
+          'python tools/build.py build' in doc and 'node tools/build.mjs build' in doc,
+          'pages come from python, sitemap/precache/lighthouserc from node')
+    check('CONTRIBUTING keeps the card step visible', 'tutorial-card' in doc)
+    check('CONTRIBUTING page count matches the roster',
+          ('全站 %d 页' % len(build.all_pages())) in doc,
+          'roster is %d pages' % len(build.all_pages()))
 
 
 def t_no_duplicate_defs():

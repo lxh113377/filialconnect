@@ -11,13 +11,23 @@
 |---|---|---|
 | 教程标题/步骤/相关教程 | `content/tutorials.json` | `python tools/build.py build` |
 | 防骗案例 | `content/fraud-cases.json` | 同上 |
-| 导航 / 页脚（全站 13 页） | `tools/build.py` 里的 `NAV_TMPL` / `FOOTER_TMPL` | 同上 |
+| 导航 / 页脚（全站 14 页） | `tools/build.py` 里的 `NAV_TMPL` / `FOOTER_TMPL` | 同上 |
 | 404 页 / `sitemap.xml` | `tools/build.py` 的 `PAGE_404_TMPL` / `render_sitemap()` | 同上 |
-| 界面文字（非生成部分） | `assets/js/i18n.js` 手写区，EN 与 ZH 同时加 | `python tools/check-i18n.py` |
+| 界面文字（非生成部分） | `assets/locales/en.json` 与 `zh.json` **成对**加；不要改 `assets/js/i18n.js`（Node 生成物，改了会被覆盖） | `node tools/build.mjs build` 后跑 `python tools/check-i18n.py` |
 | 样式与无障碍 | `assets/css/main.css`（只用 `:root` 令牌） | 见下方本地验证 |
 
-新增第 7 篇教程：往 `content/tutorials.json` 追加一条（含 `slug`/`file`），
-跑一次 `build` 即可 —— 页面清单与字典键的识别规则都从 JSON 派生，不需要改脚本常量。
+新增第 7 篇教程（第十四轮按真实动作量过的流程；在此之前本节写的是「追加一条 + 跑一次 build 即可」，
+而实测那次 build 什么文件都没生成、也没报错，所以这里逐步写明）：
+
+1. 往 `content/tutorials.json` 追加一条，含 `slug`、`file`、`category`（必须是教程页筛选 chips 里的
+   一个：`health` / `transport` / `banking` / `daily`），每段文案带 `{en, zh}`。
+2. `python tools/build.py build`：教程页 **和** 两侧字典键都由这一步生成（实测一篇 = 18 键 × 2 语言），
+   不要手抄文案，也不要改 `assets/js/i18n.js`。
+3. 在 `pages/tutorials.html` 手写一张卡片：`<div class="tutorial-card" data-category="…">` + 该篇的
+   内联 SVG 插画。卡片是刻意保留的手绘件（每篇有自己的画）；忘了它门禁会直接点名，不会再静默。
+4. `node tools/build.mjs build` 更新 `sitemap.xml` / `sw.js` precache / Lighthouse URL 矩阵，
+   然后三条检查全绿再提：`python tools/build.py check`、`node tools/build.mjs check`、
+   `python tools/test_build.py`。
 
 ## 硬性约束（CI 会拦截）
 
