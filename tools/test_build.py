@@ -498,9 +498,35 @@ def t_contrast_pairs():
               'light %.2f / dark %.2f, needs %.1f' % (e['light'], e['dark'], e['required']))
 
 
+def t_release():
+    """Version discipline. Until round 9 this repo said `1.0.0` in package.json while the
+    CHANGELOG already declared 1.2.0 released, and there was no git tag at all — a version
+    that exists only in prose is not a version.
+
+    Deliberately file-only: `actions/checkout` does not fetch tags by default, so a
+    tag-existence assertion would be a false red on CI. Tagging lives in tools/release.py.
+    """
+    pkg = json.loads(read('package.json'))
+    ver = pkg.get('version', '')
+    check('package.json version is semver x.y.z', re.fullmatch(r'\d+\.\d+\.\d+', ver), ver)
+    log = read('CHANGELOG.md')
+    headings = re.findall(r'^## \[([\w.]+)\](?: - (\d{4}-\d{2}-\d{2}))?', log, re.M)
+    check('CHANGELOG keeps an [Unreleased] section', headings and headings[0][0] == 'Unreleased', str(headings[:1]))
+    released = [h for h in headings if h[0] != 'Unreleased']
+    check('CHANGELOG has at least one released version', bool(released))
+    if released:
+        latest, date = released[0]
+        check('CHANGELOG version matches package.json', latest == ver, 'changelog %s vs package.json %s' % (latest, ver))
+        check('latest released version is datestamped', bool(date), '## [%s] lacks " - YYYY-MM-DD"' % latest)
+    for name, d in released[1:]:
+        check('released version %s is datestamped' % name, bool(d))
+    check('released versions descend from package.json version downward',
+          not released or released[0][0] == ver)
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
-               t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs):
+               t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release):
         fn()
     for f in FAILS:
         print('FAIL:', f)
