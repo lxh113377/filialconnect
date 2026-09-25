@@ -51,9 +51,11 @@ def main():
             print('FAIL %s | %s | score=%s | %s' % (os.path.basename(fp), key, score, url))
             for item in ((audit.get('details') or {}).get('items') or [])[:6]:
                 node = item.get('node') or {}
-                print('   node: %s | %s' % (node.get('target'), (node.get('explanation') or '')[:220]))
-                if node.get('html'):
-                    print('   html: %s' % node['html'][:200])
+                print('   node: %s | %s' % (node.get('target') or node.get('selector'),
+                                            (node.get('explanation') or node.get('failureSummary') or '')[:220]))
+                # Shape varies by Lighthouse version, and guessing it cost three rounds: dump the
+                # item verbatim (capped) so the element is identifiable whatever the schema is.
+                print('   item: %s' % json.dumps(item, ensure_ascii=False)[:600])
     print('reports inspected: %d | failing audits reported: %d' % (len(reports), failures))
     if not reports:
         print('DIAGNOSTIC FAILED: no Lighthouse result json under %s' % target)
