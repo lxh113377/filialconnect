@@ -220,12 +220,32 @@ async function probeUrl(url, lighthouseConfig) {
     const vals = samples.map((s) => s.scores[c]).filter((v) => v !== null);
     range[c] = vals.length > 1 ? { min: Math.min(...vals), max: Math.max(...vals) } : { min: vals[0], max: vals[0] };
   }
+  // cwv used to come from "the sample with the worst CLS" while scores came from the median,
+  // so the table printed two numbers from two different runs and a bimodal page looked flat.
+  // Every reported number now has one provenance: the median sample.
+  const medSample = () => {
+    const perf = samples.map((s) => s.scores.performance).filter((v) => v !== null);
+    const m = median(perf);
+    return samples.find((s) => s.scores.performance === m) || samples[0];
+  };
+  const cwvRange = {};
+  for (const label of ['FCP', 'LCP', 'CLS', 'TBT', 'SI']) {
+    const vals = samples.map((s) => s.cwv[label]).filter((v) => typeof v === 'number');
+    if (vals.length) cwvRange[label] = { min: Math.min(...vals), median: median(vals), max: Math.max(...vals) };
+  }
+  const spread = range.performance.max - range.performance.min;
   return {
     url,
     lighthouse: samples[0].version,
+    runs: samples.length,
     scores: Object.fromEntries(CATEGORIES.map((c) => [c, median(samples.map((s) => s.scores[c]))])),
     score_range: range,
-    cwv: samples.reduce((a, b) => (b.cwv.CLS > a.cwv.CLS ? b : a)).cwv,
+    cwv: medSample().cwv,
+    cwv_range: cwvRange,
+    // A page whose score can move this far is not "fine on average": one sample in three
+    // cannot see it, and the median hides it. Call it out instead of averaging it away.
+    unstable: spread > 0.05 ? { performance_spread: Number(spread.toFixed(2)) } : null,
+    worst_sample: { performance: range.performance.min, lcp: cwvRange.LCP ? cwvRange.LCP.max : null },
     failing_audits: samples.reduce((a, b) => (b.failing.length > a.length ? b : a)).failing,
   };
 }
@@ -236,14 +256,29 @@ function renderTable(rows, title) {
     const { min, max } = r.score_range.performance;
     return min === max ? '     ' : `(${(min * 100).toFixed(0)}-${(max * 100).toFixed(0)})`;
   };
+  const lcp = (r) => {
+    const m = r.cwv_range && r.cwv_range.LCP;
+    if (!m || m.min === m.max) return String(r.cwv.LCP ?? '-').padStart(6);
+    return `${m.median}~${m.max}`.padStart(6);
+  };
   const line = (r) =>
     `  ${pct(r.scores.performance)} ${pct(r.scores.accessibility)} ${pct(r.scores['best-practices'])} ${pct(r.scores.seo)} ${rng(r)}  ` +
-    `${String(r.cwv.LCP ?? '-').padStart(6)} ${String(r.cwv.CLS ?? '-').padStart(7)} ${String(r.cwv.TBT ?? '-').padStart(5)}  ${r.page}`;
+    `${lcp(r)} ${String(r.cwv.CLS ?? '-').padStart(7)} ${String(r.cwv.TBT ?? '-').padStart(5)}  ${r.page}` +
+    (r.unstable ? '  <-- UNSTABLE' : '');
+  const unstable = rows.filter((r) => r.unstable);
+  const note = RUNS === 1
+    ? `\n   (1 run per page: a page that is sometimes slow reads as fine - re-measure with --runs=3 before trusting a green row)`
+    : unstable.length
+      ? `\n   UNSTABLE (median passes, a sample does not): ` +
+        unstable.map((u) => `${u.page} perf ${(u.score_range.performance.min * 100).toFixed(0)}-${(u.score_range.performance.max * 100).toFixed(0)}` +
+          `${u.cwv_range?.LCP ? ` LCP ${u.cwv_range.LCP.min}-${u.cwv_range.LCP.max}ms` : ''}`).join(' | ')
+      : '';
   return (
     `\n${title}\n` +
     `   perf   a11y   bp    seo    perf范围   LCPms    CLS  TBTms  page\n` +
     rows.map(line).join('\n') +
     `\n   ${rows.length} pages, ${RUNS} run(s) each.` +
+    note +
     (rows.some((r) => r.budget_breach.length)
       ? `\n   BUDGET BREACH: ${rows.filter((r) => r.budget_breach.length).map((b) => `${b.page} -> ${b.budget_breach.join(', ')}`).join(' | ')}`
       : `\n   All declared budgets met.`)
@@ -271,6 +306,10 @@ async function main() {
     browser_lang: LANG || '(browser default)',
     served_css_head: check.sha,
     chrome: chromePath.replace(/\\/g, '/'),
+    // Absolute times here are harness-relative: `python -m http.server` is single-threaded and
+    // serves the 1.5 MB fraud list uncompressed, while production serves it gzipped over HTTP/2.
+    // Use this to compare pages against each other and runs against runs, not as the CDN number.
+    server: 'python -m http.server (no gzip, single thread) - compare within this file, not to CI',
     isolation: 'one browser instance per URL (a shared profile lets the service worker answer later pages from an earlier cache)',
     profiles: {},
   };
@@ -321,7 +360,7 @@ function summarize(probe) {
   for (const [name, prof] of Object.entries(probe.profiles)) {
     const pages = prof.pages;
     if (!pages.length) {
-      out[name] = { pages: 0, min: {}, worst_page: null, budget_breaches: [], distinct_failing_audits: [] };
+      out[name] = { pages: 0, min: {}, worst_page: null, budget_breaches: [], unstable_pages: [], distinct_failing_audits: [] };
       continue;
     }
     const lowest = (c) => Math.min(...pages.map((p) => p.scores[c]).filter((v) => v !== null));
@@ -330,6 +369,8 @@ function summarize(probe) {
       min: Object.fromEntries(CATEGORIES.map((c) => [c, lowest(c)])),
       worst_page: pages.reduce((a, b) => (b.scores.performance < a.scores.performance ? b : a)).page,
       budget_breaches: pages.filter((p) => p.budget_breach.length).map((p) => `${p.page}: ${p.budget_breach.join(' / ')}`),
+      unstable_pages: pages.filter((p) => p.unstable).map((p) => `${p.page}: perf ${p.score_range.performance.min}-${p.score_range.performance.max}`
+        + `${p.cwv_range?.LCP ? ` / LCP ${p.cwv_range.LCP.min}-${p.cwv_range.LCP.max}ms` : ''}`),
       distinct_failing_audits: [...new Set(pages.flatMap((p) => p.failing_audits.map((f) => f.audit)))].sort(),
     };
   }

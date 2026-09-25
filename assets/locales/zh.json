@@ -439,5 +439,7 @@
   "tutorials.h1": "使用教程库",
   "tutorials.p": "清晰、逐步的图文指南。无需视频，无需术语—只需简单说明，按您自己的节奏学习。",
   "meta.updated": "最近更新",
-  "footer.report": "报告这一页的问题"
+  "footer.report": "报告这一页的问题",
+  "tut.prev.label": "上一篇教程",
+  "tut.next.label": "下一篇教程"
 }

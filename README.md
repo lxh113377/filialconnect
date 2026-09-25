@@ -130,6 +130,7 @@ filialconnect/
 ├── tools/            # 构建与门禁脚本：build.py（页面）+ build.mjs（i18n/sitemap/lighthouserc/sw，Node 成熟库）
 ├── .github/          # workflows + dependabot
 ├── lighthouserc.json
+├── AGENTS.md         # 改动本仓前先读：门禁命令、反复出现的五类缺陷、归因纪律
 ├── SECURITY.md       # 数据流与漏洞报告口径
 └── SOURCES.md        # 数据源方法论与覆盖边界
 ```

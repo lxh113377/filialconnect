@@ -654,7 +654,11 @@
       if (loading) { loading.push(cb); return; }
       loading = [cb];
       if (!silent) out.textContent = t('linkcheck.loading');
-      fetch('../assets/data/destroylist-domains.txt')
+      // Only the pre-warm goes low: it fires while the visitor is still reading, and at the
+      // default priority its 1.5 MB body raced the page's own render - 3 of 13 Lighthouse runs
+      // put LCP at ~9.7 s instead of 2.25 s (score 0.73 vs 0.96). Someone who pressed 检查 is
+      // waiting on purpose, so that path keeps its urgency.
+      fetch('../assets/data/destroylist-domains.txt', { priority: silent ? 'low' : 'high' })
         .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
         .then(function (txt) {
           set = new Set(txt.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean));

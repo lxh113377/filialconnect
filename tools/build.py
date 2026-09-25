@@ -361,6 +361,8 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
       </div>
     </section>
 
+    {{PREVNEXT}}
+
     <div style="text-align:center; margin-top:var(--space-lg);">
       <a href="printable-guides.html" class="btn btn-outline" data-i18n="tut-detail.guides-link">View Printable Guide</a>
     </div>
@@ -385,6 +387,12 @@ STEP_TMPL = '''      <div class="step-item">
           <p data-i18n="tut-detail.{{SLUG}}.step{{N}}.p">{{BODY}}</p>
         </div>
       </div>'''
+
+PNAV_TMPL = '''    <nav class="page-nav" aria-label="Tutorial navigation">
+{{ITEMS}}
+    </nav>'''
+
+PNAV_ITEM = '''      <a href="{{HREF}}" class="page-nav-{{DIR}}"><span class="page-nav-dir" data-i18n="tut.{{DIR}}.label">{{LABEL_EN}}</span><span class="page-nav-title" data-i18n="tut-detail.{{SLUG}}.h1">{{TITLE_EN}}</span></a>'''
 
 RELATE_TMPL = '''        <a href="{{HREF}}" class="card">
           <h2 class="tutorial-card-title" data-i18n="tut-detail.{{SLUG}}.related{{N}}">{{TITLE}}</h2>
@@ -472,6 +480,27 @@ def sync_head(s, fp):
     return s.replace(INLINE_JS + '\n  ', FOUC_JS + '\n  ').replace(INLINE_JS, FOUC_JS)
 
 
+def page_nav(tuts, t):
+    """Prev/next links following the order of content/tutorials.json.
+
+    Titles reuse the generated `tut-detail.<slug>.h1` key instead of carrying their own copy, so a
+    renamed guide cannot leave a stale title behind in its neighbour's footer.
+    """
+    i = next((n for n, x in enumerate(tuts) if x['slug'] == t['slug']), None)
+    if i is None:
+        return ''
+    items = []
+    for direction, other, label in (('prev', i - 1, 'Previous tutorial'), ('next', i + 1, 'Next tutorial')):
+        if 0 <= other < len(tuts):
+            n = tuts[other]
+            items.append(PNAV_ITEM.replace('{{HREF}}', n['file']).replace('{{DIR}}', direction)
+                         .replace('{{LABEL_EN}}', esc_text(label)).replace('{{SLUG}}', n['slug'])
+                         .replace('{{TITLE_EN}}', esc_text(n['h1']['en'])))
+    if not items:
+        return ''
+    return PNAV_TMPL.replace('{{ITEMS}}', chr(10).join(items))
+
+
 def render_tutorial_page(t):
     steps = '\n'.join(
         STEP_TMPL.replace('{{N}}', str(i)).replace('{{SLUG}}', t['slug'])
@@ -492,6 +521,7 @@ def render_tutorial_page(t):
     # tutorial's own content decides whether the date moves, so an unrelated edit republishes
     # nothing. Same value feeds the human-visible <time> and the schema.org dateModified.
     stamp = last_updated().get('pages/' + t['file'], {}).get('date')
+    h = h.replace('{{PREVNEXT}}', page_nav(load_content()[0], t))
     h = h.replace('{{UPDATED}}',
                   ('    <p class="page-meta"><span data-i18n="meta.updated">Last updated</span>: '
                    '<time datetime="%s">%s</time></p>' % (stamp, stamp)) if stamp else '')

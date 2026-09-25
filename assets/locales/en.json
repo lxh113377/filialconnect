@@ -439,5 +439,7 @@
   "tutorials.h1": "Tutorial Library",
   "tutorials.p": "Clear, step-by-step guides in large print with simple diagrams. No videos, no jargon—just simple instructions you can follow at your own pace.",
   "meta.updated": "Last updated",
-  "footer.report": "Report a problem with this page"
+  "footer.report": "Report a problem with this page",
+  "tut.prev.label": "Previous tutorial",
+  "tut.next.label": "Next tutorial"
 }
