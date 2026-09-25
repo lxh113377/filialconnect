@@ -9,6 +9,8 @@ when the sources disagree rather than tagging whatever it finds.
 Usage:
   python tools/release.py            # dry run: what would be tagged and shipped
   python tools/release.py --apply    # tag, push tag, create the release
+  python tools/release.py --allow-pending   # spare a still-running pipeline (HEAD touches only
+                                            # release metadata); RED always blocks
 """
 import io
 import json
@@ -19,6 +21,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APPLY = '--apply' in sys.argv
+ALLOW_PENDING = '--allow-pending' in sys.argv
 
 
 def read(fp):
@@ -37,6 +40,27 @@ def section(log, version):
     return m.group(1).strip() if m else ''
 
 
+def ci_verdict(sha):
+    """('green' | 'red' | 'pending' | 'unknown', detail) for one commit.
+
+    A tag is the one artefact that cannot be quietly moved afterwards, and v1.4.0 was cut on a
+    red commit because this script only compared files. So: look at the pipeline before pushing.
+    """
+    slug = sh(['gh', 'repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner'], check=False)
+    if not slug or '/' not in slug:
+        return 'unknown', 'gh could not resolve the repository slug'
+    out = sh(['gh', 'api', 'repos/%s/commits/%s/check-runs' % (slug, sha), '--jq',
+              '[.check_runs[] | .status + ":" + (.conclusion // "null")] | join(",")'], check=False)
+    if not out:
+        return 'unknown', 'gh reported no check-runs for %s' % sha[:9]
+    pairs = [p.rsplit(':', 1) for p in out.split(',')]
+    if any(s != 'completed' for s, _ in pairs):
+        return 'pending', out
+    if all(c == 'success' for _, c in pairs):
+        return 'green', out
+    return 'red', out
+
+
 def main():
     version = json.loads(read('package.json')).get('version', '')
     log = read('CHANGELOG.md')
@@ -53,16 +77,27 @@ def main():
     dirty = sh(['git', 'status', '--porcelain'])
     if dirty:
         problems.append('working tree is dirty (%d paths) - commit first' % len(dirty.splitlines()))
+    tag = 'v' + version
+    exists = sh(['git', 'tag', '-l', tag])
+    verdict, detail = ci_verdict(head)
+    if not exists and verdict == 'red':
+        problems.append('CI is RED on %s [%s] - a pushed tag cannot be moved, so it has to land '
+                        'on a green commit' % (head[:9], detail[:120]))
+    elif not exists and verdict == 'pending' and not ALLOW_PENDING:
+        problems.append('CI has not finished on %s [%s] - wait for it, or pass --allow-pending '
+                        'when HEAD only touches release metadata' % (head[:9], detail[:120]))
+    elif not exists and verdict == 'unknown':
+        problems.append('CI verdict unknown for %s (%s) - pass --allow-pending only if you have '
+                        'checked the pipeline by hand' % (head[:9], detail[:120]))
     if problems:
         print('REFUSING to release:')
         for p in problems:
             print('  - ' + p)
         return 1
 
-    tag = 'v' + version
-    exists = sh(['git', 'tag', '-l', tag])
     print('version      : %s' % version)
     print('commit       : %s' % head[:9])
+    print('ci verdict   : %s (%s)' % (verdict, detail[:150]))
     print('tag          : %s%s' % (tag, ' (already exists, will be reused)' if exists else ''))
     print('release body : %d lines from CHANGELOG [%s]' % (len(body.splitlines()), version))
     print('mode         : %s' % ('APPLY' if APPLY else 'dry run (pass --apply to publish)'))

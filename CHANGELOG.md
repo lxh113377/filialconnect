@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-25
+
+### Fixed
+- **同一判据两处实现，只修了一处**：`tools/test_build.py` 的词典孤儿规则上一轮刚扩到全部脚本，
+  CI 里另跑的 `tools/check-i18n.py` 仍只扫 `main.js` 的 `t('key')`，于是 `052dd92`（v1.4.0 发版提交）
+  被它判红，报 `search.fulltext.found/none/offline` 三个"孤儿键"。**本地绿 ≠ CI 绿**第二次发生
+  （第一次是第十轮判据读仓外路径）。修法：规则收进 `check-i18n.py::js_key_refs()` 一处，
+  `test_build.py` 用 importlib 加载它并断言两侧引用集合相同 + 一条正样本；变异体实测——把该函数
+  退回"只扫 main.js"，两条新断言同时红（2/1490），工具自身也报回那三个键
+- **`tools/release.py` 过去不看流水线**：v1.4.0 的 tag 因此落在一个 CI 红的提交上，而 tag 推上去
+  就搬不动。现在它先取 `check-runs` 结论并打印 `ci verdict`：red 直接拒，pending 须显式
+  `--allow-pending`（HEAD 只动发布元数据时用）。三态均在真实提交上取证：
+  `052dd92`→red、`7e494b9`→green、运行中的 HEAD→pending
+
 ## [1.4.0] - 2026-09-25
 
 ### Added
