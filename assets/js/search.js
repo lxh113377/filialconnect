@@ -36,6 +36,22 @@
     return (document.documentElement.lang || '').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
   }
 
+  // main.js keeps its t() inside its own IIFE, so read the generated dictionary directly —
+  // same source of truth, and it does not depend on i18next having finished initialising.
+  function phrase(key, vars) {
+    var table = (window.I18N && window.I18N[lang()]) || {};
+    var out = table[key] || (window.I18N && window.I18N.en && window.I18N.en[key]) || '';
+    for (var k in vars) {
+      if (Object.prototype.hasOwnProperty.call(vars, k)) out = out.split('{' + k + '}').join(String(vars[k]));
+    }
+    return out;
+  }
+
+  function announce(key, vars) {
+    var live = document.getElementById('fulltext-live');
+    if (live) live.textContent = phrase(key, vars);
+  }
+
   function loadIndex(want) {
     if (loaded && loaded.lang === want) return Promise.resolve(loaded.api);
     var base = rootUrl().href + 'pagefind/' + want + '/';
@@ -103,8 +119,13 @@
     return api.search(term).then(function (res) {
       if (ticket !== seq) return;            // a newer keystroke already superseded this one
       var results = (res && res.results ? res.results : []).slice(0, MAX_RESULTS);
-      if (!results.length) { clear(); return; }
+      if (!results.length) {
+        clear();
+        announce('search.fulltext.none', { q: term });
+        return;
+      }
       render(results);
+      announce('search.fulltext.found', { n: results.length });
     });
   }
 
@@ -127,6 +148,9 @@
       degraded = true;
       var box = panel();
       if (box) box.setAttribute('data-fulltext', 'unavailable');
+      // A silently closed panel is indistinguishable from "nothing matched" for a screen
+      // reader, which is the failure shape this site keeps getting told about. Say why.
+      announce('search.fulltext.offline', {});
       if (ticket === seq) clear();
     });
   }

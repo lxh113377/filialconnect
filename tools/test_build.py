@@ -134,8 +134,15 @@ def t_i18n():
         used |= set(re.findall(r'data-i18n(?:-(?:placeholder|aria-label|alt))?="([^"]+)"', html_only(fp)))
     check('every data-i18n key exists in both dictionaries', used <= en and used <= zh,
           str(sorted(used - en)[:5]))
-    js = read('assets/js/main.js')
-    js_refs = set(re.findall(r"t\('([A-Za-z0-9.\-]+)'\)", js))
+    # References live in every script, not just main.js's t('...') calls: a key consumed by
+    # search.js through a local helper used to read as "orphan" and get deleted by mistake.
+    js_refs = set()
+    js_dir = os.path.join(ROOT, 'assets', 'js')
+    for name in sorted(os.listdir(js_dir)):
+        if not name.endswith('.js') or name == 'i18n.js':
+            continue          # i18n.js is the dictionary itself, not a reference to it
+        js_refs |= set(re.findall(r"'([A-Za-z0-9.\-]+\.[A-Za-z0-9.\-]+)'",
+                                  read(os.path.join('assets', 'js', name))))
     orphans = en - used - js_refs
     check('no orphan dictionary keys', not orphans, str(sorted(orphans)[:8]))
 
@@ -527,6 +534,29 @@ def t_search_ui():
     zh = json.loads(read(os.path.join('assets', 'locales', 'zh.json')))
     check('panel label exists in both dictionaries',
           'search.fulltext.label' in en and 'search.fulltext.label' in zh)
+    # A search box that announces nothing is the "silent zero results" shape this site keeps
+    # being told about: the reader cannot tell "no matches" from "this thing is broken".
+    live_id = 'id="fulltext-live"'
+    live_tag = html[html.index(live_id):html.index(live_id) + 140] if live_id in html else ''
+    check('full-text live region carries role=status and aria-live',
+          live_id in html and 'role="status"' in live_tag and 'aria-live="polite"' in live_tag)
+    panel_span = html[html.index('<div class="fulltext-results"'):html.index(live_id)] \
+        if live_id in html and '<div class="fulltext-results"' in html else ''
+    check('live region sits outside the hidden results panel',
+          '</div>' in panel_span,
+          'content inside [hidden] is dropped from the accessibility tree, so a live region '
+          'placed there would never be announced')
+    for key, ph in (('search.fulltext.found', '{n}'), ('search.fulltext.none', '{q}'),
+                    ('search.fulltext.offline', None)):
+        check('search.js announces %s' % key, key in src)
+        check('%s exists in both dictionaries' % key, key in en and key in zh)
+        if key in en and key in zh:
+            check('%s interpolates its placeholder in both languages' % key,
+                  (ph is None) or (ph in en[key] and ph in zh[key]),
+                  'a missing {n} makes the announcement a sentence without a count')
+    check('search.js reads the generated dictionary rather than a helper it cannot see',
+          'window.I18N' in src,
+          "main.js keeps t() inside its own IIFE; there is no global t to call here")
     wf = read(os.path.join('.github', 'workflows', 'deploy-pages.yml'))
     # Anchor on the real staging command, not on `cp -r` anywhere: the comment above it also
     # contains that phrase, and an assertion satisfied by prose is not an assertion.

@@ -103,6 +103,9 @@
       <h2 class="fulltext-title"><span data-i18n="search.fulltext.label">Full-text matches</span>: <span id="fulltext-status"></span></h2>
       <ul class="fulltext-list" id="fulltext-list"></ul>
     </div>
+    <!-- Outside the hidden panel on purpose: content inside [hidden] leaves the accessibility
+         tree, so a live region placed there would never be announced. -->
+    <p class="visually-hidden" id="fulltext-live" role="status" aria-live="polite" aria-atomic="true"></p>
 
     <div class="tutorial-grid" role="list">
       <!-- Tutorial 1: Hospital -->
