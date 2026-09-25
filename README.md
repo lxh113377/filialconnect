@@ -12,14 +12,14 @@
 ![WCAG 2.2 AA](https://img.shields.io/badge/WCAG%202.2-AA%20%E2%9C%93-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**纯静态 · 运行时不请求第三方 origin · 构建脚本 = Python（页面）+ Node（xmlbuilder2 / workbox-build / i18next）· Lighthouse 无障碍 CI error 级门禁 ≥0.95（14 页全量，浅色与深色两套配色均已实测）· 长者字号三档 + 整页朗读**
+**纯静态 · 运行时不请求第三方 origin · 构建脚本 = Python（页面）+ Node（xmlbuilder2 / workbox-build / i18next / Pagefind）· Lighthouse 无障碍 CI error 级门禁 ≥0.95（14 页全量，浅色与深色两套配色均已实测）· 长者字号三档 + 整页朗读**
 
 ## 功能模块
 
 | 模块 | 页面 | 说明 |
 |------|------|------|
 | 首页总入口 | `index.html` | 场景化导航（子女帮父母 / 老人自助） |
-| 教程库 | `pages/tutorials.html` | 关键词搜索 + 分类筛选（两者可组合，结果数与"无匹配"均读屏播报） |
+| 教程库 | `pages/tutorials.html` | 分类筛选 + 关键词子串过滤（结果数与"无匹配"读屏播报）、**全站全文检索**（Pagefind，中英各一套单语言索引，命中直落真实页面锚点；索引加载失败自动闭锁，只留筛选） |
 | 6 篇教程详情 | `pages/tutorial-*.html` | 医院 / 火车票 / 微信 / 医疗 / 银行 / 打车，各 6-7 大步骤（由 `content/tutorials.json` 生成） |
 | 呼叫子女 | `pages/call-help.html` | 本机保存家人称呼/电话 → 大按钮打开**真实拨号界面**；求助表单生成**真实短信/邮件草稿** |
 | 远程协助 | `pages/remote-assist.html` | 每次访问生成随机连接码（无 JS 时降级静态码） |

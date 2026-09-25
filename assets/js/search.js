@@ -16,6 +16,12 @@
   var loaded = null;   // { lang, api } once an index has been imported
   var timer = null;
   var seq = 0;
+  // Latched the first time an index cannot be loaded, so a browser that refuses file:// fetches
+  // (a reader double-clicking the offline ZIP) stops retrying on every keystroke. Guessing this
+  // from the protocol string was tried and dropped: the local harness runs Chrome with file access
+  // enabled, where file:// fetch *succeeds*, so a protocol check would switch the feature off for
+  // readers it works for. Failing once and remembering is correct in either browser.
+  var degraded = false;
 
   function rootUrl() {
     // Pages live one level below the site root, which is also true under file://.
@@ -104,7 +110,7 @@
 
   function onInput(input) {
     var term = (input.value || '').trim();
-    if (term.length < MIN_CHARS) { clear(); return; }
+    if (degraded || term.length < MIN_CHARS) { clear(); return; }
     var want = lang();
     var ticket = ++seq;
     if (loaded && loaded.lang !== want) {
@@ -115,8 +121,12 @@
       if (ticket !== seq) return;
       return run(api, term, ticket);
     })['catch'](function () {
-      // file:// (the offline ZIP), a missing index, or a blocked dynamic import: the substring
-      // filter in main.js still works, so the box simply stays hidden with no console error.
+      // A missing index, a blocked dynamic import, or a browser that refuses file:// fetches
+      // (the offline ZIP). Latch it: the substring filter in main.js still works, so the box
+      // stays closed and no further keystroke re-attempts a load that already failed.
+      degraded = true;
+      var box = panel();
+      if (box) box.setAttribute('data-fulltext', 'unavailable');
       if (ticket === seq) clear();
     });
   }
@@ -126,6 +136,10 @@
     var box = panel();
     if (!input || !box) return;
     box.hidden = true;
+    // Observable, not just implied: a test can read this instead of inferring from the panel
+    // staying closed, which is how the last round ended up unverifiable. Starts optimistically
+    // and latches to 'unavailable' the first time an index load fails.
+    box.setAttribute('data-fulltext', 'ready');
     input.addEventListener('input', function () {
       if (timer) window.clearTimeout(timer);
       timer = window.setTimeout(function () { onInput(input); }, 250);

@@ -515,6 +515,14 @@ def t_search_ui():
           'hidden must carry a value: .htmlhintrc attr-value-not-empty')
     check('search.js degrades instead of throwing', "['catch']" in read(js) and 'clear()' in read(js))
     check('search.js picks the index by UI language', "indexOf('zh')" in read(js))
+    src = read(js)
+    check('search.js latches a failed index load instead of guessing by protocol',
+          'var degraded = false;' in src and 'degraded = true;' in src
+          and 'if (degraded ||' in src and "location.protocol === 'file:'" not in src,
+          'a protocol string is a guess: where file:// fetch is allowed it turns a working search '
+          'box off. One observed failure, remembered, is true in either browser.')
+    check('search.js exposes both states as observable attributes',
+          "data-fulltext', 'ready'" in src and "data-fulltext', 'unavailable'" in src)
     en = json.loads(read(os.path.join('assets', 'locales', 'en.json')))
     zh = json.loads(read(os.path.join('assets', 'locales', 'zh.json')))
     check('panel label exists in both dictionaries',

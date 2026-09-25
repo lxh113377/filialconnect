@@ -5,6 +5,44 @@
 
 ## [Unreleased]
 
+### Added
+- **全站全文检索：Pagefind 1.5.2 接进教程库**（第十、十一轮）。此前「搜索」只是 `main.js`
+  对 6 张卡片的子串过滤，中文读者输「挂号」在 zh 页面得到 0 结果 —— 索引里根本没有中文语料。
+  现在两套**单语言**索引（本 Pagefind 构建无 `setLanguage`，混建只会让英文索引服务不了中文）：
+  `pagefind/en` 14 页来自真实页面，`pagefind/zh` 11 页来自 `tools/build-search.mjs` 生成的语料，
+  语料页带 `<meta name="robots" content="noindex">` 与 `data-pagefind-meta="link:<真实页>#<锚点>"`，
+  命中的是真实页面段落而不是语料副本。索引合计 1226 KiB，不进仓、不进 ZIP（构建产物）
+- **教程库搜索面板 `assets/js/search.js`**：随 `documentElement.lang` 选索引，250 ms 防抖 +
+  序号票据丢旧响应，结果节点一律 `textContent` 构建（无 innerHTML 注入面），只有条数写进
+  `#fulltext-status`，面板标题走 `data-i18n`，无结果即整块 `hidden`
+- **降级状态可观测 `data-fulltext=ready|unavailable`**（第十二轮）：面板藏起来不等于降级发生，
+  第十轮就是靠「隐藏」这个间接证据把「file:// 用不了」写进了代码
+- **检索链入门禁**：`tools/build-search.mjs check` 幂等校验（CI 每次重算语料哈希）、
+  `t_search_corpus`（语料须等于 deploy 清单里的真实页，且不得被 Workbox 吸进 precache）、
+  `t_search_ui`（宿主页面须真加载 `search.js`、面板三元素齐备、双语字典有标题键）。
+  自测链 1,440 → **1,475**
+
+### Fixed
+- **Workbox 会把 11 个检索语料页吸进 precache**（15 → 26 条）：`globPatterns` 是 `**/*.html`，
+  语料页落在站点目录内就一起进缓存，等于把 `noindex` 的构建中间产物推给真实访客。
+  `globIgnores` 补 `_search/** pagefind/** tools/** reports/** .github/**`，并由 `t_search_corpus` 盯住
+- **`data-pagefind-meta` 逗号写法吞掉锚点**：`"link:页,anchor:段"` 解析后 `meta.link` 只剩 `页`，
+  命中链接退化成整页顶部。改成单值 `link:<页>#<锚点>`（改后仍一度读到旧值，实为 HTTP 缓存，
+  换端口取证才确认修好）
+- **CI 判据读仓外路径，红 22 秒**：`t_search_ui` 无条件读 `../_internal/build_zip.py`，
+  `actions/checkout` 的检出里没有这个文件。判据改成条件式并打印说明，ZIP 的保证回到建 ZIP 的地方执行
+- **离线 ZIP 的降级方式**（第十二轮）：第十一轮按「file:// 不能 fetch 索引分片」写死协议判断，
+  本机实测证伪 —— 这套测试浏览器开着文件访问权限，`file://` 下 `fetch` 与检索**都能成功**，
+  协议猜测反而把一个能用的搜索框关掉。改为**首次加载失败即闭锁**（`degraded` 置位后不再重试），
+  两种浏览器下行为都对。取证：把站点副本去掉 `pagefind/` 目录起服务，敲一次「挂号」后
+  `data-fulltext` 由 `ready` 变 `unavailable`、面板保持隐藏、控制台只剩浏览器自己的 404
+
+### Changed
+- 对标发现的「已上线功能未记 CHANGELOG」自伤：`v1.3.0` 之后三轮的功能改动全部补进本节。
+  `tools/release.py` 只读**指定版本号那一节**（不自动搬 Unreleased），所以这些条目现在还是
+  「发不出去」的状态 —— 下一次发版须先把本节改写成 `## [1.4.0] - YYYY-MM-DD` 再跑发布，
+  否则会发一个说明里完全不提搜索功能的版
+
 ## [1.3.0] - 2026-09-25
 
 ### Added
