@@ -25,3 +25,9 @@ __pycache__/
 
 # workbox source maps (regenerate on demand)
 *.map
+
+# Search corpus + Pagefind index: build outputs (node tools/build-search.mjs index).
+# Not shipped until assets/js/search.js consumes them, so a 1.3 MB index does not
+# ride along in the Pages artifact or the competition ZIP.
+_search/
+pagefind/

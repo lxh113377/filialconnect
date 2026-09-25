@@ -15,6 +15,7 @@
     "i18next": "26.4.2",
     "i18next-browser-languagedetector": "8.2.1",
     "linkinator": "8.1.0",
+    "pagefind": "1.5.2",
     "workbox-build": "7.4.1",
     "xmlbuilder2": "3.1.1"
   },

@@ -39,6 +39,13 @@ jobs:
       - name: DOM audit (parsed pages vs dictionary; head meta and fallback text)
         run: node tools/verify-dom.mjs
 
+      - name: Search corpus + dual index build (Pagefind, zh half is the audience language)
+        run: |
+          node tools/build-search.mjs index
+          node tools/build-search.mjs check
+          test -f pagefind/zh/pagefind.js || { echo "missing zh index"; exit 1; }
+          test -f pagefind/en/pagefind.js || { echo "missing en index"; exit 1; }
+
       - name: Pipeline self-tests (build/check/i18n invariants)
         run: python3 tools/test_build.py
 

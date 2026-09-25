@@ -178,6 +178,10 @@ export async function buildSw(dest = ROOT) {
     swDest: join(dest, 'sw.js'),
     globDirectory: ROOT,
     globPatterns: SW_SOURCES,
+    // `**/*.html` against the repo root also matches the search corpus, which is an indexing
+    // input rather than a page (measured: precache jumped 15 -> 26 entries and shipped all 11
+    // _search/zh pages into the offline shell).
+    globIgnores: ['_search/**', 'pagefind/**', 'node_modules/**', 'tools/**', 'reports/**', '.github/**'],
     cacheId: 'filialconnect-v1',
     skipWaiting: true,
     clientsClaim: true,

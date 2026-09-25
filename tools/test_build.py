@@ -471,6 +471,25 @@ def t_contrast_tokens():
             check('no %s brand token doubles as text on its own tint' % status, not hits, str(hits[:2]))
 
 
+def t_search_corpus():
+    """The Pagefind corpus is an indexing input, not a deliverable.
+
+    Measured while wiring it: workbox's `**/*.html` glob against the repo root swept all 11
+    _search/zh pages into the offline shell (precache 15 -> 26 entries), i.e. internal build
+    input shipped to elderly users' devices as if it were content.
+    """
+    sw = read('sw.js')
+    check('offline shell precaches no search-corpus pages', '_search' not in sw)
+    check('offline shell precaches no pagefind output', 'pagefind/' not in sw)
+    gen = 'tools/build-search.mjs'
+    check('search corpus generator exists', os.path.exists(os.path.join(ROOT, gen)))
+    head = read(gen)
+    check('corpus pages declare a language and are noindex',
+          'name="robots" content="noindex"' in head and 'lang="${lang}"' in head)
+    check('corpus targets zh only (English already exists on disk)',
+          "LANGS = ['zh']" in head)
+
+
 def t_contrast_pairs():
     """Both palettes, every declared fg/bg pair, on any machine, with no browser.
 
@@ -526,7 +545,8 @@ def t_release():
 
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
-               t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release):
+               t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
+               t_search_corpus):
         fn()
     for f in FAILS:
         print('FAIL:', f)
