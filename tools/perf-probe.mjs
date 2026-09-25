@@ -242,8 +242,8 @@ async function probeUrl(url, lighthouseConfig) {
     score_range: range,
     cwv: medSample().cwv,
     cwv_range: cwvRange,
-    // A page whose score can move this far is not "fine on average": one sample in three
-    // cannot see it, and the median hides it. Call it out instead of averaging it away.
+    // Diagnostic only: a page can swing 0.93-1.00 and still be fine on every sample. What matters
+    // is `sample_breach` below - computed against the budget, because that is the decision line.
     unstable: spread > 0.05 ? { performance_spread: Number(spread.toFixed(2)) } : null,
     worst_sample: { performance: range.performance.min, lcp: cwvRange.LCP ? cwvRange.LCP.max : null },
     failing_audits: samples.reduce((a, b) => (b.failing.length > a.length ? b : a)).failing,
@@ -363,14 +363,21 @@ function summarize(probe) {
       out[name] = { pages: 0, min: {}, worst_page: null, budget_breaches: [], unstable_pages: [], distinct_failing_audits: [] };
       continue;
     }
+    const budget = (prof.budgets || {})['categories:performance'] || {};
     const lowest = (c) => Math.min(...pages.map((p) => p.scores[c]).filter((v) => v !== null));
     out[name] = {
       pages: pages.length,
       min: Object.fromEntries(CATEGORIES.map((c) => [c, lowest(c)])),
       worst_page: pages.reduce((a, b) => (b.scores.performance < a.scores.performance ? b : a)).page,
       budget_breaches: pages.filter((p) => p.budget_breach.length).map((p) => `${p.page}: ${p.budget_breach.join(' / ')}`),
+      // Median vs worst-sample: CI asserts the median, so a page can pass CI and still be slow for
+      // every third visitor. List both, and require an unstable page to clear the line regardless.
       unstable_pages: pages.filter((p) => p.unstable).map((p) => `${p.page}: perf ${p.score_range.performance.min}-${p.score_range.performance.max}`
-        + `${p.cwv_range?.LCP ? ` / LCP ${p.cwv_range.LCP.min}-${p.cwv_range.LCP.max}ms` : ''}`),
+        + `${p.cwv_range?.LCP ? ` / LCP ${p.cwv_range.LCP.min}-${p.cwv_range.LCP.max}ms` : ''}`
+        + `${budget.minScore !== undefined && p.worst_sample.performance < budget.minScore ? ' / BREACHES BUDGET' : ''}`),
+      worst_sample_breaches: budget.minScore === undefined ? [] : pages
+        .filter((p) => p.worst_sample.performance < budget.minScore)
+        .map((p) => `${p.page}: worst ${p.worst_sample.performance} < ${budget.minScore}`),
       distinct_failing_audits: [...new Set(pages.flatMap((p) => p.failing_audits.map((f) => f.audit)))].sort(),
     };
   }

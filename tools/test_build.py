@@ -1029,12 +1029,60 @@ def t_page_nav():
               'tut.prev.label' in d and 'tut.next.label' in d)
 
 
+def t_perf_measurement():
+    """The measured baseline must say how much it measured, how often, and its worst sample.
+
+    Wired after round 25 found a page that was sometimes 4x slower (LCP 2.25 s vs 9.75 s) and read
+    as healthy: one sample per URL, and the budget check only looked at the median. Each assertion
+    below is a number that was wrong or missing in that baseline. Calibrated first - on the current
+    file every page clears its budget on its *worst* sample, so this gate has no false positives.
+    """
+    fp = 'reports/perf-baseline.json'
+    if not os.path.exists(os.path.join(ROOT, fp)):
+        check('perf baseline exists', False, 'run: node tools/perf-probe.mjs --profile=both --runs=3')
+        return
+    b = json.loads(read(fp))
+    check('baseline used at least 3 runs per URL (one sample cannot see a bimodal page)',
+          b.get('runs_per_url', 0) >= 3, str(b.get('runs_per_url')))
+    check('baseline records which server it measured against', bool(b.get('server')), str(b.get('server')))
+    tuts, _cases = build.load_content()
+    roster = len(build.page_roster(tuts))
+    expect = {'desktop': roster, 'mobile': 4}
+    for name, prof in sorted(b['profiles'].items()):
+        pages = prof['pages']
+        budget = (prof.get('budgets') or {}).get('categories:performance', {}).get('minScore')
+        summ = (b.get('summary') or {}).get(name) or {}
+        check('%s baseline measured %d pages' % (name, expect.get(name)),
+              name in expect and len(pages) == expect.get(name), '%d pages' % len(pages))
+        for p in pages:
+            check('%s/%s keeps its per-sample LCP range' % (name, p['page']),
+                  bool((p.get('cwv_range') or {}).get('LCP')), str(p.get('cwv_range')))
+            check('%s/%s carries the unstable verdict (absent must not read as stable)' % (name, p['page']),
+                  'unstable' in p, str(sorted(p)))
+            if budget is not None:
+                worst = (p.get('worst_sample') or {}).get('performance')
+                check('%s/%s clears its budget on the worst sample' % (name, p['page']),
+                      worst is not None and worst >= budget, 'worst %s < budget %s' % (worst, budget))
+        flagged = sorted(p['page'] for p in pages if p.get('unstable'))
+        listed = sorted(s.split(':')[0] for s in summ.get('unstable_pages') or [])
+        check('%s lists every unstable page' % name, flagged == listed,
+              'flagged %s vs listed %s' % (flagged, listed))
+        check('%s summary states the worst-sample verdict' % name,
+              'worst_sample_breaches' in summ, str(sorted(summ)))
+        check('%s has no worst-sample budget breach' % name,
+              not summ.get('worst_sample_breaches'), str(summ.get('worst_sample_breaches')))
+    js = read(os.path.join('assets', 'js', 'main.js'))
+    check('the fraud-list pre-warm keeps its fetch priority split',
+          "priority: silent ? 'low' : 'high'" in js,
+          'a background 1.5 MB download must not share urgency with the page that is rendering')
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
                t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
                t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw, t_page_nav,
-               t_contrast_coverage, t_perf_coverage):
+               t_contrast_coverage, t_perf_coverage, t_perf_measurement):
         fn()
     for f in FAILS:
         print('FAIL:', f)
