@@ -82,6 +82,11 @@ jobs:
       - name: Lighthouse CI (performance + a11y budgets, all pages, desktop)
         run: node_modules/.bin/lhci autorun --config=lighthouserc.json
 
+      - name: Name the elements behind any failing Lighthouse audit
+        # assert only prints "color-contrast failure"; the report already names the node.
+        if: always()
+        run: python3 tools/ci-audit-nodes.py .lighthouseci
+
       - name: Lighthouse CI (mobile budgets - primary device for seniors)
         run: node_modules/.bin/lhci autorun --config=lighthouserc.mobile.json
         env:
