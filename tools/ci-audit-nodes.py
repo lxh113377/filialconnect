@@ -50,12 +50,20 @@ def main():
             failures += 1
             print('FAIL %s | %s | score=%s | %s' % (os.path.basename(fp), key, score, url))
             for item in ((audit.get('details') or {}).get('items') or [])[:6]:
-                node = item.get('node') or {}
-                print('   node: %s | %s' % (node.get('target') or node.get('selector'),
-                                            (node.get('explanation') or node.get('failureSummary') or '')[:220]))
+                try:
+                    node = item.get('node') if isinstance(item, dict) else {}
+                    if not isinstance(node, dict):
+                        node = {}
+                    print('   node: %s | %s' % (node.get('target') or node.get('selector'),
+                                                (node.get('explanation') or node.get('failureSummary') or '')[:220]))
+                except Exception as exc:              # a diagnostic must never die mid-report
+                    print('   (node not printable: %s)' % exc)
                 # Shape varies by Lighthouse version, and guessing it cost three rounds: dump the
                 # item verbatim (capped) so the element is identifiable whatever the schema is.
-                print('   item: %s' % json.dumps(item, ensure_ascii=False)[:600])
+                try:
+                    print('   item: %s' % json.dumps(item, ensure_ascii=False)[:600])
+                except Exception as exc:
+                    print('   item: <unserialisable %s>' % type(exc).__name__)
     print('reports inspected: %d | failing audits reported: %d' % (len(reports), failures))
     if not reports:
         print('DIAGNOSTIC FAILED: no Lighthouse result json under %s' % target)

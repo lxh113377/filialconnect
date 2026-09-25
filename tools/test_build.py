@@ -490,6 +490,24 @@ def t_contrast_tokens():
               pinned or not uses_text_token,
               'background is --color-accent while color is --color-text, which inverts in dark mode')
     check('contrast-token rule actually scanned the accent surfaces', seen >= 3, 'saw %d blocks' % seen)
+    # Third shape of the same mistake, found by axe in CI only: a link placed on the footer's dark
+    # surface inherited the global blue and measured 1.55:1 (round 16's "report this page" link).
+    # Reuses contrast_audit's own primitives on purpose - a second copy of the ratio math would be
+    # the same "two implementations, one fixed" defect this repo keeps hitting.
+    import contrast_audit as ca
+    footer = re.search(r'\.site-footer a \{[^}]*?color:\s*rgba\(\s*255,\s*255,\s*255,\s*([0-9.]+)\s*\)', css)
+    check('footer links carry their own colour (not the inherited global blue)', bool(footer),
+          'no `.site-footer a` colour rule; on --color-primary-dark the global blue is 1.55:1')
+    if footer:
+        alpha = float(footer.group(1))
+        for pal, table in zip(('light', 'dark'), ca.token_tables(css)[:2]):
+            bg = ca.hex_to_rgb(table.get('--color-primary-dark', ''))
+            if not bg:
+                check('%s footer surface resolves to a hex colour' % pal, False, '')
+                continue
+            fg = tuple(round(alpha * 255 + (1 - alpha) * c) for c in bg)
+            check('%s footer link clears 4.5:1 on the footer surface' % pal,
+                  ca.ratio(fg, bg) >= 4.5, '%.2f:1' % ca.ratio(fg, bg))
     # Same mistake shape, second occurrence in one round: a brand status colour used as
     # both the fill and the text sitting on its own tint. axe measured 3.90:1 (success)
     # and 2.84:1 (warning) in the light palette and the 0.95 category floor hid it.

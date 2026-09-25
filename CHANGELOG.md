@@ -8,7 +8,18 @@
 ## [1.5.0] - 2026-09-25
 
 ### Fixed
-- **`sw.js` 的 precache 清单不再依赖文件系统爬盘顺序**：workbox 按 `glob` 返回顺序写出，那是宿主
+- **页脚链接在深色页脚底上只有 1.55:1**（第十六轮我自己引入的缺陷，第二十二~二十三轮定位）。
+  axe 在 CI 报 `color-contrast` score=0，元素 `footer.site-footer > div.footer-bottom > p.footer-report > a`，
+  fg `#2B5797`（全局链接色）压在 bg `#1A3A6E` 上、19px 常规字重。本仓静态解算器复算同为 **1.55**
+  —— 与 axe 逐位吻合，说明缺的不是算法而是**覆盖面**：它只算"同一规则块内同时声明前景与背景"的配对，
+  跨块继承看不见。修法取同类层：给 `.site-footer a` 一个基底色 `rgba(255,255,255,.7)`
+  （两配色合成 `#BAC4D4`，实测 **6.37:1**），而不是只补我这次漏的那一条选择器；
+  判据复用 `contrast_audit` 自己的原语（不再抄第二份比值算法），两个变异体实测会红：
+  删规则 → 1 条红；把 alpha 降到 0.35 → 两 palette 各报 2.75:1 红
+- **CI 诊断脚本自身崩溃**（同一轮暴露）：`details.items` 结构随 Lighthouse 版本变化，
+  遇到非字典 item 时整段 Traceback。改为逐项 try/except，诊断绝不让中途报错吃掉后面的页面
+
+：workbox 按 `glob` 返回顺序写出，那是宿主
   平台的属性而不是站点的属性。实测本地顺序为 `index.html, 404.html, pages/tutorials.html,
   pages/tutorial-wechat.html`（非字母序），CI 的 Linux runner 会爬出另一套顺序 —— 于是
   「重生成后逐字节比对」的漂移判据**只在 CI 红、每台开发机都绿**，把发版卡住。改用 workbox 自带的

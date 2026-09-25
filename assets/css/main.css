@@ -1348,6 +1348,17 @@ label {
   margin-bottom: var(--space-xs);
 }
 
+.site-footer a {
+  /* The footer sits on --color-primary-dark in both palettes; without this a new footer link
+     inherits the global blue and measures 1.55:1 (measured by axe in CI, reproduced by the
+     static resolver). Specificity ties .footer-links a, so the rules below still win. */
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.site-footer a:hover {
+  color: var(--color-accent-light);
+}
+
 .footer-links a {
   color: rgba(255, 255, 255, 0.7);
 }
