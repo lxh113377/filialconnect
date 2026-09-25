@@ -79,12 +79,18 @@ jobs:
           echo "destroylist-domains.txt -> $code"
           test "$code" = "200"
 
-      - name: Lighthouse CI (performance + a11y budgets, all pages, desktop)
-        run: node_modules/.bin/lhci autorun --config=lighthouserc.json
+      - name: Lighthouse CI collect (desktop)
+        # Two steps instead of `autorun`: autorun deletes its storage on exit, which left the
+        # node-level diagnostic with nothing to read (measured: "reports inspected: 0").
+        run: node_modules/.bin/lhci collect --config=lighthouserc.json
+
+      - name: Lighthouse CI assert (performance + a11y budgets, all pages, desktop)
+        run: node_modules/.bin/lhci assert --config=lighthouserc.json
 
       - name: Name the elements behind any failing Lighthouse audit
         # assert only prints "color-contrast failure"; the report already names the node.
         if: always()
+        continue-on-error: true
         run: python3 tools/ci-audit-nodes.py .lighthouseci
 
       - name: Lighthouse CI (mobile budgets - primary device for seniors)
