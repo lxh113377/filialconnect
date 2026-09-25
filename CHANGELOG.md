@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-25
+
+### Added
+- **每一页页脚都有「报告这一页的问题」链接**（第十六轮）。无障碍声明此前写着"每页页脚有链接"，
+  实测全站 14 页 `issues/new` 命中数为 **0** —— 这是本项目第 8 个"文案承诺超过代码能力"的缺陷，
+  且偏偏写在无障碍反馈那一句里。现在链接由 `footer_for(is_index, fp)` 逐页生成，
+  `?title=[page] pages/call-help.html` 直接点名是哪一页（仓库地址从 `SITE_BASE` 推导，不第二处硬编码）。
+  对端一手：starlight 有 `EditLink.astro`（并带 `print:hidden`），a11yproject 文档里也有 edit 出口
+- **判据把承诺和实现对齐**：`t_feedback_exit` 逐页校验链接在 `<footer>` 内、`rel=noopener`、
+  `data-i18n` 标签、且 title 参数等于本页路径；另加一条"声明提到页脚链接 ⟹ 14/14 页必须都有"，
+  即要么代码追上文案，要么文案改掉。变异体实测：删掉一个 `rel="noopener"` → 该页判缺失 + 两条漂移判据同红
 ### Added
 - **教程页「最近更新」戳**（第十五轮，#58 落地）。每篇教程页尾一行 `<time>` + schema.org `dateModified`，
   日期来自 `reports/last-updated.json`：由 `tools/last-updated.py` 在**本地**（有完整 git 历史）算出并**提交进仓**，

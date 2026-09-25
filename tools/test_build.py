@@ -815,11 +815,50 @@ def t_last_updated():
           and 'meta.updated' in json.loads(read('assets/locales/zh.json')))
 
 
+def t_feedback_exit():
+    """Copy that promises a capability, checked against the capability.
+
+    `a11s.feedback.p` has told readers for the site's whole life that every page footer carries an
+    issue link. Measured before round 16: `issues/new` appeared on zero pages. That is the eighth
+    instance of this repo's most expensive defect class, and it sat in the accessibility feedback
+    sentence specifically. The link is now generated per page, and this gate binds the two together
+    so the wording cannot outrun the code again.
+    """
+    import urllib.parse
+    claim_zh = json.loads(read('assets/locales/zh.json'))['a11s.feedback.p']
+    claim_en = json.loads(read('assets/locales/en.json'))['a11s.feedback.p']
+    claims_footer = ('页脚' in claim_zh) and ('footer' in claim_en.lower())
+    n = 0
+    missing = []
+    for fp in build.all_pages():
+        s = read(fp)
+        if '<footer' not in s:
+            missing.append(fp + ' (no footer at all)')
+            continue
+        foot = s[s.index('<footer'):]
+        m = re.search(r'<a href="(https://[^"]+issues/new\?title=[^"]+)" rel="noopener"'
+                      r' data-i18n="footer\.report"', foot)
+        if not m:
+            missing.append(fp)
+            continue
+        title = urllib.parse.parse_qs(m.group(1).split('?', 1)[1])['title'][0]
+        check('%s feedback link names the page itself' % fp, title == '[page] ' + fp, title)
+        n += 1
+    check('every page carries the promised footer issue link', not missing,
+          str(missing[:4]) + ('' if not missing else ' (%d of %d pages have it)' % (n, len(build.all_pages()))))
+    check('footer issue links exist on all pages, or the claim must be reworded',
+          not claims_footer or n == len(build.all_pages()),
+          'accessibility statement says every page footer links to issues; %d/%d do' % (n, len(build.all_pages())))
+    check('the report label exists in both dictionaries',
+          'footer.report' in json.loads(read('assets/locales/en.json'))
+          and 'footer.report' in json.loads(read('assets/locales/zh.json')))
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
                t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs,
-               t_changelog_shape, t_last_updated):
+               t_changelog_shape, t_last_updated, t_feedback_exit):
         fn()
     for f in FAILS:
         print('FAIL:', f)

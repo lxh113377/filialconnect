@@ -22,6 +22,7 @@ import json
 import os
 import re
 import sys
+import urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONTENT = os.path.join(ROOT, 'content')
@@ -298,6 +299,7 @@ FOOTER_TMPL = FOOTER_MARK_BEG + '''
     </div>
     <div class="footer-bottom">
       <p data-i18n="footer.bottom">FilialConnect &mdash; Digital Warmth Across the Miles</p>
+      <p class="footer-report"><a href="{{FB}}" rel="noopener" data-i18n="footer.report">Report a problem with this page</a></p>
     </div>
   </footer>''' + '\n' + FOOTER_MARK_END
 
@@ -419,8 +421,19 @@ def nav_for(is_index):
     return NAV_TMPL.replace('{{R}}', '' if is_index else '../').replace('{{P}}', 'pages/' if is_index else '')
 
 
-def footer_for(is_index):
-    return FOOTER_TMPL.replace('{{R}}', '' if is_index else '../').replace('{{P}}', 'pages/' if is_index else '')
+ISSUES_BASE = SITE_BASE.replace('https://', 'https://github.com/').replace('.github.io', '') + '/issues/new'
+
+
+def feedback_url(fp):
+    """Prefilled "report a problem" link naming this page, derived from SITE_BASE so the
+    repository is written down once. The accessibility statement promises a footer link on every
+    page; before this existed the promise was false (measured: zero issues/new links site-wide)."""
+    return '%s?title=%s' % (ISSUES_BASE, urllib.parse.quote('[page] ' + fp))
+
+
+def footer_for(is_index, fp=None):
+    out = FOOTER_TMPL.replace('{{R}}', '' if is_index else '../').replace('{{P}}', 'pages/' if is_index else '')
+    return out.replace('{{FB}}', feedback_url(fp or ('index.html' if is_index else 'pages/tutorials.html')))
 
 
 def canonical_for(fp):
@@ -490,7 +503,7 @@ def render_tutorial_page(t):
         ld['dateModified'] = stamp
     h = h.replace('{{JSONLD}}', '<script type="application/ld+json">'
             + json.dumps(ld, ensure_ascii=True, separators=(',', ':')) + '</script>')
-    return h.replace('{{NAV}}', nav_for(False)).replace('{{FOOTER}}', footer_for(False))
+    return h.replace('{{NAV}}', nav_for(False)).replace('{{FOOTER}}', footer_for(False, 'pages/' + t['file']))
 
 
 FOOTER_404 = '  <script src="assets/js/main.js"></script>'
@@ -545,7 +558,7 @@ PAGE_404_TMPL = '''<!DOCTYPE html>
 
 
 def render_404_page():
-    return PAGE_404_TMPL.replace('{{NAV}}', nav_for(True)).replace('{{FOOTER}}', footer_for(True))
+    return PAGE_404_TMPL.replace('{{NAV}}', nav_for(True)).replace('{{FOOTER}}', footer_for(True, '404.html'))
 
 
 def render_sitemap():
@@ -565,7 +578,7 @@ def render_sitemap():
 # ------------------------------------------------------------------ partials
 
 
-def sync_nav_footer(s, is_index):
+def sync_nav_footer(s, is_index, fp=None):
     """Marker-delimited where possible; unmarked pages fall back to a single
     non-greedy header/footer swap, and `check` reports any page still unmarked."""
     if NAV_MARK_BEG in s and NAV_MARK_END in s:
@@ -575,9 +588,9 @@ def sync_nav_footer(s, is_index):
         s = re.sub(r'  <header class="site-header".*?</header>', lambda m: nav_for(is_index), s, count=1, flags=re.S)
     if FOOTER_MARK_BEG in s and FOOTER_MARK_END in s:
         s = re.sub(re.escape(FOOTER_MARK_BEG) + r'.*?' + re.escape(FOOTER_MARK_END),
-                   lambda m: footer_for(is_index), s, flags=re.S)
+                   lambda m: footer_for(is_index, fp), s, flags=re.S)
     else:
-        s = re.sub(r'  <footer class="site-footer".*?</footer>', lambda m: footer_for(is_index), s, count=1, flags=re.S)
+        s = re.sub(r'  <footer class="site-footer".*?</footer>', lambda m: footer_for(is_index, fp), s, count=1, flags=re.S)
     return s
 
 
@@ -752,7 +765,7 @@ def build_outputs():
         if fp == '404.html':
             continue
         s = read(fp)
-        s = sync_nav_footer(s, fp == 'index.html')
+        s = sync_nav_footer(s, fp == 'index.html', fp)
         s = sync_head(s, fp)
         if fp == 'pages/fraud-database.html':
             if FRAUD_MARK_BEG not in s or FRAUD_MARK_END not in s:

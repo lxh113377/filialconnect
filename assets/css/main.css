@@ -1356,6 +1356,10 @@ label {
   color: var(--color-accent-light);
 }
 
+.footer-report {
+  margin-top: var(--space-sm);
+}
+
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin-top: var(--space-xl);
