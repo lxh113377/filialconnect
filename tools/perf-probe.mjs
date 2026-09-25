@@ -19,8 +19,24 @@ import desktopConfig from 'lighthouse/core/config/desktop-config.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
+// `--only tutorials` used to parse as { only: true } because the reader only understood
+// --flag=value; the filter then matched 0 of 14 URLs and, before the empty-measure guard existed,
+// the probe printed "All declared budgets met" for measuring nothing. Accept both spellings.
+const VALUE_FLAGS = new Set(['runs', 'profile', 'out', 'lang', 'only']);
+const cliArgs = [];
+for (let i = 0; i < process.argv.length - 2; i += 1) {
+  const a = process.argv[2 + i];
+  const m = /^--([^=]+)$/.exec(a);
+  const next = process.argv[3 + i];
+  if (m && VALUE_FLAGS.has(m[1]) && next !== undefined && !next.startsWith('--')) {
+    cliArgs.push(`--${m[1]}=${next}`);
+    i += 1;
+  } else {
+    cliArgs.push(a);
+  }
+}
 const argv = Object.fromEntries(
-  process.argv.slice(2).map((a) => {
+  cliArgs.map((a) => {
     const m = /^--([^=]+)(?:=(.*))?$/.exec(a) || [];
     return [m[1], m[2] === undefined ? true : m[2]];
   }),
