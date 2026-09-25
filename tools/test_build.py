@@ -10,6 +10,7 @@ Usage: python tools/test_build.py      (exit 0 = all pass)
 """
 import gzip
 import io
+import importlib.util
 import json
 import os
 import re
@@ -145,6 +146,17 @@ def t_i18n():
                                   read(os.path.join('assets', 'js', name))))
     orphans = en - used - js_refs
     check('no orphan dictionary keys', not orphans, str(sorted(orphans)[:8]))
+    # Two implementations of "is this key used" once disagreed: tools/check-i18n.py — the CI step —
+    # still scanned only main.js, so it went red on its own after this gate had gone green.
+    spec = importlib.util.spec_from_file_location(
+        'check_i18n', os.path.join(ROOT, 'tools', 'check-i18n.py'))
+    ci_tool = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ci_tool)
+    ci_refs = ci_tool.js_key_refs(ROOT)
+    check('CI i18n tool and this gate see the same script references', ci_refs == js_refs,
+          'symmetric difference: %s' % str(sorted(ci_refs ^ js_refs)[:5]))
+    check('CI i18n tool sees keys used outside main.js', 'search.fulltext.found' in ci_refs,
+          'positive sample — a scan that always returns the same set is how the red happened')
 
 
 # ------------------------------------------------- 4. copy-vs-code truthfulness

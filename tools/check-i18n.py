@@ -12,6 +12,23 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY_RE = re.compile(r"^\s*'([^']+)'\s*:", re.M)
 
 
+def js_key_refs(root=None):
+    """Dictionary keys referenced from any runtime script.
+
+    Scanning only main.js's t('...') calls is not enough: a key consumed by another script
+    (search.js announces three of them) reads as an orphan and gets deleted. i18n.js is skipped
+    because it *is* the generated dictionary, not a reference to it.
+    """
+    base = os.path.join(root or ROOT, 'assets', 'js')
+    refs = set()
+    for name in sorted(os.listdir(base)):
+        if not name.endswith('.js') or name == 'i18n.js':
+            continue
+        text = io.open(os.path.join(base, name), encoding='utf-8').read()
+        refs |= set(re.findall(r"'([A-Za-z0-9.\-]+\.[A-Za-z0-9.\-]+)'", text))
+    return refs
+
+
 def main():
     # The dictionary's single source is assets/locales/*.json since the Node
     # toolchain took over assets/js/i18n.js (now a generated runtime bundle),
@@ -41,8 +58,7 @@ def main():
         s = io.open(fp, encoding='utf-8').read()
         used |= set(re.findall(r'data-i18n(?:-placeholder|-aria-label|-alt)?="([^"]+)"', s))
 
-    main_js = io.open(os.path.join(ROOT, 'assets', 'js', 'main.js'), encoding='utf-8').read()
-    js_refs = set(re.findall(r"\bt\('([A-Za-z0-9.\-]+)'\)", main_js))
+    js_refs = js_key_refs(ROOT)
     for k in sorted(used - en):
         failures.append('data-i18n key missing from dict: %s' % k)
     for k in sorted(en - used - js_refs):
