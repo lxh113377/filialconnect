@@ -7,6 +7,7 @@ must keep honouring, and the "copy must not promise what code does not do"
 invariants that broke three times during development.
 
 Usage: python tools/test_build.py      (exit 0 = all pass)
+       python tools/test_build.py --isolate   (per-judge counts, for attributing a chain delta)
 """
 import gzip
 import io
@@ -798,7 +799,32 @@ def t_content_roster():
     filesystem, so a 7th entry in content/tutorials.json rebuilt zero files and warned about
     nothing. Card grid, filter taxonomy, illustration files and cross-links are the other exits
     where the same silence reproduces."""
-    tuts, _cases = build.load_content()
+    tuts, cases = build.load_content()
+    # The validator is only worth having if it bites. Measured before writing it: a duplicated slug
+    # was accepted (`build.py` exited 0 and wrote the page twice), a `pages/` prefix became a
+    # FileNotFoundError about `pages/pages/…`, and a missing key became a bare KeyError with no slug.
+    refused = None
+    try:
+        build.validate_content(list(tuts) + [dict(tuts[0])], cases)
+    except SystemExit as exc:
+        refused = str(exc)
+    check('the content validator refuses a duplicated roster entry by name',
+          bool(refused) and tuts[0]['slug'] in refused, str(refused)[:120])
+    shape = None
+    try:
+        dirty = [dict(tuts[0], file='pages/' + tuts[0]['file'])] + [dict(t) for t in tuts[1:]]
+        build.validate_content(dirty, cases)
+    except SystemExit as exc:
+        shape = str(exc)
+    check('it refuses a page name that contradicts the slug it belongs to',
+          bool(shape) and 'derived from the slug' in shape, str(shape)[:120])
+    honest = ''
+    try:
+        build.validate_content(tuts, cases)
+    except SystemExit as exc:
+        honest = str(exc)
+    check('and it accepts the content that actually ships (a validator that refuses real content '
+          'is worse than no validator)', not honest, honest[:160])
     html = read('pages/tutorials.html')
     starts = [m.start() for m in re.finditer(r'<div class="tutorial-card" data-category="', html)]
     bounds = starts[1:] + [len(html)]
@@ -1986,6 +2012,59 @@ def t_no_link_code():
           int(re.search(r'selftest: (\d+) cases', out).group(1)) >= 12, last_line(' '.join(tail)))
 
 
+def t_triage_copy():
+    """The triage table in AGENTS.md is a generated region, not a human copy of ci-watch.HINTS.
+
+    Round 36 wrote the copy and promised the code was its authority. Round 37 measured the promise
+    already broken: nine rows on each side (so any length comparison stays green) and three rows that
+    existed only in the document - two of which are not log signatures and can never fire - while
+    three real rows (`node half reports no drift`, `HTTP 404`, `precache revision`) had no document
+    counterpart. Failure class 6, caught in the file that documents class 6.
+    """
+    tr = load_tool('triage', 'triage.py')
+    hints = tr.load_watch().HINTS
+    text = read('AGENTS.md')
+    ok, detail = tr.check_doc(text, hints)
+    check('the AGENTS.md triage region is marked (an unmarked table can only be retyped, never '
+          'regenerated)', ok is not None, str(detail))
+    check('the document carries exactly the table these rows generate (byte for byte)',
+          ok is True, str(detail))
+    check('the triage rows are non-empty (a header-only table compares equal to nothing)',
+          len(hints) >= 6, '%d rows' % len(hints))
+    check('AGENTS.md still owns the prose that is not a per-row copy (the non-signature lessons)',
+          text.count('本地全绿、CI 红') >= 1 and text.count('后台任务通知') >= 1,
+          'two bullets expected outside the generated region')
+    st = subprocess.run([sys.executable, os.path.join('tools', 'triage.py'), '--selftest'],
+                        cwd=ROOT, capture_output=True, text=True, timeout=300)
+    out = (st.stdout or '') + (st.stderr or '')
+    tail = [ln for ln in out.splitlines() if 'selftest:' in ln]
+    check('triage.py self-proves both directions (a hand edit is red, a rewrite is idempotent)',
+          st.returncode == 0 and bool(tail), last_line(' '.join(tail)) or out[-160:])
+    check('its selftest counts its own cases out loud (a silent 0-case suite is not a pass)',
+          bool(re.search(r'selftest: (\d+) cases, 0 failures', out)) and
+          int(re.search(r'selftest: (\d+) cases', out).group(1)) >= 12, last_line(' '.join(tail)))
+    cw = subprocess.run([sys.executable, os.path.join('tools', 'ci-watch.py'), '--selftest'],
+                        cwd=ROOT, capture_output=True, text=True, timeout=300)
+    cout = (cw.stdout or '') + (cw.stderr or '')
+    check('every triage row can still fire on a fixture log of its own (a dead signature is '
+          'indistinguishable from a missing one)', cw.returncode == 0 and
+          bool(re.search(r'ci-watch selftest: (\d+) cases, 0 failures', cout)),
+          last_line(' '.join([ln for ln in cout.splitlines() if 'selftest:' in ln])) or cout[-160:])
+    refs = tr.judge_refs(hints)
+    known = {fn.__name__ for fn in JUDGES}
+    check('every judge a triage row cites is a judge that is registered here',
+          refs and not set(refs) - known, 'cited=%s missing=%s' % (len(refs), sorted(
+              set(refs) - known)))
+    # The measured attribution floor (round 37: 9 of 308 check() shapes). The floor is the measurement,
+    # so this cannot be greened by deleting the question, and it does not pretend a 2.9% attribution
+    # rate is a gate - it makes a shrink visible. Headroom is the number itself, printed on the line.
+    cov = tr.coverage(hints)
+    check('triage attribution attributes at least the %d failure shapes measured on 2026-09-27 '
+          '(of %d shapes the chain can print; attribution may not shrink)'
+          % (cov['covered_sites'], cov['sites']), cov['covered_sites'] >= 9,
+          tr.coverage_line(cov))
+
+
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
           t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
           t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
@@ -1994,7 +2073,8 @@ JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets,
           t_deploy_staging, t_public_metadata, t_offline_package,
           t_capability_claims, t_documented_numbers, t_gate_wiring,
           t_judge_ledger, t_perf_provenance, t_deploy_reasons,
-          t_page_title, t_aria_locale, t_tracked_inputs, t_coverage_identity, t_no_link_code)
+          t_page_title, t_aria_locale, t_tracked_inputs, t_coverage_identity, t_no_link_code,
+          t_triage_copy)
 
 
 def _abort_note(name, exc):
@@ -2003,7 +2083,42 @@ def _abort_note(name, exc):
             ' - %s' % (name, type(exc).__name__, detail or 'no message'))
 
 
+def isolate():
+    """Per-judge counts, printed. The chain total is owned by `main()`; who contributed to it was
+    not, which is why rounds 36 and 37 each carried an unattributed difference: reconstructing it
+    from a HEAD export needs a working tree that has `.git` and `node_modules`, and a throwaway copy
+    is missing one or the other, so the comparison itself was the unreliable instrument.
+
+    Usage: python tools/test_build.py --isolate > ../_internal/reports/rNN_judge_isolation.json
+    Exit: 0 measured | 1 a judge aborted (its count is then a floor, not the truth) | 2 nothing to
+    measure. The sum is printed as data, never as a verdict on the chain.
+    """
+    rows = []
+    aborted = []
+    for fn in JUDGES:
+        del FAILS[:]
+        COUNT[0] = 0
+        try:
+            fn()
+        except BaseException as exc:                      # noqa: BLE001 - name it, do not eat it
+            aborted.append(fn.__name__)
+            rows.append([fn.__name__, COUNT[0], 1, 'ABORT %s' % type(exc).__name__])
+            continue
+        rows.append([fn.__name__, COUNT[0], len(FAILS), ''])
+    if not JUDGES:
+        print('UNVERIFIED: no judges registered, so the sum below is 0 by construction')
+        return 2
+    print(json.dumps({'judges': rows, 'sum': sum(r[1] for r in rows),
+                      'aborted': aborted}, ensure_ascii=False))
+    print('ISOLATE: %d checks across %d judges%s'
+          % (sum(r[1] for r in rows), len(rows),
+             ', ABORTED: %s' % ', '.join(aborted) if aborted else ''))
+    return 1 if aborted else 0
+
+
 def main():
+    if '--isolate' in sys.argv:
+        return isolate()
     aborted = []
     for fn in JUDGES:
         try:

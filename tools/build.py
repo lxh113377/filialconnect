@@ -78,11 +78,111 @@ FOUC_JS = ('<script>document.documentElement.classList.add("js");'
            'catch(e){}</script>')
 
 
+def _bilingual(value, label, problems):
+    if not isinstance(value, dict) or not value.get('en') or not value.get('zh'):
+        problems.append('%s must be {en, zh} with both sides filled (got %r)' % (label, value))
+
+
+# The key set the roster carries (read off the committed file: all 6 entries have exactly these 13
+# keys), and the two field shapes inside it - also read off the file, not invented. `title`, `desc`,
+# `category` and `illustration` are English strings because their translations live in the locale
+# dictionaries, while `h1`, `intro`, `img_alt` and `card_p` are {en, zh} objects. Guessing this wrong
+# makes the validator refuse honest content, which is worse than not validating at all.
+TUT_KEYS = ('slug', 'file', 'title', 'h1', 'desc', 'category', 'intro', 'steps', 'related',
+            'illustration', 'img_alt', 'card_p', 'card_tags')
+TUT_STR = ('slug', 'file', 'title', 'desc', 'category', 'illustration')
+TUT_BILINGUAL = ('h1', 'intro', 'img_alt', 'card_p')
+
+
+def validate_content(tuts, cases):
+    """Refuse malformed content by name, before a template crashes on it.
+
+    Round 37 measured three shapes and what actually happened to each: a duplicated slug was
+    accepted silently (`build.py` exited 0 and wrote the same page twice, and the failure only
+    surfaced three judges later as a *card-count* complaint, which misdiagnoses the cause); a `file`
+    carrying a `pages/` prefix produced `FileNotFoundError: pages/pages/tutorial-hospital.html`, a
+    traceback that blames the filesystem for what is a data error; and a missing `title` produced a
+    bare `KeyError: 'title'` with no slug in it, so the reader cannot tell which entry to fix.
+    The generator is not wrong for refusing - it is wrong for refusing without naming the entry.
+    """
+    problems = []
+    if not tuts:
+        problems.append('content/tutorials.json holds zero tutorials - an empty roster would '
+                        'publish a site with no lessons and compare equal to nothing')
+    tutorial_files = {x.get('file') for x in tuts}
+    seen = {}
+    for i, t in enumerate(tuts):
+        slug = t.get('slug', '<no slug>')
+        if not isinstance(slug, str) or not slug:
+            problems.append('entry %d has no usable "slug" (got %r)' % (i, slug))
+            continue
+        if slug in seen:
+            problems.append('content/tutorials.json lists slug %r twice (entries %d and %d) - '
+                            'two entries would render the same page and the roster count would '
+                            'stop matching the files' % (slug, seen[slug], i))
+            continue
+        seen[slug] = i
+        missing = [k for k in TUT_KEYS if k not in t]
+        if missing:
+            problems.append('%s: missing keys %s' % (slug, missing))
+        expected = 'tutorial-%s.html' % slug
+        if 'file' in t and t['file'] != expected:
+            problems.append('%s: "file" says %r but the page name is derived from the slug '
+                            '(%r) - 6 of 6 entries agree, so keep one of them, not two'
+                            % (slug, t['file'], expected))
+        for label in TUT_BILINGUAL:
+            if label in t:
+                _bilingual(t[label], '%s: %s' % (slug, label), problems)
+        for label in TUT_STR:
+            if label in t and not (isinstance(t[label], str) and t[label].strip()):
+                problems.append('%s: %s must be a non-empty string (got %r)' % (slug, label,
+                                                                               t[label]))
+        for r in (t.get('related') or []):
+            ref = r.get('file') if isinstance(r, dict) else None
+            # A related card may point at a page the roster does not own: measured on 2026-09-27,
+            # `wechat` and `banking` both relate to `fraud-database.html`, which is a rendered page
+            # but not a tutorial. The invariant is "the page will exist", not "it is a tutorial" -
+            # writing the narrower rule made the validator refuse honest content, which is the worst
+            # outcome a validator can have.
+            if ref and ref not in tutorial_files and not os.path.isfile(
+                    os.path.join(ROOT, 'pages', ref)):
+                problems.append('%s: related card points at %r, which neither an entry owns nor '
+                                'pages/ contains' % (slug, ref))
+            if isinstance(r, dict) and 'title' in r:
+                _bilingual(r['title'], '%s: related %s title' % (slug, ref), problems)
+        tags = t.get('card_tags')
+        if tags is not None:
+            if not isinstance(tags, list) or not tags:
+                problems.append('%s: card_tags must be a non-empty list' % slug)
+            else:
+                for tag in tags:
+                    _bilingual(tag, '%s: a card_tags entry' % slug, problems)
+        if not isinstance(t.get('steps'), list) or not t.get('steps'):
+            problems.append('%s: "steps" must be a non-empty list' % slug)
+        else:
+            for j, st in enumerate(t['steps']):
+                if not isinstance(st, dict):
+                    problems.append('%s step %d: must be an object' % (slug, j + 1))
+                    continue
+                for k in ('title', 'p'):
+                    if st.get(k) is not None:
+                        _bilingual(st[k], '%s step %d: %s' % (slug, j + 1, k), problems)
+    if not cases:
+        problems.append('content/fraud-cases.json holds zero cases')
+    nums = [c.get('n') for c in cases]
+    if len(nums) != len(set(nums)):
+        problems.append('content/fraud-cases.json has duplicate case numbers %s' % nums)
+    if problems:
+        sys.exit('FAIL: content/tutorials.json or content/fraud-cases.json is malformed:\n  ' +
+                 '\n  '.join(problems))
+    return tuts, cases
+
+
 def load_content():
     """Read the authoritative content JSON once; derive every roster/regex."""
     tuts = json.load(io.open(os.path.join(CONTENT, 'tutorials.json'), encoding='utf-8'))['tutorials']
     cases = json.load(io.open(os.path.join(CONTENT, 'fraud-cases.json'), encoding='utf-8'))['cases']
-    return tuts, cases
+    return validate_content(tuts, cases)
 
 
 LEDGER = 'reports/last-updated.json'

@@ -17,6 +17,7 @@
   "release.py": "test",
   "stage-site.py": "ci",
   "test_build.py": "ci",
+  "triage.py": "test",
   "verify-dom.mjs": "ci",
   "verify-live.py": "ci"
 }

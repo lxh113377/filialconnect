@@ -30,36 +30,85 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build as B          # noqa: E402  (for ROOT)
 import release as R        # noqa: E402  (ci_verdict + gh plumbing are already there)
 
-# (pattern, what to do). The table is the single source for the triage list in AGENTS.md: a second
-# copy of these strings in prose is the defect class this repository already calls class 6.
+# The triage rows, and the only place they are written. `AGENTS.md` renders this table through
+# `tools/triage.py --write` and CI verifies it with `--check`, because in round 36 it was a hand
+# copy and by round 37 it had drifted: both sides had nine rows (so a length comparison stays green)
+# while three rows lived only in the code and three only in the document - including two document
+# rows that are not log signatures and therefore can never fire. `sig` is what a reader greps for,
+# `pattern` is what this tool matches, and `cause`/`action` are shared by the CLI and the document.
 HINTS = (
-    (r'ERR_MODULE_NOT_FOUND|Cannot find (?:package|module)',
-     'run `npm ci` - dependencies are missing, this is not artifact drift; a worktree must never '
-     'link node_modules from the live repo (t_no_link_code)'),
-    (r'no build input is untracked|Did you mean --force|pathspec .* did not match any files',
-     'a commit was made without new files: `git add <paths>` then re-check `git show --name-only`; '
-     '`git add -u` skips untracked ones'),
-    (r'matches this measurement',
-     'a generated ledger is stale - run the generator its own message names (tools/judge_coverage.py, tools/gate_wiring.py, ...) and commit its output'),
-    (r'node half reports no drift|i18n.js .* out of sync',
-     'build order is python then node: `python tools/build.py && node tools/build.mjs`, '
-     'then re-run `node tools/build.mjs check`'),
-    (r'steps=0|Could not allocate|waiting for a runner',
-     'the job never got a runner: read annotations at '
-     '`gh api repos/<slug>/check-runs/<id>/annotations` - it is not a code failure'),
-    (r'ABORTED JUDGES',
-     'a judge crashed instead of reporting: fix that judge first - while it is aborting, the '
-     'evidence of every later judge is lost'),
-    (r'assertion.*404|HTTP 404',
-     '`gh api` GET parameters belong in the query string; `-f` puts them in the body and turns a '
-     'good path into a 404'),
-    (r'verify-live|UNVERIFIED',
-     'the live probe could not reach production (network) or the deploy is not the probed commit; '
-     'UNVERIFIED is not a pass and not a red either'),
-    (r'precache revision|service worker',
-     'sw.js was generated before its inputs changed - rebuild in order and re-run the determinism '
-     'judge (t_deterministic_sw)'),
+    {'sig': '`ERR_MODULE_NOT_FOUND` / `Cannot find package`',
+     'pattern': r'ERR_MODULE_NOT_FOUND|Cannot find (?:package|module)',
+     'cause': '缺依赖，**不是**产物漂移',
+     'action': 'run `npm ci` - dependencies are missing, this is not artifact drift; a worktree '
+               'must never link node_modules from the live repo (t_no_link_code)'},
+    {'sig': '`no build input is untracked` / `Did you mean --force?`',
+     'pattern': r'no build input is untracked|Did you mean --force|pathspec .* did not match any files',
+     'cause': '上一笔提交用了 `git add -u`（漏新文件）',
+     'action': 'a commit was made without new files: `git add <paths>` then re-check '
+               '`git show --name-only`; `git add -u` skips untracked ones'},
+    {'sig': '`matches this measurement: run: python tools/…`',
+     'pattern': r'matches this measurement',
+     'cause': '生成物/台账过期',
+     'action': 'a generated ledger is stale - run the generator its own message names '
+               '(tools/judge_coverage.py, tools/gate_wiring.py, ...) and commit its output'},
+    {'sig': '`node half reports no drift` / `i18n.js … out of sync`',
+     'pattern': r'node half reports no drift|i18n.js .* out of sync',
+     'cause': '构建顺序反了：node 侧派生件早于 python 侧',
+     'action': 'build order is python then node: `python tools/build.py && node tools/build.mjs`, '
+               'then re-run `node tools/build.mjs check`'},
+    {'sig': 'job 数秒失败且 `steps=0`',
+     'pattern': r'steps=0|Could not allocate|waiting for a runner',
+     'cause': '没拿到 runner（配额/环境），不是代码错',
+     'action': 'the job never got a runner: read annotations at '
+               '`gh api repos/<slug>/check-runs/<id>/annotations` - it is not a code failure'},
+    {'sig': '`ABORTED JUDGES: t_xxx`',
+     'pattern': r'ABORTED JUDGES',
+     'cause': '某判据崩了 ⇒ 它之后所有判据的结论丢失（含已收集失败的打印）',
+     'action': 'a judge crashed instead of reporting: fix that judge first - while it is aborting, '
+               'the evidence of every later judge is lost'},
+    {'sig': '`HTTP 404` / `assertion … 404`',
+     'pattern': r'assertion.*404|HTTP 404',
+     'cause': '`gh api` 的 GET 参数被当 body 发了',
+     'action': '`gh api` GET parameters belong in the query string; `-f` puts them in the body and '
+               'turns a good path into a 404'},
+    {'sig': '`verify-live … UNVERIFIED`',
+     'pattern': r'verify-live|UNVERIFIED',
+     'cause': '网络不可达，或线上部署不是被探针的那笔提交',
+     'action': 'the live probe could not reach production (network) or the deploy is not the '
+               'probed commit; UNVERIFIED is not a pass and not a red either'},
+    {'sig': '`precache revision` / `service worker`',
+     'pattern': r'precache revision|service worker',
+     'cause': 'sw.js 早于它的输入生成',
+     'action': 'sw.js was generated before its inputs changed - rebuild in order and re-run the '
+               'determinism judge (t_deterministic_sw)'},
 )
+
+# One synthetic log line per row, in the words the real failure actually printed. This is the
+# positive control the table never had: a pattern whose spelling no longer matches anything is a
+# dead row, and a dead row cannot be told apart from an absent one unless something fires it.
+FIXTURES = {
+    '`ERR_MODULE_NOT_FOUND` / `Cannot find package`':
+        "Error: Cannot find package 'workbox-build' imported from tools/build.mjs",
+    '`no build input is untracked` / `Did you mean --force?`':
+        "The following paths are ignored by one of your .gitignore files: reports\nhint: Use -f if "
+        "you really want to add them.\nno build input is untracked",
+    '`matches this measurement: run: python tools/…`':
+        'FAIL: reports/judge-coverage.json matches this measurement: run: python '
+        'tools/judge_coverage.py',
+    '`node half reports no drift` / `i18n.js … out of sync`':
+        'node half reports no drift but assets/i18n.js is out of sync with the locales',
+    'job 数秒失败且 `steps=0`':
+        'Run 4812 failed in 3s with steps=0 - the job was waiting for a runner',
+    '`ABORTED JUDGES: t_xxx`':
+        'ABORTED JUDGES: t_offline_package',
+    '`HTTP 404` / `assertion … 404`':
+        'gh api repos/x/y/pulls returned HTTP 404; assertion failed on a 404 body',
+    '`verify-live … UNVERIFIED`':
+        'verify-live: UNVERIFIED - could not reach lxh113377.github.io (curl 000)',
+    '`precache revision` / `service worker`':
+        'the precache revision is stale: the service worker was built before its inputs changed',
+}
 
 
 def run(args, timeout=180):
@@ -86,7 +135,7 @@ def failing_log(sha):
 
 
 def advice(text):
-    return [fix for pattern, fix in HINTS if re.search(pattern, text, re.I)]
+    return [row['action'] for row in HINTS if re.search(row['pattern'], text, re.I)]
 
 
 def exit_for(state):
@@ -98,7 +147,8 @@ def selftest():
     """The three things a hook depends on: the mapping, the signatures, and the non-inert table."""
     red_log = ('Run 12: node half failed\\nError: Cannot find package \'workbox-build\' '
                'ERR_MODULE_NOT_FOUND\\n')
-    other_log = ('FAIL: reports/judge-coverage.json matches this measurement: run: python tools/judge_coverage.py')
+    other_log = ('FAIL: reports/judge-coverage.json matches this measurement: '
+                 'run: python tools/judge_coverage.py')
     cases = [
         ('a missing-dependency log is answered with npm ci, not with a rebuild',
          any('npm ci' in h for h in advice(red_log)), str(advice(red_log))[:60]),
@@ -110,9 +160,27 @@ def selftest():
          [exit_for(s) for s in ('green', 'red', 'pending', 'unknown', 'garbage')] == [0, 1, 2, 2, 2],
          str([exit_for(s) for s in ('green', 'red', 'pending', 'unknown', 'garbage')])),
         ('the signature table is not inert (a rule with no patterns cannot fire)',
-         len(HINTS) >= 6 and all(fix for _p, fix in HINTS), '%d patterns' % len(HINTS)),
+         len(HINTS) >= 6 and all(row['action'] for row in HINTS), '%d patterns' % len(HINTS)),
         ('every pattern is a regex that compiles (a typo would silently kill a row)',
-         all(_compiles(p) for p, _f in HINTS), 're.compile over HINTS'),
+         all(_compiles(row['pattern']) for row in HINTS), 're.compile over HINTS'),
+        # Round 37: the row is four fields now because the document renders three of them, and a
+        # missing or pipe-carrying field would render a broken table rather than a red run.
+        ('every row carries sig/cause/action/pattern, all non-empty',
+         all(all(row.get(k) for k in ('sig', 'cause', 'action', 'pattern')) for row in HINTS),
+         '%d rows shaped' % len(HINTS)),
+        ('no rendered cell can contain a pipe or newline (it would add a column to the document)',
+         not any(ch in row[k] for row in HINTS for k in ('sig', 'cause', 'action')
+                 for ch in ('|', '\n')), 'cell shape'),
+        ('every signature is distinctive enough to name a row (no row is the empty string)',
+         len(set(row['sig'] for row in HINTS)) == len(HINTS),
+         '%d distinct signatures' % len(set(row['sig'] for row in HINTS))),
+        ('every row can still fire: a fixture log line per signature, nine for nine',
+         [row['sig'] for row in HINTS if row['action'] not in advice(FIXTURES[row['sig']])] == [],
+         'dead rows: %s' % [row['sig'] for row in HINTS
+                             if row['action'] not in advice(FIXTURES[row['sig']])][:70]),
+        ('the fixture set covers exactly the rows that exist (a new row must ship its own probe)',
+         set(FIXTURES) == set(row['sig'] for row in HINTS),
+         '%d fixtures / %d rows' % (len(FIXTURES), len(HINTS))),
     ]
     bad = sum(1 for _n, ok, _d in cases if not ok)
     for name, ok, detail in cases:

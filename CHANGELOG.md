@@ -5,6 +5,52 @@
 
 ## [Unreleased]
 
+### Added
+- **`AGENTS.md` 的「报错特征 → 处置」表从手抄副本改为生成物**（第 37 轮）。第 36 轮把它写成"给人看的副本、
+  权威是 `tools/ci-watch.py` 的 `HINTS`"，第 37 轮实测这句话已经假了：两边都是 9 行，内容错位 3↔3——
+  文档丢了 `node half reports no drift`、`HTTP 404`、`precache revision` 三行真签名，
+  却留着 `本地全绿、CI 红` 与 `后台任务通知"exit 0"` 两条**根本不是日志签名**、永远匹配不上的行。
+  行数一致意味着任何"比长度"的核对都会绿。新增 `tools/triage.py`（`--write` 生成、`--check` 逐字节回验、
+  `--coverage` 量归因覆盖率、`--selftest` 17 例双向），`HINTS` 每行补 `sig`/`cause` 两个展示字段并配
+  `FIXTURES`（每行一条会真的触发它自己的日志样本，9/9 全活，判红"哑签名"）；判据 `t_triage_copy` 9 项：
+  标记必须在、表必须逐字节等于生成物、行数不许靠删行变绿、每行引用的 `t_*` 必须是真判据、
+  归因地板 `COVERAGE sites=317 covered=10` 只许升。两条非签名纪律移出表体，改为具名 bullet。
+- **内容生成器改为"入口就拒绝"**（第 37 轮结转③，本轮实测三种脏输入形态）：`tools/build.py` 新增
+  `validate_content()`，`load_content()` 唯一入口调用。实测改造前：花名册里重复 slug 被**静默接受**
+  （`build.py` 退出 0、同一页写两遍，三个判据之后才以"卡片数对不上"的形式暴露，归因错位）；
+  `file` 带 `pages/` 前缀得到 `FileNotFoundError: pages/pages/tutorial-hospital.html`（把数据错误
+  推给文件系统）；缺 `title` 得到裸 `KeyError: 'title'`（不带 slug，读者不知改哪条）。
+  现在这四种形态各自点名拒绝，`t_content_roster` 加 3 项含**反向控制**：真实出厂内容必须被接受
+  （"校验器拒绝真内容"比没有校验器更糟），外加归档侧电池 A3/M9–M12。
+- **`tools/test_build.py --isolate`**：逐判据打印 `checks/fails` 并给出 `sum`，写进归档
+  `_internal/reports/rNN_judge_isolation.json`。第 36 轮留下一笔"链总与隔离和差 1 我未归因"，
+  根因是归因需要一份 HEAD 基线，而一次性导出要么没 `.git` 要么没 `node_modules`，仪器自己就不准。
+  本轮把基线变成产物：`ISOLATE: 2096 checks across 41 judges` 与链上 `PASS: 2096 checks` 实测相等。
+
+### Fixed
+- **归档侧 `legacy-report-findings.json` 配上生成器**（第 37 轮结转③）。实测该文件由 commit `775450e`
+  引入，`grep -rn` 在 `.py/.json/.yml` 里命中 0 个生产者、0 个消费者，只有 `PROJECT_MEMORY.md` 一处散文
+  提它——即失败类别 5（没接线的工具是半成品）与类别 7（手抄的数会烂）落在同一个产物上。
+  `_internal/render_peers_table.py` 新增 `--audit-legacy`（轮次号由报告文件名的中文数字**结构解析**，
+  窗口配对按"报告自己点名的 JSON，多个取最晚 end"，人口=目录枚举且 `audited+unaudited==report_files`
+  被断言）与 `--verify`；close-out 第⑥条闸吃它。实测人口 29 份报告 / 6 份有窗口可审 / 23 份采集器时代之前，
+  登记 16 条 findings，历史报告照旧不回改。
+- **采集窗从手抄改为被验字段**：`window_utc` 一直在采集器 JSON 里，而 `--check` 只回验表格 7 列与
+  结论句，报告头那句"采集窗 HH:MM:SSZ–HH:MM:SSZ"是手抄的。接线前先量误报率：r31–r36 六份报告
+  12/12 个时间戳与自家 JSON 相符（**内容零误报**，错的只是形态），于是把 `window_line()` 做成硬断言。
+  渲染器自检 15 → 28 例（含"缺 `window_utc` ⇒ unverifiable 而非跳过"）。
+- **归档收尾改为"唯一出口"**（第 37 轮结转①）：`_internal/closeout_round.py` 加 `--emit`，打印并落盘
+  一行机器回执 `CLOSEOUT checks=… inner=… chain=… mirror=… harness=… table=… ci=…`，
+  第⑦条闸要求本轮报告**原样携带**这行且各字段与当次实测相等——报告里出现"已归档"却没有回执、
+  或回执是上一轮的，都会判红。五条闸涨到七条，自检 8 → 14 例（含"半截回执"与"chain=0 不算通过"）。
+
+### Changed
+- 链 2,082 → **2,096**（+14）。逐项实测可归因 12 项：`t_triage_copy` 新增 9 项 + `t_content_roster`
+  新增 3 项；**余下 +2 本轮未归因**，只记录不编解释。上一轮留下"差 1 未归因"是因为缺仪器——一次性
+  导出基线要么没 `.git` 要么没 `node_modules`，比较工具自己不可信。本轮先补 `--isolate`：
+  `ISOLATE: 2096 checks across 41 judges` 与链上 `PASS: 2096 checks` 实测相等，下一轮再遇差额
+  可直接逐判据对表。判据 40 → 41，工具 21 件（`triage.py=test`）。纯工具/判据 ⇒ 不发版。
+
 ### Fixed
 - **一条判据崩掉时，整条链的结论会一起消失**（第 31 轮由「真加一篇教程」实测暴露）。
   `main()` 裸调每个 `t_*`，而 `tools/package-offline.py` 在 staging 集不完整时
