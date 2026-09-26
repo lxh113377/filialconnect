@@ -40,6 +40,42 @@ def section(log, version):
     return m.group(1).strip() if m else ''
 
 
+REQUIRED_JOBS = ('quality', 'deploy')
+# The post-deploy probe is the only evidence that the *published* site matches the commit being
+# tagged. Before round 26 `ci_verdict` lumped every check together, so a release could be cut on
+# a commit where the live-site job simply did not exist (v1.6.1 measured: quality + deploy only).
+POST_DEPLOY_JOB = 'verify-live'
+
+
+def classify_checks(pairs):
+    """('green'|'red'|'pending'|'unknown', detail) from [(name, status, conclusion), ...].
+
+    Pure on purpose: the network call is one line, but the three ways this can be wrong
+    (a job missing, a job still running, a job failed) are all reachable with a fixture.
+    A missing post-deploy job is 'unknown', never 'green' - absence of a signal is not a
+    passing signal, which is the same rule the perf baseline gate applies to its own fields.
+    """
+    by_name = {name: (status, conclusion) for name, status, conclusion in pairs}
+    detail = ','.join('%s:%s' % (n, by_name[n][1] or by_name[n][0]) for n in sorted(by_name))
+    if not by_name:
+        return 'unknown', 'no check-runs at all'
+    for name in REQUIRED_JOBS:
+        if name not in by_name:
+            return 'unknown', 'required job %s never reported [%s]' % (name, detail)
+    if POST_DEPLOY_JOB not in by_name:
+        deploy_status, deploy_concl = by_name.get('deploy', ('queued', None))
+        if deploy_status == 'completed' and deploy_concl == 'success':
+            return 'unknown', '%s is absent although deploy succeeded - the live site was ' \
+                              'never probed for this commit [%s]' % (POST_DEPLOY_JOB, detail)
+        return 'pending', '%s has not reported yet [%s]' % (POST_DEPLOY_JOB, detail)
+    states = [by_name[n] for n in list(REQUIRED_JOBS) + [POST_DEPLOY_JOB]]
+    if any(s != 'completed' for s, _ in states):
+        return 'pending', detail
+    if any(c != 'success' for _, c in states):
+        return 'red', detail
+    return 'green', detail
+
+
 def ci_verdict(sha):
     """('green' | 'red' | 'pending' | 'unknown', detail) for one commit.
 
@@ -50,15 +86,16 @@ def ci_verdict(sha):
     if not slug or '/' not in slug:
         return 'unknown', 'gh could not resolve the repository slug'
     out = sh(['gh', 'api', 'repos/%s/commits/%s/check-runs' % (slug, sha), '--jq',
-              '[.check_runs[] | .status + ":" + (.conclusion // "null")] | join(",")'], check=False)
+              '[.check_runs[] | .name + ":" + .status + ":" + (.conclusion // "null")] | join(",")'],
+             check=False)
     if not out:
         return 'unknown', 'gh reported no check-runs for %s' % sha[:9]
-    pairs = [p.rsplit(':', 1) for p in out.split(',')]
-    if any(s != 'completed' for s, _ in pairs):
-        return 'pending', out
-    if all(c == 'success' for _, c in pairs):
-        return 'green', out
-    return 'red', out
+    pairs = []
+    for chunk in out.split(','):
+        parts = chunk.rsplit(':', 2)
+        if len(parts) == 3:
+            pairs.append((parts[0], parts[1], None if parts[2] == 'null' else parts[2]))
+    return classify_checks(pairs)
 
 
 def offline_package(apply):

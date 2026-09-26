@@ -721,6 +721,47 @@ def t_release():
           'manifest %s vs package.json %s' % (man.get('version'), ver))
     check('released versions descend from package.json version downward',
           not released or released[0][0] == ver)
+    # ---- the release gate's own classifier, tested as a pure function ---------------------
+    spec = importlib.util.spec_from_file_location(
+        'release_tool', os.path.join(ROOT, 'tools', 'release.py'))
+    release_tool = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(release_tool)
+    J = release_tool.REQUIRED_JOBS + (release_tool.POST_DEPLOY_JOB,)
+    done = [(n, 'completed', 'success') for n in J]
+    cases = [
+        ('all three jobs green -> green', done, 'green'),
+        # measured shape on v1.6.1: the post-deploy probe did not exist yet
+        ('deploy green but no verify-live -> unknown (never green)',
+         [(n, 'completed', 'success') for n in release_tool.REQUIRED_JOBS], 'unknown'),
+        ('verify-live still queued while deploy green -> pending, not green',
+         [(n, 'completed', 'success') for n in release_tool.REQUIRED_JOBS]
+         + [(release_tool.POST_DEPLOY_JOB, 'in_progress', None)], 'pending'),
+        ('verify-live failed -> red', done[:-1] + [(release_tool.POST_DEPLOY_JOB, 'completed', 'failure')], 'red'),
+        ('quality failed -> red', [('quality', 'completed', 'failure'),
+                                   ('deploy', 'completed', 'success'),
+                                   (release_tool.POST_DEPLOY_JOB, 'completed', 'success')], 'red'),
+        ('nothing reported -> unknown', [], 'unknown'),
+        ('required job missing while others green -> unknown',
+         [(n, 'completed', 'success') for n in J if n != 'deploy'], 'unknown'),
+    ]
+    for label, fixture, want in cases:
+        # A classifier that raises instead of returning a verdict is a release gate that fails
+        # open on someone else's typo - the crash itself must be an assertion, not a traceback.
+        try:
+            got, _detail = release_tool.classify_checks(fixture)
+            raised = ''
+        except Exception as exc:                              # noqa: BLE001
+            got, raised = '<raised>', '%s: %s' % (type(exc).__name__, exc)
+        check('release classifier never raises on %s' % label, raised == '', raised)
+        check('release classifier: %s' % label, got == want, 'got %s want %s' % (got, want))
+    src = read(os.path.join('tools', 'release.py'))
+    check('an unknown verdict cannot be relaxed by --allow-pending',
+          "verdict == 'unknown'" in src and 'ALLOW_PENDING' not in
+          src.split("verdict == 'unknown'")[1].split('if problems')[0].upper(),
+          'only pending may be waived')
+    check('the job names are the API names, not workflow names',
+          release_tool.POST_DEPLOY_JOB == 'verify-live' and 'quality' in release_tool.REQUIRED_JOBS,
+          'measured via gh api check-runs on 2026-09-26')
 
 
 def t_content_roster():

@@ -5,7 +5,18 @@
 
 ## [Unreleased]
 
-_（暂无未发布的变更；第二十六轮的判据与工具随 1.7.0 一起发出。）_
+### Added
+- **发版护栏现在点名 `verify-live` 作业**（第二十六轮批注追加执行）。原先 `release.py::ci_verdict`
+  把所有 check-run 混成一坨，只看"有没有红、有没有跑完"，看不见"该探测线上的作业根本没存在"——
+  实测 v1.6.1 那次发版的 commit 上只有 `quality` + `deploy`，**线上从未被探测过也照样算绿**。
+  现在 `classify_checks()` 三态分明：required 作业缺席 = `unknown`；`verify-live` 在 deploy 已 success
+  的前提下缺席 = `unknown`（**`--allow-pending` 放宽不了 unknown**）；它 queued = `pending`；失败 = `red`。
+  反证用的是真实历史数据：对 v1.7.0 的 commit 判 `green`，对 v1.6.1 的判
+  `unknown: verify-live is absent although deploy succeeded - the live site was never probed`。
+  作业名取自 `gh api .../check-runs` 实测（是**作业名**不是 workflow 名，也不是 step 标题）。
+  新增 16 条判据（7 个夹具 × 2 断言 + 3 条接线断言）：其中"分类器任何输入都不得抛异常"是把
+  一次 `KeyError` 崩溃**转成具名红**得来的——变异体 X3 最初只是崩，不算被抓住。
+  5 条变异 X1-X5 逐条实测转红、还原 0 红。纯工具改动，按 #123 规矩不制造版本号，随下次发版带走。
 
 ## [1.7.0] - 2026-09-26
 

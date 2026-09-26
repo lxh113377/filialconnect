@@ -53,11 +53,29 @@
       "reproducibility": "built twice into a temporary directory, sha256 compared; timestamps pinned to the ZIP epoch",
       "defect_that_motivated_it": "7 published Releases, 0 assets each, while offline use is the stated promise",
       "note": "peer evidence was measured, not assumed: only Pagefind ships release assets among the compared projects, because it distributes binaries - the justification here is our own delivery path, not a convention"
+    },
+    "t_release_classifier": {
+      "assertions": 17,
+      "denominator": {
+        "jobs_required": ["deploy", "quality"],
+        "post_deploy_job": "verify-live",
+        "fixtures": 7
+      },
+      "name_source": "gh api repos/.../commits/<sha>/check-runs measured 2026-09-26: bf4dcb4 reports quality+deploy+verify-live, v1.6.1's 4b7498f reports quality+deploy only",
+      "real_negative_control": "the classifier run against the v1.6.1 commit returns unknown with 'verify-live is absent although deploy succeeded', which is the exact hole this closes",
+      "mutations_tested": 5,
+      "mutations": [
+        "X1 missing post-deploy probe counted as green -> 'never green' red",
+        "X2 in-progress treated as finished -> 'pending, not green' red",
+        "X3 required-job guard replaced by continue -> 'never raises' red (KeyError promoted to a named failure; the first run of this case only crashed, which is not detection)",
+        "X4 job name guessed from a step title instead of the API -> 'API names' red",
+        "X5 unknown made relaxable by --allow-pending -> 'cannot be relaxed' red"
+      ]
     }
   },
   "chain": {
     "before": 1879,
-    "after": 1947
+    "after": 1963
   },
   "ci_regressions_caused_and_fixed_this_round": [
     "run 36218739260 (22s): the fourth reader of the hand-copied list was tools/build-search.mjs, which regexed deploy-pages.yml for `cp -r ... _site/`. It failed loudly, not silently. Now reads the committed ledger with a >=40-file floor; index output unchanged at en:14p zh:11p | 1227 KiB.",
