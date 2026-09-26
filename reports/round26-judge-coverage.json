@@ -37,10 +37,10 @@
       "defect_that_motivated_it": "the repository About box said 'Zero-dependency static site' after the user revoked that framing - a sentence the file-level ban could not reach because it is not a file",
       "mutations_tested": 4,
       "mutations": [
-        "M7 'Zero-dependency' returns to the description -> 'does not revive the revoked slogan' red",
-        "M8 page count in the description changed to 99 -> 'page count matches the roster' red",
+        "P1 the revoked slogan returns to the description -> 'does not revive the revoked slogan' red",
+        "P2 page count in the description changed to 99 -> 'page count matches the roster' red",
         "P3 a topic made 'Offline First' -> 'lowercase slugs' red",
-        "M10 homepage pointed at example.com -> 'equals the sitemap origin' red"
+        "P4 the expectation drifts from the real origin -> 'equals the sitemap origin' red"
       ]
     },
     "t_offline_package": {
