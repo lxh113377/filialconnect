@@ -105,6 +105,14 @@
   覆盖：`python _internal/check_harness_links.py`，复用同一个检测器、不复制规则。它先抓出真犯
   `test_round33_add_tutorial.py` 的 junction，改掉之后归档侧 76 个文件全绿。规矩随之改口：
   worktree 需要依赖就在**它自己里面**装，不链回活的仓。AGENTS.md 增加失败类别第 9 条。
+- `tools/ci-watch.py`：push 之后的 CI 等待器。它不是新判据，而是把"每轮手工重复四步"
+  （push → 轮询 check-runs → 找失败 run → 读日志）压成一条命令，好让 hook 有东西可调
+  （hook 本身属于本机配置，仓库不代改）。三态**复用** `release.ci_verdict`，两个工具不可能互相打脸；
+  红项按 `HINTS` 签名表直接给具名处置（缺依赖→`npm ci`、台账过期→跑它点名的生成器、
+  `steps=0`→是没拿到 runner 不是代码错、`gh api` GET 404→参数进 query、后台通知的 exit 0≠被测结论），
+  无签名命中就明说并交出读日志的命令。`--once` 供逐事件调用，`--selftest` 6 例（签名表非空且可编译、
+  green=0/red=1/pending|unknown=2、未命中不得伪装成"看着没事"）。
+  AGENTS.md 另加「报错特征 → 处置」速查表，其权威即这张 `HINTS` 表（改判据文案先改表，防类别 7）。
 
 ### Fixed
 - **判据在格式化自己那条失败证据时崩掉**（第 36 轮变异电池 M4 抓出，缺陷早在第 35 轮）。
