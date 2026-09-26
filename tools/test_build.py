@@ -1800,6 +1800,41 @@ def t_aria_locale():
           every == len(pages()), '%d/%d pages' % (every, len(pages())))
 
 
+INPUT_DIRS = ('content', 'assets', 'tools', 'pages')
+
+
+def t_tracked_inputs():
+    """Every file the build reads has to be in the commit, not just on this machine.
+
+    Round 33 measured the gap: a commit made with `git add -u` silently skipped the untracked
+    `content/card-art/*.svg` + `content/tutorial-cards.json` the new generator reads, so the pushed
+    tree could not build while the local chain stayed green. `git add -u` only stages TRACKED
+    changes, and "local green" was never evidence about the commit - this is.
+    """
+    r = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard'],
+                       cwd=ROOT, capture_output=True, text=True, timeout=120)
+    if r.returncode != 0:
+        check('git can list untracked files (otherwise this judge sees nothing)', False,
+              (r.stderr or '').strip()[:120])
+        return
+    others = [l.strip().replace('\\', '/') for l in r.stdout.splitlines() if l.strip()]
+    inside = [p for p in others
+              if p.split('/')[0] in INPUT_DIRS or (p.endswith('.html') and '/' not in p)]
+    check('no build input is untracked (a commit could otherwise ship without it)',
+          not inside, str(sorted(inside)[:6]))
+    # positive control: the scan must be able to see something, or the rule is decoration
+    probe = os.path.join(ROOT, 'content', '__r33_trackprobe__.md')
+    io.open(probe, 'w', encoding='utf-8', newline='\n').write('probe\n')
+    try:
+        seen = [l.strip().replace('\\', '/') for l in
+                subprocess.run(['git', 'ls-files', '--others', '--exclude-standard'], cwd=ROOT,
+                               capture_output=True, text=True, timeout=120).stdout.splitlines()]
+        check('the untracked scan really sees a new file under content/ (not vacuous)',
+              'content/__r33_trackprobe__.md' in seen, str(seen[:3]))
+    finally:
+        os.remove(probe)
+
+
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
           t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
           t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
@@ -1808,7 +1843,7 @@ JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets,
           t_deploy_staging, t_public_metadata, t_offline_package,
           t_capability_claims, t_documented_numbers, t_gate_wiring,
           t_judge_ledger, t_perf_provenance, t_deploy_reasons,
-          t_page_title, t_aria_locale)
+          t_page_title, t_aria_locale, t_tracked_inputs)
 
 
 def _abort_note(name, exc):
