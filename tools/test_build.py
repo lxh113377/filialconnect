@@ -1932,6 +1932,46 @@ def t_coverage_identity():
           '%s vs %s' % (led['runtime_outputs_probed'], led['named_build_outputs_probed']))
 
 
+def t_no_link_code():
+    """Nothing in the shipped tree may create a filesystem link, and the scan proves its own reach.
+
+    On 2026-09-26 two verification harnesses junctioned a throwaway worktree to this repo's real
+    `node_modules`, and `git worktree remove --force` walked the link and deleted the target - twice,
+    744 packages each time. The rule lived in a docstring for a day, which is how a rule gets read
+    and not obeyed. Pattern matching lives in tools/link_guard.py, which self-tests both directions;
+    what this judge owns is the wiring and the population, so neither can quietly shrink.
+    """
+    lg = load_tool('link_guard', 'link_guard.py')
+    r = subprocess.run(['git', 'ls-files'], cwd=ROOT, capture_output=True, text=True, timeout=120)
+    tracked = [l.strip().replace('\\', '/') for l in r.stdout.splitlines()
+               if l.strip().endswith(('.py', '.mjs', '.js'))]
+    paths = lg.scan_paths(ROOT)
+    check('git can list tracked sources (otherwise the coverage claim below sees nothing)',
+          r.returncode == 0 and len(tracked) >= 20,
+          'rc=%s tracked=%d' % (r.returncode, len(tracked)))
+    check('the link scan reaches every tracked source file (no directory is out of population)',
+          not set(tracked) - set(paths), str(sorted(set(tracked) - set(paths))[:5]))
+    findings, scanned, _notes = lg.scan_tree(
+        ROOT, self_path=os.path.join(ROOT, 'tools', 'link_guard.py'))
+    links = [f for f in findings if f[0] == 'link']
+    check('no shipped source creates a filesystem link (a link into a live tree gets deleted '
+          'by `git worktree remove --force`)', not links, str(links[:3])[:200])
+    check('the scan read a non-empty population', scanned > 0, str(scanned))
+    # The detector's own both-directions proof lives in link_guard --selftest, and this judge runs
+    # it. Fixtures were tried here first and the scanner immediately caught them: a negative control
+    # that has to spell the forbidden command is verbatim repo content, so exactly one file in this
+    # tree is allowed to hold those strings as data - the one that owns the table.
+    st = subprocess.run([sys.executable, os.path.join('tools', 'link_guard.py'), '--selftest'],
+                        cwd=ROOT, capture_output=True, text=True, timeout=300)
+    out = (st.stdout or '') + (st.stderr or '')
+    tail = [ln for ln in out.splitlines() if 'selftest:' in ln]
+    check('link_guard self-proves both directions (fires on real code, quiet on a comment, '
+          'UNVERIFIED on nothing)', st.returncode == 0 and bool(tail), tail[:1] or out[-160:])
+    check('its selftest counts its own cases out loud (a silent 0-case suite is not a pass)',
+          bool(re.search(r'selftest: (\d+) cases, 0 failures', out)) and
+          int(re.search(r'selftest: (\d+) cases', out).group(1)) >= 12, tail[:1])
+
+
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
           t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
           t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
@@ -1940,7 +1980,7 @@ JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets,
           t_deploy_staging, t_public_metadata, t_offline_package,
           t_capability_claims, t_documented_numbers, t_gate_wiring,
           t_judge_ledger, t_perf_provenance, t_deploy_reasons,
-          t_page_title, t_aria_locale, t_tracked_inputs, t_coverage_identity)
+          t_page_title, t_aria_locale, t_tracked_inputs, t_coverage_identity, t_no_link_code)
 
 
 def _abort_note(name, exc):

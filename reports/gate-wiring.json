@@ -13,7 +13,7 @@
     "verify-dom.mjs",
     "verify-live.py"
   ],
-  "declared": 18,
+  "declared": 19,
   "declared_but_absent": [],
   "hand": [
     "ci-audit-nodes.py"
@@ -26,11 +26,12 @@
   "test": [
     "contrast_audit.py",
     "last-updated.py",
+    "link_guard.py",
     "package-offline.py",
     "perf-probe.mjs",
     "release.py"
   ],
-  "tools_on_disk": 18,
+  "tools_on_disk": 19,
   "undeclared": [],
   "undocumented_hand_only": []
 }

@@ -84,6 +84,28 @@
   现在识别 `ERR_MODULE_NOT_FOUND` 并只给一条具名判定（实测：把依赖移到一边 ⇒ `1/2071 checks failed`
   且红项名字直说 `run npm ci`；移回 ⇒ 全链 `2072` 绿。两条断言的差 1 正是该分支的构造）。
 
+### Added
+- **禁止创建文件系统链接，落成机器闸**（第 36 轮，纯工具改动不制造版本号）。2026-09-26 有两个验证
+  harness 把临时 `git worktree` 用 junction 链回本仓真实的 `node_modules`，`git worktree remove --force`
+  顺着链接把目标删了——**同一天两次、每次 744 个包**，而当时这条规则已经写进 docstring 一整天。
+  写在文档里的规则会被读到、然后被忘掉；判据不会。新增 `tools/link_guard.py`：AST 解析（注释与
+  docstring 里"提一句 junction"不是代码，否则闸门会把人训练成关掉它），三类探测＝命令形状的字符串
+  ＋ `os.symlink(...)` 这类调用 ＋ `_winapi`/`win32file` 这类导入；一个文件都没读到＝UNVERIFIED 而非 PASS。
+- **判据不许替检测器保管反例**：`t_no_link_code` 第一版把"注释里提到 junction"的反例写在判据正文里，
+  检测器立刻把这行判红——含被禁字符串的夹具本身就是仓库内容。双向自证交回
+  `python tools/link_guard.py --selftest`（17 例，正反配对 + 零分母反例 + CLI 两个入口），判据只 own
+  接线与分母：`git ls-files` 里的每个源码文件都必须落进 `scan_paths()` 的扫描人口（防某个目录被排除后
+  "绿"变成"看得少"）。
+- 扫描器**对自己的对称豁免**：它自己的 marker 表是数据不是命令，故只有字符串规则在该文件让位，
+  调用与导入规则照打；豁免每次运行都打印出来（不是静默扣掉），并由两条用例钉住"同一段字符串换到
+  别的文件仍然判红"。解析不了的文件也不再跳过，而是降级成逐行探测并点名降级（归档里那个 round-27
+  的一次性补丁脚本因此仍被读、只是弱一档）；非 UTF-8 字节按 replace 读取——marker 全 ASCII，坏一个
+  字节不是免检理由。只有"打不开"才算真盲区、才判红。
+- 仓外的 harness 目录（`_internal/`，真正会跑 `git worktree` 的那批脚本，CI 检出不含）由自己的命令
+  覆盖：`python _internal/check_harness_links.py`，复用同一个检测器、不复制规则。它先抓出真犯
+  `test_round33_add_tutorial.py` 的 junction，改掉之后归档侧 76 个文件全绿。规矩随之改口：
+  worktree 需要依赖就在**它自己里面**装，不链回活的仓。AGENTS.md 增加失败类别第 9 条。
+
 ## [1.11.0] - 2026-09-26
 
 第三十二轮（同一命令第 24 次重发 = 完整重执行）。补完第 30 轮留下的那一半：`manual` 名单当时只是

@@ -61,6 +61,13 @@ rebuilding, not appending by hand (`t_perf_coverage` fails otherwise).
    the locale JSONs shipped, referenced by no page, with no written why). `t_deploy_reasons` now
    demands every shipped asset be explained by a reference, an og:image/manifest/dynamic rule, or
    `SHIPPED_WITHOUT_REFERENCE` with a reason. Ship for a reason or do not ship.
+9. **A verification harness that reaches back into the live repository.** Two harnesses junctioned a
+   throwaway `git worktree` to this repo's own `node_modules` on 2026-09-26 and `git worktree remove
+   --force` followed the link, deleting 744 packages - twice, after the rule had already been written
+   into a docstring. No file here may create a filesystem link, and `t_no_link_code` fails if one does
+   (the detector's both-directions proof is `python tools/link_guard.py --selftest`). Harnesses kept
+   outside this repository are scanned by their own command, `python _internal/check_harness_links.py`.
+   A worktree that needs dependencies installs them inside itself; it does not link to the live tree.
 
 ## Attribution before action
 
