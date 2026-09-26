@@ -71,6 +71,15 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    (the detector's both-directions proof is `python tools/link_guard.py --selftest`). Harnesses kept
    outside this repository are scanned by their own command, `python _internal/check_harness_links.py`.
    A worktree that needs dependencies installs them inside itself; it does not link to the live tree.
+10. **A declared authority relationship that nothing verifies stops being true.** `AGENTS.md` claimed
+   the triage table's authority was `tools/ci-watch.py`'s `HINTS` and that the section was "only the
+   human copy". One round later both sides still had nine rows - so a length comparison is green -
+   while three rows existed only in the code and three only in the document, and two document rows
+   were not log signatures at all and therefore could never fire. If a file claims to render another
+   file's data, the render must be generated and byte-verified (`python tools/triage.py --check`,
+   judge `t_triage_copy`); if it cannot be generated, the claim must not be written. The same rule
+   applies to artifacts, not just prose: `legacy-report-findings.json` sat in the archive with no
+   generator and no consumer, which is a fossil of a number, not a ledger.
 
 ## Attribution before action
 
@@ -99,6 +108,8 @@ CI 跑 `--check` 逐字节回验，判据 `t_triage_copy` 在链上——因为�
 | `HTTP 404` / `assertion … 404` | `gh api` 的 GET 参数被当 body 发了 | `gh api` GET parameters belong in the query string; `-f` puts them in the body and turns a good path into a 404 |
 | `verify-live … UNVERIFIED` | 网络不可达，或线上部署不是被探针的那笔提交 | the live probe could not reach production (network) or the deploy is not the probed commit; UNVERIFIED is not a pass and not a red either |
 | `precache revision` / `service worker` | sw.js 早于它的输入生成 | sw.js was generated before its inputs changed - rebuild in order and re-run the determinism judge (t_deterministic_sw) |
+| `hand drift: N row(s) differ` | AGENTS.md 的 Triage 表被手改，或 `HINTS` 改了没重生成 | run `python tools/triage.py --write` and commit it; the section between the markers is generated, so hand edits there are not a second opinion (t_triage_copy) |
+| `stale receipt` / `malformed receipt` | 报告里的收尾回执不是本次实测（或字段残缺） | re-run `python _internal/closeout_round.py --emit` and paste the whole block again; a receipt from last round is not evidence this round closed |
 <!-- END:TRIAGE-TABLE -->
 
 两条**不是日志签名**的操作纪律（它们没法被 grep 到，所以不进表；表只收"原话"）：

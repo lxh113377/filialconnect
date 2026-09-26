@@ -2059,10 +2059,10 @@ def t_triage_copy():
     # so this cannot be greened by deleting the question, and it does not pretend a 2.9% attribution
     # rate is a gate - it makes a shrink visible. Headroom is the number itself, printed on the line.
     cov = tr.coverage(hints)
-    check('triage attribution attributes at least the %d failure shapes measured on 2026-09-27 '
-          '(of %d shapes the chain can print; attribution may not shrink)'
-          % (cov['covered_sites'], cov['sites']), cov['covered_sites'] >= 9,
-          tr.coverage_line(cov))
+    check('triage attribution attributes at least the 9 failure shapes measured on 2026-09-27 '
+          '(the floor is that measurement; the population it is a fraction of grows with every '
+          'check anyone writes, so the ratio is printed and never enforced)',
+          cov['covered_sites'] >= 9, tr.coverage_line(cov))
 
 
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,

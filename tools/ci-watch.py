@@ -82,6 +82,18 @@ HINTS = (
      'cause': 'sw.js 早于它的输入生成',
      'action': 'sw.js was generated before its inputs changed - rebuild in order and re-run the '
                'determinism judge (t_deterministic_sw)'},
+    # Round 37's own two new failure shapes, added the round they were measured (a signature table
+    # that never grows is a table that stopped describing this repository).
+    {'sig': '`hand drift: N row(s) differ`',
+     'pattern': r'hand drift: \d+ row',
+     'cause': 'AGENTS.md 的 Triage 表被手改，或 `HINTS` 改了没重生成',
+     'action': 'run `python tools/triage.py --write` and commit it; the section between the markers '
+               'is generated, so hand edits there are not a second opinion (t_triage_copy)'},
+    {'sig': '`stale receipt` / `malformed receipt`',
+     'pattern': r'stale receipt|malformed receipt',
+     'cause': '报告里的收尾回执不是本次实测（或字段残缺）',
+     'action': 're-run `python _internal/closeout_round.py --emit` and paste the whole block again; '
+               'a receipt from last round is not evidence this round closed'},
 )
 
 # One synthetic log line per row, in the words the real failure actually printed. This is the
@@ -108,6 +120,11 @@ FIXTURES = {
         'verify-live: UNVERIFIED - could not reach lxh113377.github.io (curl 000)',
     '`precache revision` / `service worker`':
         'the precache revision is stale: the service worker was built before its inputs changed',
+    '`hand drift: N row(s) differ`':
+        'DRIFT: hand drift: 2 row(s) differ (only in HINTS: a; only in the document: b)',
+    '`stale receipt` / `malformed receipt`':
+        'RED  the report carries the close-out receipt  stale receipt: inner says f7fd452ab, '
+        'measured 6999601',
 }
 
 
