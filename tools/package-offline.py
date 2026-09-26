@@ -32,6 +32,7 @@ PREFIX = 'filialconnect/'
 # archive (built outside this repo) made the same cut.
 SOURCE_DIRS = ('tools', 'content', 'reports')
 SOURCE_FILES = ('CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'AGENTS.md', '.htmlhintrc',
+                'lighthouserc.json', 'lighthouserc.mobile.json',
                 'package.json', 'package-lock.json', '.gitattributes')
 EXCLUDE_NAMES = {'.gitkeep'}
 # Pagefind resolves its shards over HTTP, so an index copied to a phone is unreadable weight.

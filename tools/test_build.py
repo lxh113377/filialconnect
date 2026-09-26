@@ -642,20 +642,17 @@ def t_search_ui():
     check('deploy builds the index before staging it',
           'build-search.mjs index' in wf and wf.index('build-search.mjs index') < wf.index(stage),
           'the enumerator can only ship an index that has already been built')
-    # build_zip.py lives outside this repository, so a CI checkout has no parent directory to
-    # read it from. Reaching for it unconditionally crashed the CI gate with FileNotFoundError:
-    # a check that can only run on one person's machine is not a gate. Where the file is
-    # absent the ZIP guarantee is still enforced - by _internal/verify_zip_parity.py, which
-    # runs wherever the ZIP is actually built - and this says so instead of going quiet.
-    zipline_path = os.path.join(ROOT, '..', '_internal', 'build_zip.py')
-    if os.path.exists(zipline_path):
-        zipline = io.open(zipline_path, encoding='utf-8').read()
-        check('offline ZIP excludes the index it cannot use',
-              "'pagefind'" in zipline and "'_search'" in zipline,
-              'Pagefind fetches over HTTP, which file:// blocks')
-    else:
-        print('note: build_zip.py not in this checkout; ZIP exclusion is checked by '
-              '_internal/verify_zip_parity.py where the ZIP is built')
+    # Round 26 moved the packaging rules into this repository (tools/package-offline.py), so this
+    # no longer reaches for ../_internal/build_zip.py. That out-of-repo read is what turned CI red
+    # in round 11 with a FileNotFoundError - "a check that can only run on one person's machine is
+    # not a gate" - and the thin caller that remains in _internal/ just invokes this tool.
+    packager = read(os.path.join('tools', 'package-offline.py'))
+    check('offline ZIP excludes the index it cannot use',
+          "'pagefind'" in packager and "'_search'" in packager,
+          'Pagefind fetches its shards over HTTP, which file:// blocks')
+    check('the offline packager is the only owner of the ZIP membership',
+          'staging_sets()' in packager and "SOURCE_DIRS" in packager,
+          'deriving membership keeps one list; a second os.walk is a second owner')
     sw = read('sw.js')
     check('service worker does not precache the index', 'pagefind/' not in sw)
 
