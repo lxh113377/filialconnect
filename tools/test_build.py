@@ -2123,17 +2123,23 @@ def attribute(basename):
     needs a working tree that has both `.git` and `node_modules`, and a throwaway copy is missing one
     or the other - the comparison instrument was itself the unreliable thing. This measures on the
     live tree: it hides `basename` from `os.listdir` (in memory, nothing on disk moves) and reports
-    how each judge's count responds. Two judges unchanged while two move by one is the control that
+    how each judge's count responds. `masked_in` names the directories where the mask actually bit:
+    if it is empty the file was invisible to this instrument, and that is blindness, not a zero. Two judges unchanged while two move by one is the control that
     proves the mask is targeted rather than global. Cost: two full chain passes - it is a diagnostic
     run when a count moved and nobody can say why, not a CI step.
     """
     real = os.listdir
+    masked_in = []
 
     def measure(mask):
         def patched(path, *a, **k):
             names = real(path, *a, **k)
-            return [n for n in names if not (str(path).replace('\\', '/').endswith('tools')
-                                             and n == mask)] if mask else names
+            if not mask:
+                return names
+            kept = [n for n in names if n != mask]
+            if len(kept) != len(names) and str(path) not in masked_in:
+                masked_in.append(str(path))
+            return kept
         os.listdir = patched
         out = {}
         try:
@@ -2153,14 +2159,22 @@ def attribute(basename):
     moved = {k: base[k] - masked[k] for k in base if base[k] != masked[k]}
     total = sum(moved.values())
     print(json.dumps({'mask': basename, 'total': base and sum(base.values()),
-                      'delta': total, 'moved': moved,
+                      'delta': total, 'moved': moved, 'masked_in': sorted(masked_in),
                       'unchanged': len(base) - len(moved)}, ensure_ascii=False))
-    print('ATTRIBUTE mask=%s delta=%d moved=%s unchanged=%d judges'
+    print('ATTRIBUTE mask=%s delta=%d moved=%s masked_in=%s unchanged=%d judges'
           % (basename, total, ', '.join('%s+%d' % (k, v) for k, v in sorted(moved.items())),
+             ','.join(os.path.basename(p) or p for p in sorted(masked_in)) or 'NONE',
              len(base) - len(moved)))
+    if not masked_in:
+        # Round 38 shipped this diagnostic blind to anything outside `*/tools`, yet a zero came back
+        # looking like "that file contributes nothing". Where the mask never removed a listing entry,
+        # the only honest answer is that the file is invisible to the instrument, not measured as nil.
+        print('  UNVERIFIED: the mask removed nothing from any listing, so this instrument never '
+              'saw %s - a delta of 0 here is blindness, not a measurement' % basename)
+        return 2
     if not moved:
-        print('  note: nothing moved - the masked file is not in any per-file population, so it '
-              'cannot explain a count change')
+        print('  note: the mask bit (%s) but no judge count moved - the file is enumerated by no '
+              'per-file judge' % ','.join(sorted(masked_in)))
         return 2
     return 0
 
