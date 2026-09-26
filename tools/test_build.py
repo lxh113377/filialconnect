@@ -794,6 +794,29 @@ def t_content_roster():
           'content %s vs cards %s' % (slugs, sorted(cards)))
     check('card grid has one card per tutorial', len(starts) == len(tuts),
           '%d cards vs %d tutorials' % (len(starts), len(tuts)))
+    # Round 33: the grid is generated. A hand-edit between the markers would otherwise survive the
+    # next build unnoticed, so compare the shipped bytes against what build.py renders.
+    beg, end = build.CARDS_MARK_BEG, build.CARDS_MARK_END
+    marked = beg in html and end in html
+    check('the library card grid sits in a generator-owned region', marked,
+          'run: python tools/build.py build')
+    if marked:
+        shipped = html.split(beg, 1)[1].split(end, 1)[0]
+        want = '\n' + build.render_cards(tuts, build.parse_dict()['en']) + '\n'
+        first_diff = next((i for i, (a, b) in enumerate(zip(shipped, want)) if a != b),
+                          min(len(shipped), len(want)))
+        check('shipped card grid equals the generated grid (nothing hand-edited inside)',
+              shipped == want, 'first difference at byte %d of %d/%d'
+              % (first_diff, len(shipped), len(want)))
+    art_dir = os.path.join(ROOT, 'content', 'card-art')
+    art = {f[:-4] for f in os.listdir(art_dir)} if os.path.isdir(art_dir) else set()
+    card_slugs = {c['slug'] for c in build.load_cards()}
+    check('every card has a hand-drawn picture and no picture outlives its card',
+          art == card_slugs, 'art-only %s vs cards-only %s'
+          % (sorted(art - card_slugs), sorted(card_slugs - art)))
+    check('card order is declared once, in content/tutorial-cards.json',
+          list(cards) == [c['slug'] for c in build.load_cards()],
+          'shipped %s vs declared %s' % (list(cards), [c['slug'] for c in build.load_cards()]))
     chips = set(re.findall(r'data-filter="([a-z]+)"', html)) - {'all'}
     check('every filter chip is a real category', 
           not {c for c in cards.values() if c not in chips},

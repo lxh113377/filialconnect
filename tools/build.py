@@ -38,6 +38,34 @@ FOOTER_MARK_END = '  <!-- END:FOOTER -->'
 FRAUD_MARK_BEG = '      <!-- BEGIN:FRAUD-ITEMS (tools/build.py) -->'
 FRAUD_MARK_END = '      <!-- END:FRAUD-ITEMS -->'
 
+CARDS_MARK_BEG = ('      <!-- BEGIN:TUTORIAL-CARDS (tools/build.py) '
+                  '- edit content/tutorial-cards.json + content/card-art/<slug>.svg -->')
+CARDS_MARK_END = '      <!-- END:TUTORIAL-CARDS -->'
+
+# The library card grid, generated. Only two things per card are not derivable and therefore live
+# in content: the card order plus the invisible `<!-- Tutorial N: label -->` comment
+# (content/tutorial-cards.json), and the hand-drawn picture (content/card-art/<slug>.svg).
+# Tags, titles, blurbs and links come from the roster + dictionary, which is what lets
+# `t_content_roster` assert that adding a tutorial needs no HTML edit at all.
+CARD_TMPL = (
+    '      <!-- Tutorial %s -->\n'
+    '      <div class="tutorial-card" data-category="%s" role="listitem">\n'
+    '        <div class="tutorial-card-image">\n%s\n'
+    '        </div>\n'
+    '        <div class="tutorial-card-body">\n'
+    '          <div class="tutorial-card-tags">\n%s\n'
+    '          </div>\n'
+    '          <h2 data-i18n="tut.%s.h3">%s</h2>\n'
+    '          <p data-i18n="tut.%s.p">%s</p>\n'
+    '          <a href="tutorial-%s.html" class="card-link">\n'
+    '            <span data-i18n="tut.view">%s</span>\n'
+    '            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">'
+    '<path d="M6 4l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+    'stroke-linejoin="round"/></svg>\n'
+    '          </a>\n'
+    '        </div>\n'
+    '      </div>\n')
+
 I18N_BEGIN = '    // BEGIN:GENERATED (tools/build.py) - edit content/*.json instead'
 I18N_END = '    // END:GENERATED'
 
@@ -812,6 +840,51 @@ def render_sw():
     return SW_TEMPLATE.replace('@SHELL@', shell)
 
 
+def load_cards():
+    """Ordered card roster: [{slug, label}]. Order is authority here, not in the HTML."""
+    data = json.loads(read(os.path.join('content', 'tutorial-cards.json')))
+    return data['cards']
+
+
+def card_tags(slug, dict_en):
+    """`tag1` always, `tag2` when the dictionary has it - the accent goes on the second."""
+    lines = []
+    for n in (1, 2):
+        key = 'tut.%s.tag%d' % (slug, n)
+        if key in dict_en:
+            cls = 'tag' if n == 1 else 'tag tag-accent'
+            lines.append('            <span class="%s" data-i18n="%s">%s</span>' % (cls, key, dict_en[key]))
+    if not lines:
+        sys.exit('FAIL: card %r has no tut.%s.tag1 label to show' % (slug, slug))
+    return '\n'.join(lines)
+
+
+def render_cards(tuts, dict_en):
+    roster = {t['slug']: t for t in tuts}
+    out, used = [], set()
+    for i, card in enumerate(load_cards(), 1):
+        slug = card['slug']
+        if slug in used:
+            sys.exit('FAIL: content/tutorial-cards.json lists %r twice' % slug)
+        used.add(slug)
+        tut = roster.get(slug)
+        if tut is None:
+            sys.exit('FAIL: content/tutorial-cards.json names %r, which is not in content/tutorials.json' % slug)
+        art_rel = os.path.join('content', 'card-art', slug + '.svg')
+        if not os.path.isfile(os.path.join(ROOT, art_rel)):
+            sys.exit('FAIL: card %r has no hand-drawn picture at %s - an artless card must be a '
+                     'decision, not something the generator ships silently' % (slug, art_rel))
+        art = read(art_rel).rstrip('\n')
+        out.append(CARD_TMPL % ('%d: %s' % (i, card['label']), tut['category'], art,
+                                card_tags(slug, dict_en), slug, dict_en['tut.%s.h3' % slug],
+                                slug, dict_en['tut.%s.p' % slug], slug, dict_en['tut.view']))
+    missing = sorted(set(roster) - used)
+    if missing:
+        sys.exit('FAIL: tutorials with no card entry (add them to content/tutorial-cards.json '
+                 '+ content/card-art/): %s' % missing)
+    return '\n'.join(out)
+
+
 def build_outputs():
     tuts, cases = load_content()
     dict_en = parse_dict()['en']
@@ -838,6 +911,12 @@ def build_outputs():
                 sys.exit('FAIL: fraud markers missing (run: build.py extract)')
             block = FRAUD_MARK_BEG + '\n' + render_fraud_items(cases) + '\n' + FRAUD_MARK_END
             s = re.sub(re.escape(FRAUD_MARK_BEG) + r'.*?' + re.escape(FRAUD_MARK_END),
+                       lambda m: block, s, flags=re.S)
+        if fp == 'pages/tutorials.html':
+            if CARDS_MARK_BEG not in s or CARDS_MARK_END not in s:
+                sys.exit('FAIL: tutorial-card markers missing in pages/tutorials.html')
+            block = CARDS_MARK_BEG + '\n' + render_cards(tuts, dict_en) + '\n' + CARDS_MARK_END
+            s = re.sub(re.escape(CARDS_MARK_BEG) + r'.*?' + re.escape(CARDS_MARK_END),
                        lambda m: block, s, flags=re.S)
         out[fp] = s
     # SSG pass: dictionary is the single source for every fallback text/attr

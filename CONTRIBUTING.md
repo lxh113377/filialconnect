@@ -28,8 +28,11 @@
    CI 的 `actions/checkout` 是浅克隆（实测：一个有 12 次提交历史的页面上只剩 1 条、日期=构建当天），
    在 CI 现算 git 日期会让全站都声称"今天刚更新"。账本按每篇内容自己的哈希决定要不要换日期，
    改一篇不会把另五篇的"最近更新"一起刷新（实测：改 hospital 只有它 refreshed，其余 unchanged）。
-4. 在 `pages/tutorials.html` 手写一张卡片：`<div class="tutorial-card" data-category="…">` + 该篇的
-   内联 SVG 插画。卡片是刻意保留的手绘件（每篇有自己的画）；忘了它门禁会直接点名，不会再静默。
+4. 卡片自第三十三轮起**也是生成产物**：往 `content/tutorial-cards.json` 追加一条
+   `{"slug": "…", "label": "…", "category": "…"}`（顺序即展示顺序，`label` 只用于源码注释），
+   并把那张手绘图放成 `content/card-art/<slug>.svg`。**不要再改 `pages/tutorials.html`**——
+   卡片区在 `BEGIN/END:TUTORIAL-CARDS` 标记之间，构建会整段重写，手改会被判据点名。
+   缺图时构建直接拒绝并点名（不给静默产出无图卡片的机会）；每篇画仍由人绘制，这是内容决策，不是工具决策。
 5. `node tools/build.mjs build` 更新 `sitemap.xml` / `sw.js` precache / Lighthouse URL 矩阵，
    然后三条检查全绿再提：`python tools/build.py check`、`node tools/build.mjs check`、
    `python tools/test_build.py`。
