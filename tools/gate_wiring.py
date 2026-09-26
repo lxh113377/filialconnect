@@ -16,6 +16,13 @@ Observed placement wins over the declaration only in the sense that a tool decla
 named nowhere is a silent gap and fails. A tool that appears somewhere it was not declared
 lands in both lists, which the ledger makes visible.
 
+What this classifier CANNOT see, measured (round 28, mutation R5): a tool invoked by two steps
+loses one of them and still reads as wired, because credit is per tool, not per invocation. The
+fix is not to store an invocation count here - that number is owned by the workflow file, and
+copying it is what made a ledger go red three times on 2026-09-26. The honest mitigation is
+`t_judge_ledger`'s "one authority per quantity" rule plus a per-step ledger if a real incident
+ever needs it.
+
 Usage:
   python tools/gate_wiring.py            # rewrite reports/gate-wiring.json
   python tools/gate_wiring.py --check    # exit 1 on drift, an undeclared tool, or a silent gap
@@ -40,15 +47,50 @@ def tool_files():
                   if f.endswith(('.py', '.mjs')) and not f.startswith('_'))
 
 
-def ci_names():
-    """File names actually named by a workflow step.
+WORKFLOW_DIR = os.path.join('.github', 'workflows')
 
-    Matched on the path `tools/x`, not on a bare word: a step comment or an npm alias is not
-    wiring, and treating one as wiring is how a gap stays invisible.
+
+def _steps():
+    """(workflow file, step text) pairs, split on the `- name:` boundary of a step."""
+    out = []
+    for wf in sorted(os.listdir(os.path.join(ROOT, WORKFLOW_DIR))):
+        text = read(os.path.join(WORKFLOW_DIR, wf))
+        for chunk in re.split(r'^\s*- name:', text, flags=re.M)[1:]:
+            yield wf, chunk
+    return out
+
+
+def ci_names():
+    """File names invoked by a BLOCKING workflow step.
+
+    Two things do not count as wiring, both measured in this repository's own history:
+      - a bare word: a comment or an npm alias mentioning the script (`t_perf_coverage` names
+        `perf-probe.mjs` in a failure hint, and counted as a test consumer for a round);
+      - a step under `continue-on-error: true`: it cannot redden a run, so it asserts nothing
+        (round 7 found the same shape in a warn-level Lighthouse budget).
     """
-    wdir = os.path.join(ROOT, '.github', 'workflows')
-    text = ''.join(read(os.path.join('.github', 'workflows', wf))
-                   for wf in sorted(os.listdir(wdir)))
+    hits = set()
+    for _wf, step in _steps():
+        found = set(re.findall(r'tools/([A-Za-z0-9_.-]+\.(?:py|mjs))', step))
+        if 'continue-on-error: true' in step:
+            continue
+        hits |= found
+    return hits
+
+
+def ci_soft_names():
+    """Named by a step that cannot fail the build - reported, never credited as wiring."""
+    hits = set()
+    for _wf, step in _steps():
+        if 'continue-on-error: true' in step:
+            hits |= set(re.findall(r'tools/([A-Za-z0-9_.-]+\.(?:py|mjs))', step))
+    return hits
+
+
+def ci_reference_names():
+    """Every tool name appearing anywhere in a workflow, blocking or not (diagnostics only)."""
+    text = ''.join(read(os.path.join(WORKFLOW_DIR, wf))
+                   for wf in sorted(os.listdir(os.path.join(ROOT, WORKFLOW_DIR))))
     return set(re.findall(r'tools/([A-Za-z0-9_.-]+\.(?:py|mjs))', text))
 
 
@@ -104,6 +146,7 @@ def measure():
     ledger = {'tools_on_disk': len(disk), 'declared': len(declared)}
     ledger.update({b: [] for b in BUCKETS})
     ledger.update({'undeclared': [], 'declared_but_absent': [], 'silent_gap': [],
+                   'non_blocking_ci': sorted(t for t in ci_soft_names() if t in tool_files()),
                    'undocumented_hand_only': []})
     agents = read('AGENTS.md')
     for tool in disk:

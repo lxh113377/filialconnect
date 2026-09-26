@@ -50,6 +50,7 @@ jobs:
 
       - name: Judge denominators and tool wiring (a ledger nobody can regenerate is a rumour)
         run: |
+          python3 tools/judge_coverage.py --selftest
           python3 tools/gate_wiring.py --check
           python3 tools/judge_coverage.py --check
 

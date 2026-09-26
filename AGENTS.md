@@ -12,6 +12,7 @@ node tools/build.mjs check            # i18n.js / sitemap / lighthouserc / sw.js
 python tools/stage-site.py check      # the deploy/probe file lists match reports/deploy-staging.json
 python tools/check-i18n.py            # EN/ZH key symmetry and data-i18n coverage
 python tools/contrast_coverage.py --check   # contrast audit denominator ledger
+python tools/judge_coverage.py --selftest  # the ledger generator may not read git/fs/other tools
 node_modules/.bin/htmlhint "index.html" "pages/*.html"
 
 python tools/verify-live.py           # after a deploy: does production equal this commit? (needs net)
@@ -68,6 +69,11 @@ command that would falsify it, and a mutation that turns the new check red.
 `tools/` declares no consumer, declares CI but is named by no workflow, or is hand-only without
 being written here. Declared hand-only or release-only:
 
+- `ci-audit-nodes.py` - hand-only *by classification*, and this is the honest label: it is
+  named by a CI step, but that step is `continue-on-error: true`, so its verdict cannot
+  redden a run. `gate_wiring` no longer credits a non-blocking step as wiring - a tool
+  that can only print is a diagnostic, and pretending otherwise is how the round-7
+  `warn`-level budget hid a 0.63 SEO score for six rounds. Read it in a failed run's log.
 - `perf-probe.mjs` - hand-only. It feeds the blocking `t_perf_measurement` budget, and a real
   browser run does not belong in the CI job, so nothing regenerates its input automatically.
   `t_perf_provenance` pins what it can: the Lighthouse version and the sample sizes recorded in

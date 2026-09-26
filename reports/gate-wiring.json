@@ -4,7 +4,6 @@
     "build.mjs",
     "build.py",
     "check-i18n.py",
-    "ci-audit-nodes.py",
     "contrast_coverage.py",
     "fetch-fraud-feeds.py",
     "gate_wiring.py",
@@ -16,7 +15,12 @@
   ],
   "declared": 18,
   "declared_but_absent": [],
-  "hand": [],
+  "hand": [
+    "ci-audit-nodes.py"
+  ],
+  "non_blocking_ci": [
+    "ci-audit-nodes.py"
+  ],
   "release": [],
   "silent_gap": [],
   "test": [

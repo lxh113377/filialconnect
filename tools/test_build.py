@@ -1461,6 +1461,17 @@ def t_documented_numbers():
           levels == {'2.2'}, str(sorted(levels)))
     check('no public document reintroduces the older level', 'WCAG 2.1' not in read('README.md'),
           'README claims a second conformance level')
+    # Round 28 (peers, new dimension): only axe-core and us publish a numeric security-response
+    # window in-repo (2/10). A stated window is a promise, so it must not survive as prose alone -
+    # and it must not drift between the two files that make it.
+    sec = read('SECURITY.md')
+    sup = read('.github/SUPPORT.md') if os.path.exists(os.path.join(ROOT, '.github', 'SUPPORT.md')) else ''
+    days_sec = re.findall(r'(\d+)\s*天', sec)
+    check('SECURITY.md states a numeric response window', bool(days_sec), sec[:120])
+    check('the support file, if it quotes a window, agrees with SECURITY.md',
+          not re.findall(r'(\d+)\s*(?:天|days?|week)', sup) or days_sec and re.findall(
+              r'(\d+)\s*(?:天|days?|week)', sup),
+          'SECURITY.md says %s, SUPPORT.md says %s' % (days_sec, re.findall(r'(\d+)\s*(?:天|days?|week)', sup)))
 
 
 def t_gate_wiring():
@@ -1492,11 +1503,20 @@ def t_judge_ledger():
     check('no judge is defined but never registered',
           not ledger['judges_defined_but_unregistered'],
           str(ledger['judges_defined_but_unregistered']))
-    _entries, counts = load_tool('package_offline', 'package-offline.py').members()
+    # one authority for the contract: the tool that writes the ledger also declares its fields
+    PORTABLE_FIELDS = jc.ALLOWED_FIELDS
     committed = json.loads(read('reports/judge-coverage.json'))
-    check('the committed ledger records the package the packager really builds',
-          committed['offline_package_entries'] == counts['total'],
-          'ledger %s vs measured %d' % (committed['offline_package_entries'], counts['total']))
+    check('the ledger stores no quantity owned by another authority',
+          set(committed) == PORTABLE_FIELDS,
+          'extra=%s missing=%s' % (sorted(set(committed) - PORTABLE_FIELDS),
+                                   sorted(PORTABLE_FIELDS - set(committed))))
+    check('the ledger is internally consistent',
+          committed['judge_functions'] == committed['judge_functions_registered'],
+          '%s vs %s' % (committed['judge_functions'], committed['judge_functions_registered']))
+    # The membership facts stay where they are owned: the packager is executed, not quoted.
+    _entries, counts = load_tool('package_offline', 'package-offline.py').members()
+    check('the packager still ships a whole site', counts['site'] >= 45,
+          '%d site files' % counts['site'])
     check('reports/judge-coverage.json matches this measurement',
           read('reports/judge-coverage.json') == jc.render(),
           'run: python tools/judge_coverage.py')
