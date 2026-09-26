@@ -1655,6 +1655,90 @@ def t_page_title():
     check('the derived-equality helper has real signal (tutorials page reference present)',
           '<title>%s</title>' % fake in read('pages/tutorials.html'), repr(fake[:60]))
 
+
+# One table for both sides of the promise: the attribute a screen reader speaks (or a tooltip
+# shows) and the marker main.js actually swaps. A marker main.js does not know about would look
+# localized in the HTML and stay English in the browser, so the two lists must never diverge.
+I18N_ATTR_MARKERS = (('aria-label', 'data-i18n-aria-label'),
+                     ('placeholder', 'data-i18n-placeholder'),
+                     ('alt', 'data-i18n-alt'))
+
+# The only English attribute values allowed to ship unbound, each naming the code that rewrites
+# it at runtime. An entry that stops matching anything is itself reported (see below), so this
+# cannot quietly turn into a general exemption list.
+ARIA_LOCALE_ALLOWLIST = {
+    ('aria-label', 'ZH - Switch to Chinese'):
+        'main.js applyTranslations rewrites it from t("lang.to.zh") / t("lang.to.en")',
+    ('aria-label', 'Connection code: A7F 3K9'):
+        'main.js rewrites it with a randomly generated code, so the static value never shows',
+}
+ARIA_LOCALE_BOUND_FLOOR = 60
+_TAG_ATTRS_RE = re.compile(r'<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>')
+
+
+def _spoken_in_english(value):
+    """Any Latin word of 3+ letters with no Han character: AT reads English on a zh-CN page.
+
+    Deliberately NOT "two or more Latin words". That looser test let `aria-label="Breadcrumb"`
+    (one word, on 12 pages) through, and the only reason it was found at all is that the page was
+    loaded in Chinese in a real browser. A predicate is not a spec; the observation is.
+    """
+    return bool(re.search(r'[A-Za-z]{3,}', value)) and not re.search(r'[一-鿿]', value)
+
+
+def t_aria_locale():
+    """Everything a screen reader announces must localize too, not just the visible text.
+
+    Round 31 found the two most structural labels on the site - the `Main navigation` landmark and
+    the mobile `Toggle navigation menu` button - reading English to a Chinese screen-reader user on
+    a `lang="zh-CN"` page. Body copy was fine because it goes through data-i18n; these attributes
+    simply had no key, so no judge could see them. That is WCAG 3.1.2 (language of purpose) on a
+    site that publishes an accessibility statement, and static HTML is only the English fallback:
+    an English value is safe exactly when the element carries the marker main.js swaps.
+    """
+    bound, unbound, markers_in_html = [], [], set()
+    for fp in pages():
+        s = re.sub(r'(?s)<(script|style)\b.*?</\1>', '', html_only(fp))
+        markers_in_html |= set(re.findall(r'(data-i18n-[a-z-]+)=', s))
+        for m in _TAG_ATTRS_RE.finditer(s):
+            attrs = m.group(2)
+            for attr, marker in I18N_ATTR_MARKERS:
+                got = re.search(r'\s%s="([^"]*)"' % attr, attrs)
+                if not got or not _spoken_in_english(got.group(1)):
+                    continue
+                if marker in attrs:
+                    bound.append((fp, attr))
+                else:
+                    unbound.append((attr, got.group(1)))
+    seen = {}
+    for key in unbound:
+        seen[key] = seen.get(key, 0) + 1
+    stray = sorted(set(seen) - set(ARIA_LOCALE_ALLOWLIST))
+    dead = sorted(set(ARIA_LOCALE_ALLOWLIST) - set(seen))
+
+    check('no spoken attribute stays English without a key or a named runtime setter', not stray,
+          ' | '.join('%s=%r' % k for k in stray[:4]))
+    check('every allow-list exemption still matches a real attribute (dead ones are an open door)',
+          not dead, str(dead))
+    check('the attribute audit sees bound labels (enumerator is not blind)',
+          len(bound) >= ARIA_LOCALE_BOUND_FLOOR, '%d bound' % len(bound))
+    # An unsupported marker is worse than no marker: the HTML looks localized and the browser
+    # silently keeps English. main.js's own pair table is the authority, read from the source.
+    supported = {marker for _, marker in I18N_ATTR_MARKERS}
+    check('no data-i18n-* attribute marker is used that main.js does not swap',
+          markers_in_html <= supported | {'data-i18n'},
+          'unsupported: %s' % sorted(markers_in_html - supported - {'data-i18n'}))
+    table = re.findall(r"\['([a-z-]+)', '(data-i18n-[a-z-]+)'\]", read(os.path.join('assets', 'js', 'main.js')))
+    check('main.js swap table and this judge are the same list',
+          sorted((a, m) for a, m in table) == sorted(I18N_ATTR_MARKERS),
+          'main.js=%s judge=%s' % (sorted(table), sorted(I18N_ATTR_MARKERS)))
+    # positive control: the fix itself must be visible to this enumerator on every page.
+    every = sum(1 for fp in pages()
+                if 'data-i18n-aria-label="nav.main.aria"' in html_only(fp))
+    check('the main-navigation landmark label is bound on every page',
+          every == len(pages()), '%d/%d pages' % (every, len(pages())))
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
@@ -1664,7 +1748,7 @@ def main():
                t_deploy_staging, t_public_metadata, t_offline_package,
                t_capability_claims, t_documented_numbers, t_gate_wiring,
                t_judge_ledger, t_perf_provenance, t_deploy_reasons,
-               t_page_title):
+               t_page_title, t_aria_locale):
         fn()
     for f in FAILS:
         print('FAIL:', f)

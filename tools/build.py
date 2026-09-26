@@ -235,7 +235,7 @@ def esc_text(t):
 
 NAV_TMPL = NAV_MARK_BEG + '''
   <header class="site-header" role="banner">
-    <nav class="nav-container" aria-label="Main navigation">
+    <nav class="nav-container" data-i18n-aria-label="nav.main.aria" aria-label="Main navigation">
       <a href="{{R}}index.html" class="nav-brand" data-i18n-aria-label="nav.brand.aria" aria-label="FilialConnect Home">
         <svg class="nav-logo" viewBox="0 0 42 42" fill="none" aria-hidden="true">
           <circle cx="21" cy="21" r="20" fill="#2B5797" opacity="0.12"/>
@@ -248,7 +248,7 @@ NAV_TMPL = NAV_MARK_BEG + '''
         <span class="nav-title" data-i18n="nav.brand">FilialConnect</span>
       </a>
 
-      <button type="button" class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+      <button type="button" class="nav-toggle" data-i18n-aria-label="nav.toggle.aria" aria-label="Toggle navigation menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
 
@@ -332,7 +332,7 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
 {{NAV}}
 
   <main id="main-content">
-    <nav class="breadcrumb" aria-label="Breadcrumb">
+    <nav class="breadcrumb" data-i18n-aria-label="breadcrumb.aria" aria-label="Breadcrumb">
       <a href="{{R}}index.html" data-i18n="breadcrumb.home">Home</a>
       <span class="separator" aria-hidden="true">/</span>
       <a href="tutorials.html" data-i18n="breadcrumb.tutorials">Tutorials</a>
@@ -350,7 +350,7 @@ TUT_PAGE_TMPL = '''<!DOCTYPE html>
       <figcaption data-i18n="tut-img.note">Teaching illustration (simplified mock-up, not a real app screenshot).</figcaption>
     </figure>
 
-    <section class="step-list" aria-label="Tutorial steps">
+    <section class="step-list" data-i18n-aria-label="tut.steps.aria" aria-label="Tutorial steps">
 {{STEPS}}
     </section>
 {{UPDATED}}
@@ -388,7 +388,7 @@ STEP_TMPL = '''      <div class="step-item">
         </div>
       </div>'''
 
-PNAV_TMPL = '''    <nav class="page-nav" aria-label="Tutorial navigation">
+PNAV_TMPL = '''    <nav class="page-nav" data-i18n-aria-label="tut.pagenav.aria" aria-label="Tutorial navigation">
 {{ITEMS}}
     </nav>'''
 
@@ -401,7 +401,7 @@ RELATE_TMPL = '''        <a href="{{HREF}}" class="card">
 FRAUD_ITEM_TMPL = '''      <!-- Fraud {{N}} (generated) -->
       <div class="fraud-item" role="region" aria-labelledby="fraud-{{N}}-title">
         <div class="fraud-summary" tabindex="0" role="button" aria-expanded="false">
-          <span class="fraud-level {{LEVEL}}" aria-label="{{LEVEL_LABEL}}">!</span>
+          <span class="fraud-level {{LEVEL}}" data-i18n-aria-label="fraud.risk.{{LEVEL}}.aria" aria-label="{{LEVEL_LABEL}}">!</span>
           <span class="fraud-title" id="fraud-{{N}}-title" data-i18n="fraud.{{N}}.title">{{TITLE}}</span>
           <svg class="fraud-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
@@ -925,7 +925,8 @@ def extract():
     s = read('pages/fraud-database.html')
     cases, n = [], 1
     while 'fraud.%d.title' % n in d['en']:
-        m = re.search(r'aria-labelledby="fraud-%d-title">\s*<div class="fraud-summary"[^>]*>\s*<span class="fraud-level ([a-z]+)" aria-label="([^"]+)">' % n, s)
+        m = re.search(r'aria-labelledby="fraud-%d-title">\s*<div class="fraud-summary"[^>]*>\s*<span class="fraud-level ([a-z]+)"'
+                      r'(?: data-i18n-aria-label="[^"]*")? aria-label="([^"]+)">' % n, s)
         if not m:
             sys.exit('FAIL: fraud item %d level not found' % n)
         ns = 1
