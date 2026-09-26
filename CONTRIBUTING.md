@@ -57,6 +57,7 @@ python tools/build.py check      # 漂移门禁（CI 同款）
 python tools/check-i18n.py       # 双语对称 + HTML 覆盖 + 孤儿键
 python tools/test_build.py     # 管线/结构/无障碍/文案真实性断言（条数以实跑输出为准，本文不写死）
 python tools/stage-site.py check   # 「哪些文件离得开这个仓」与已提交台账对账（部署集 = 页面引用集）
+python tools/stage-site.py explain <path>   # 这个文件凭什么被部署（无原因＝它是漏进来的散件）
 npx --yes htmlhint "index.html" "404.html" "pages/*.html"
 npx --yes linkinator . --recurse --check-fragments \
     --skip "https://lxh113377.github.io/filialconnect.*"

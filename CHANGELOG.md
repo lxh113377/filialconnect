@@ -4,6 +4,33 @@
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
 ## [Unreleased]
+
+### Added
+- **#145 结案（挂账变规则）**：`assets/` 一直按整目录部署，结构上挡不住一个无人引用的散件混进线上——
+  第 26 轮那条「logo 没人引用却仍随站点部署」的挂账本质就是这个。新增 `t_deploy_reasons`：每个被部署、
+  被跟踪、非构建产物的 assets 文件，必须能被「页面引用 / og:image / manifest / 运行时 fetch 模式 /
+  显式带理由白名单」解释，否则判红。配套 `tools/stage-site.py explain <path>` 回答「这个文件凭什么被服务」。
+  **部署集逐字节未变（实测 before==after==101，delta 为空）**，变的是一件事：下一张随手丢进 assets/ 的图
+  现在会让构建变红，而不是悄悄跟着上线。
+- `SHIPPED_WITHOUT_REFERENCE` 把三处「决定」写进代码（`assets/locales/{en,zh}.json` 是给离线包保留的
+  字典源、`logo-future-designer.png` 是 5fbe651 有意入库的大赛 logo）——**没有**为了让账面干净而删它：
+  入库是有意的，规则要的是「写下理由」，不是「消灭例外」。
+
+### Fixed
+- **本轮先写坏了一版 #145 并回滚**：第一版把 `ALWAYS_SHIP_DIRS=('assets',)` 直接换成「按引用决定部署集」，
+  实测部署集从 101 掉到 **82**——`assets/css/main.css`、6 张教程图、3 个 js 全部下线（等于把整站打空）。
+  是靠**先存快照、改完比集合**发现的，不是靠推理。改成「生产规则不动 + 事后审计」的写法才对。
+  教训与第 28 轮同源：能改变线上文件集的东西，必须先证明等价再落地。
+
+### 归因（不新增代码，纠正一条被追错的账）
+- **桌面 SEO 0.63 不是待修项，是刻意排除项**：`reports/perf-baseline.json` 里 `min.seo=0.63` 来自
+  `404.html` 的 `is-crawlable`（权重 4.04）失败，而 `lighthouserc.json` 第二行矩阵本就对 `404.html`
+  设 `seo:"off"`——它不进预算，也不该进「待修」。真正的非预算失败是若干页的
+  `cumulative-layout-shift score=0.73`（性能类，已在 `unstable_pages` 记账）。下一轮不必再为 0.63 起跑。
+  已知缺口如实记：baseline 里失败审计的 `why` 字段是空的（`'? ::'`），要拿到 target/node 明细得在
+  **失败的那次 run** 里跑 hand-only 的 `ci-audit-nodes.py`，本地重跑一次 Lighthouse 不在本轮成本内。
+
+
 ## [1.8.1] - 2026-09-26
 
 本版本含**两轮**工具改动：第二十七轮未随 v1.8.0 发走的发版护栏条目（其页面与文案变更已在 v1.8.0 发布），以及第二十八轮（同一命令第 20 次重发 = 完整重执行）。

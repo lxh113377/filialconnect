@@ -1547,6 +1547,45 @@ def t_perf_provenance():
           'hand-only' in read('AGENTS.md') and 'perf-probe.mjs' in read('AGENTS.md'),
           'it feeds a blocking budget but nothing regenerates it; say it where contributors read')
 
+
+def t_deploy_reasons():
+    """#145: an asset that ships for no written reason is the bug, not the debt.
+
+    assets/ is shipped as a directory (`ALWAYS_SHIP_DIRS`), so nothing structural stops a stray
+    file riding into the deploy set. This audit does not change what ships - it changes what is
+    allowed to be invisible: every shipped, tracked asset must be explained by a page reference,
+    an og:image meta, the manifest, a runtime fetch pattern, or the allow-list-with-a-reason.
+    Positive control (`assets/__definitely_not_a_real_file__.png`) proves the classifier can
+    return "no reason"; without it an over-permissive classifier would pass silently.
+    """
+    ss = load_tool('stage_site', 'stage-site.py')
+    sets, audit = ss.staging_sets()
+    deploy = set(sets['deploy'])
+    tracked = set(ss.repo_files())
+    audited = [p for p in sorted(deploy)
+               if p.startswith('assets/') and p in tracked and not ss.is_build_output(p)]
+    check('the reason audit has a real denominator', len(audited) >= 20, '%d assets' % len(audited))
+
+    unexplained = [p for p in audited if not ss.ship_reasons(p, sets, audit)]
+    check('every shipped asset is explained by a reference or a written reason',
+          not unexplained, str(unexplained))
+
+    for path, reason in ss.SHIPPED_WITHOUT_REFERENCE.items():
+        check('allow-list entry %s exists on disk' % path,
+              os.path.exists(os.path.join(ROOT, path.replace('/', os.sep))), path)
+        check('allow-list entry %s is actually deployed' % path, path in deploy, path)
+        check('allow-list entry %s carries a non-empty reason' % path, bool(reason.strip()), path)
+
+    ghost = {p for p in ss.SHIPPED_WITHOUT_REFERENCE if p not in deploy}
+    check('the allow-list ships nothing that is not deployed', not ghost, str(sorted(ghost)))
+
+    probe = 'assets/__definitely_not_a_real_file__.png'
+    check('a non-existent asset is NOT reported as deployed (classifier is not vacuous)',
+          probe not in deploy and not ss.ship_reasons(probe, sets, audit), probe)
+    check('a known-referenced asset really is explained (positive control)',
+          bool(ss.ship_reasons('assets/css/main.css', sets, audit)),
+          'main.css should be explained by page src/href; if empty, the audit sees nothing')
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
@@ -1555,7 +1594,7 @@ def main():
                t_contrast_coverage, t_perf_coverage, t_perf_measurement,
                t_deploy_staging, t_public_metadata, t_offline_package,
                t_capability_claims, t_documented_numbers, t_gate_wiring,
-               t_judge_ledger, t_perf_provenance):
+               t_judge_ledger, t_perf_provenance, t_deploy_reasons):
         fn()
     for f in FAILS:
         print('FAIL:', f)

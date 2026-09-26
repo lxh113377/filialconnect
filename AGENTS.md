@@ -10,6 +10,7 @@ python tools/test_build.py            # structure, i18n, copy-truth, budgets, de
 python tools/build.py check           # python-owned derived files in sync
 node tools/build.mjs check            # i18n.js / sitemap / lighthouserc / sw.js in sync
 python tools/stage-site.py check      # the deploy/probe file lists match reports/deploy-staging.json
+python tools/stage-site.py explain assets/… # why is this file being served (empty = a stray)
 python tools/check-i18n.py            # EN/ZH key symmetry and data-i18n coverage
 python tools/contrast_coverage.py --check   # contrast audit denominator ledger
 python tools/judge_coverage.py --selftest  # the ledger generator may not read git/fs/other tools
@@ -55,6 +56,11 @@ rebuilding, not appending by hand (`t_perf_coverage` fails otherwise).
 7. **A number written in prose rots silently.** Three documents quoted a self-test count that had
    doubled. Do not restate measurable quantities in copy - either point at the command that prints
    it, or pin it with a judge (`t_public_metadata` pins the one number the About box commits to).
+8. **A directory-wide shipping rule hides stray files.** `assets/` is shipped wholesale, so nothing
+   structurally stops an unreferenced file riding into production (this was #145: a contest logo and
+   the locale JSONs shipped, referenced by no page, with no written why). `t_deploy_reasons` now
+   demands every shipped asset be explained by a reference, an og:image/manifest/dynamic rule, or
+   `SHIPPED_WITHOUT_REFERENCE` with a reason. Ship for a reason or do not ship.
 
 ## Attribution before action
 

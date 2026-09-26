@@ -44,7 +44,21 @@ SCHEME_PREFIX = ('http://', 'https://', 'mailto:', 'tel:', 'data:', 'javascript:
 # The hand-copied list shipped all of assets/, so the derived set must too: a new image that
 # nothing references yet still has to be reachable, and `assets_unshipped` says the day that
 # stops being true.
-ALWAYS_SHIP_DIRS = ('assets',)
+ALWAYS_SHIP_DIRS = ('assets',)   # ships the whole tree; the AUDIT below decides who is a stray
+# assets/ is shipped as a directory, so nothing structurally stops a stray file from riding in.
+# These are the shipped-but-not-page-referenced files whose presence IS a decision; a new file in
+# assets/ that is not referenced and not listed here turns `t_deploy_reasons` red. `--explain <p>`
+# answers "why is this being served?".
+SHIPPED_WITHOUT_REFERENCE = {
+    'assets/locales/en.json':
+        'build input the browser never fetches (i18n.js is generated from it); shipped so the '
+        'offline ZIP and Pages bundle carry the dictionary source, per SOURCES.md provenance',
+    'assets/locales/zh.json':
+        'same as en.json; together they are the human-readable source of assets/js/i18n.js',
+    'assets/images/logo-future-designer.png':
+        'competition organiser logo, committed deliberately (5fbe651) and kept in the bundle for '
+        'the submission even though no page displays it - a decision, not an oversight (#145)',
+}
 
 
 def site_base():
@@ -194,6 +208,48 @@ def ledger_files(paths):
     became the drift. Committed files are what a ledger can honestly pin.
     """
     return [p for p in paths if not is_build_output(p)]
+
+
+def meta_refs():
+    """Images named only inside `<meta property="og:image" content="...">`; SRC_HREF misses them."""
+    origin = site_base()
+    found = {}
+    tracked = set(repo_files())
+    for page in html_pages():
+        for ref in re.findall(r'property="og:image"[^>]+content="([^"]+)"', read(page)):
+            path = resolve(page, ref, origin)
+            if path and path in tracked:
+                found.setdefault(path, set()).add(page)
+    return found
+
+
+def ship_reasons(rel, sets, audit):
+    """Every reason a deployed file has. Empty means: it ships for no recorded reason."""
+    reasons = []
+    if rel in set(html_pages()) or rel in ('404.html', 'sitemap.xml', 'robots.txt'):
+        reasons.append('page roster / site control file')
+    if rel in audit['html_refs']:
+        reasons.append('named by a page src/href or inline css url()')
+    if rel in meta_refs():
+        reasons.append('named by og:image on ' + ','.join(sorted(meta_refs()[rel])))
+    for src, path in manifest_refs():
+        if path == rel:
+            reasons.append('named by %s' % src)
+    for origin, pattern in [tuple(p.split(' -> ', 1)) for p in audit['dynamic_patterns']]:
+        if rel == pattern or rel.startswith(pattern.rstrip('/') + '/'):
+            reasons.append('a runtime fetch pattern declared by %s covers it' % origin)
+    if rel in SHIPPED_WITHOUT_REFERENCE and SHIPPED_WITHOUT_REFERENCE[rel].strip():
+        reasons.append('allow-list: ' + SHIPPED_WITHOUT_REFERENCE[rel])
+    if is_build_output(rel):
+        reasons.append('build output under %s/, rebuilt downstream' % rel.split('/')[0])
+    return reasons
+
+
+def explain(rel):
+    sets, audit = staging_sets()
+    if rel not in set(sets['deploy']):
+        return False, []
+    return True, ship_reasons(rel, sets, audit)
 
 
 def staging_sets():
@@ -356,6 +412,21 @@ def main(argv):
         sets, _ = staging_sets()
         for p in sets[profile]:
             print(p)
+        return 0
+    if verb == 'explain':
+        if len(argv) < 2:
+            raise SystemExit('explain needs a path')
+        present, reasons = explain(argv[1])
+        if not present:
+            print('%s: NOT in the deploy set (it will not be served)' % argv[1])
+            return 1
+        if not reasons:
+            print('%s: ships for NO recorded reason - this is the #145 shape (referenced by no '
+                  'page, listed by nobody)' % argv[1])
+            return 1
+        print('%s ships because:' % argv[1])
+        for r in reasons:
+            print('  - ' + r)
         return 0
     if verb == 'stage':
         if not out:
