@@ -11,6 +11,7 @@ Usage: python tools/test_build.py      (exit 0 = all pass)
 import gzip
 import io
 import importlib.util
+import glob
 import json
 import os
 import re
@@ -1176,6 +1177,24 @@ def t_deploy_staging():
         stray = [l.strip() for l in body.split('\n')
                  if re.match(r'^\s*cp -r?\s', l) and re.search(r'\b(assets|pages|index\.html)\b', l)]
         check('%s keeps no private copy of the file list' % fn, not stray, str(stray[:2]))
+    # A fourth consumer existed and was only found because CI went red: build-search.mjs regexed
+    # the workflow's `cp -r` line to decide what to index. Parsing another tool's prose for a file
+    # list means the list has two owners, so no source file may do it.
+    parsers = []
+    for fp in sorted(glob.glob(os.path.join(ROOT, 'tools', '*'))):
+        rel = os.path.relpath(fp, ROOT).replace(os.sep, '/')
+        if not os.path.isfile(fp) or not rel.endswith(('.py', '.mjs', '.js')):
+            continue
+        text = read(rel)
+        # The parser's two anchors: the phrase it matched and the directory only the Pages
+        # workflow owns. Comments count on purpose - prose that reads like the mechanism is how a
+        # future reader re-adds it.
+        # The two anchors of that parser. \x74 escapes the literal "t" because this file is itself
+        # scanned: the first run of this judge matched its own pattern string.
+        for pat in (r'cp\s*-\s*r[^\n]{0,40}_si\x74e', r'_si\x74e/'):
+            for m in re.findall(pat, text):
+                parsers.append('%s: %s' % (rel, m[:60]))
+    check('no tool parses a workflow for the file list', not parsers, str(parsers[:3]))
     ledger_path = os.path.join('reports', 'deploy-staging.json')
     check('staging ledger is committed', os.path.isfile(os.path.join(ROOT, ledger_path)))
     ledger = json.loads(read(ledger_path))

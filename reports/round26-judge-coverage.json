@@ -13,16 +13,18 @@
         "pages_checked_individually": 14
       },
       "equivalence_baseline": "the derived deploy set equals the two hand-copied lists file for file, minus assets/images/.gitkeep, which GitHub Pages never served (measured: 404)",
-      "mutations_tested": 6,
+      "mutations_tested": 7,
       "mutations": [
         "M1 a page references feeds/new.json -> 'refs_not_staged' red",
         "M2 deploy workflow stops calling the enumerator -> 'stages through the enumerator' red",
         "M3 a hand-copied cp list returns to ci.yml -> 'keeps no private copy of the file list' red",
         "M4 committed ledger edited to count 40 -> 'ledger deploy count matches the enumerator' red",
         "M5 sw.js imports a workbox chunk that is not on disk -> 'unresolved_dynamic' red",
-        "M6 ALWAYS_SHIP_DIRS narrowed to assets/css -> 'as large as the hand list it replaced' red (83 files)"
+        "M6 ALWAYS_SHIP_DIRS narrowed to assets/css -> 'as large as the hand list it replaced' red (83 files)",
+        "M7 a tool puts the workflow parser back (comment containing 'cp -r ... _site/') -> 'no tool parses a workflow for the file list' red"
       ],
-      "vacuous_assertion_removed": "references were originally merged into the deploy set by construction, so 'refs_not_staged' could never fire; the merge was removed and M1 re-run to prove the check is reachable"
+      "vacuous_assertion_removed": "references were originally merged into the deploy set by construction, so 'refs_not_staged' could never fire; the merge was removed and M1 re-run to prove the check is reachable",
+      "fourth_consumer_found_in_ci": "the hand-copied list had four readers, not two: tools/build-search.mjs regexed deploy-pages.yml's cp -r line to decide what Pagefind indexes. It failed loudly in CI (run 36218739260, deploy job, 22s) rather than silently, and now reads reports/deploy-staging.json with a >=50-file floor. Acceptance: rebuild prints the same en:14p zh:11p | 1227 KiB as before the change."
     },
     "t_public_metadata": {
       "assertions": 8,
@@ -37,7 +39,7 @@
       "mutations": [
         "M7 'Zero-dependency' returns to the description -> 'does not revive the revoked slogan' red",
         "M8 page count in the description changed to 99 -> 'page count matches the roster' red",
-        "M9 a topic made 'Offline First' -> 'lowercase slugs' red",
+        "P3 a topic made 'Offline First' -> 'lowercase slugs' red",
         "M10 homepage pointed at example.com -> 'equals the sitemap origin' red"
       ]
     },
@@ -55,6 +57,6 @@
   },
   "chain": {
     "before": 1879,
-    "after": 1939
+    "after": 1942
   }
 }

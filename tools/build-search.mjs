@@ -157,13 +157,24 @@ function prune(expected) {
 }
 
 function shippedPaths() {
-  // deploy-pages.yml's `cp -r` line is the one place that declares what actually ships.
-  // Indexing the working tree instead swept in node_modules HTML and left pagefind reporting a
-  // third, `unknown` language for a 14-page site (evidence: wasm.unknown.pagefind in the output).
-  const wf = read(join('.github', 'workflows', 'deploy-pages.yml'));
-  const m = /cp -r ([^\n]*?)(?=\s+_site\/)/.exec(wf);
-  if (!m) throw new Error('deploy-pages.yml: could not find the `cp -r ... _site/` line');
-  return m[1].split(/\s+/).filter((t) => !t.endsWith('.md'));
+  // The committed staging ledger (reports/deploy-staging.json, written by tools/stage-site.py)
+  // is the one place that declares what actually ships. This used to regex the `cp -r` line out
+  // of deploy-pages.yml - a fourth consumer of a hand-copied list, and the reason indexing can
+  // never drift from deployment. Indexing the working tree instead swept in node_modules HTML and
+  // left pagefind reporting a third, `unknown` language for a 14-page site
+  // (evidence: wasm.unknown.pagefind in the output).
+  const LEDGER = join('reports', 'deploy-staging.json');
+  let ledger;
+  try {
+    ledger = JSON.parse(read(LEDGER));
+  } catch (e) {
+    throw new Error(`${LEDGER} is missing or unreadable - run: python tools/stage-site.py check --write`);
+  }
+  const files = (ledger.profiles && ledger.profiles.deploy && ledger.profiles.deploy.files) || [];
+  if (files.length < 50) {
+    throw new Error(`${LEDGER} lists ${files.length} deploy files, expected >= 50 - refusing to index a subset`);
+  }
+  return files.filter((f) => !f.endsWith('.md'));
 }
 
 function stage(dir) {
