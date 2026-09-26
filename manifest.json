@@ -2,7 +2,7 @@
   "name": "孝心联 FilialConnect",
   "short_name": "孝心联",
   "description": "Bilingual elderly-friendly tech tutorials: hospital booking, train tickets, WeChat, banking, and scam self-check. 适老化数字反哺教程站。",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "lang": "zh-CN",
   "dir": "ltr",
   "id": "/filialconnect/",
