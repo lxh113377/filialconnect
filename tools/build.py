@@ -114,14 +114,24 @@ def derived_fraud_key_re():
     return re.compile(r"^fraud\.(%s)\.(%s)$" % (nums, leaf))
 
 
+def derived_card_re():
+    """Library-card copy keys, derived from content/tutorials.json since round 34."""
+    slugs = [t['slug'] for t in load_content()[0]]
+    return re.compile(r"^tut\.(%s)\.(h3|p|tag\d+)$" % '|'.join(slugs))
+
+
 def is_generated_key(k):
-    return bool(derived_slug_re().match(k) or derived_fraud_key_re().match(k))
+    return bool(derived_slug_re().match(k) or derived_fraud_key_re().match(k)
+                or derived_card_re().match(k))
 
 
 # Namespace pattern that does NOT depend on the current content, so keys left behind by a deleted
 # tutorial or a shortened step list can still be recognised as derived.
 DERIVED_NS_RE = re.compile(r'^(?:tut-detail\.[a-z-]+\.(?:h1|p|img\.alt|step\d+\.(?:title|p)'
-                           r'|related\d+)|fraud\.\d+\.[a-z0-9.]+)$')
+                           r'|related\d+)|fraud\.\d+\.[a-z0-9.]+'
+                           # card copy is derived too, so a blurb left by a renamed or deleted
+                           # tutorial is pruned instead of lingering as an orphan
+                           r'|tut\.[a-z-]+\.(?:h3|p|tag\d+))$')
 
 
 def locale_outputs():
@@ -129,7 +139,10 @@ def locale_outputs():
 
     Those keys used to be a hand-pasted copy of content/*.json - 19+ per tutorial per language -
     which is both the main cost of adding a tutorial and a standing drift risk (edit the content,
-    leave the old string in the dictionary). Hand-written keys (nav, cards, UI) are never touched.
+    leave the old string in the dictionary). Hand-written keys (nav, UI) are never touched; the
+    library-card copy (`tut.<slug>.h3|p|tagN`) joined the derived set in round 34, so a card blurb
+    is edited in content/tutorials.json and cannot drift. Keys are written sorted, which keeps
+    `git diff` placement deterministic no matter who adds the content or when.
     """
     out = {}
     for lang in ('en', 'zh'):
@@ -142,7 +155,7 @@ def locale_outputs():
         keep = {k for k, _ in pairs}
         for k in [k for k in d if DERIVED_NS_RE.match(k) and k not in keep]:
             del d[k]
-        out[fp] = json.dumps(d, ensure_ascii=False, indent=2) + '\n'
+        out[fp] = json.dumps(d, ensure_ascii=False, indent=2, sort_keys=True) + '\n'
     return out
 
 
@@ -216,6 +229,15 @@ def gen_pairs(lang):
             L.append(('tut-detail.%s.step%d.p' % (s, i), st['p'][lang]))
         for i, r in enumerate(t['related'], 1):
             L.append(('tut-detail.%s.related%d' % (s, i), r['title'][lang]))
+        # Library-card copy (round 34). `h3` is the translated <h1> itself - measured equal for all
+        # six tutorials - so only the blurb and the tags are authored data.
+        if 'card_p' not in t or not t.get('card_tags'):
+            sys.exit("FAIL: tutorial %r needs card_p and at least one card_tags entry; the library "
+                     "card shows them (content/tutorials.json)" % s)
+        L.append(('tut.%s.h3' % s, t['h1'][lang]))
+        L.append(('tut.%s.p' % s, t['card_p'][lang]))
+        for i, tg in enumerate(t['card_tags'], 1):
+            L.append(('tut.%s.tag%d' % (s, i), tg[lang]))
     for c in cases:
         n = c['n']
         L.append(('fraud.%d.title' % n, c['title'][lang]))
@@ -990,6 +1012,11 @@ def extract():
     d = parse_dict()
     slugs = sorted(re.match(r'tutorial-(.+)\.html$', os.path.basename(p)).group(1)
                    for p in all_pages() if '/tutorial-' in p.replace(os.sep, '/'))
+    try:
+        prev_by_slug = {t['slug']: t for t in json.loads(
+            read(os.path.join(CONTENT, 'tutorials.json')))['tutorials']}
+    except (OSError, ValueError, KeyError):
+        prev_by_slug = {}
     tuts = []
     for slug in slugs:
         fp = 'pages/tutorial-%s.html' % slug
@@ -1011,8 +1038,18 @@ def extract():
                             'title': {'en': d['en']['tut-detail.%s.related%d' % (slug, i)],
                                       'zh': d['zh']['tut-detail.%s.related%d' % (slug, i)]}})
             i += 1
+        # Author-only fields live nowhere in the HTML, so carry them across instead of dropping
+        # them: losing card_p/card_tags silently would delete copy an author wrote (round 34).
+        prev = prev_by_slug.get(slug, {})
+        carried = {k: prev[k] for k in ('illustration', 'img_alt', 'category', 'card_p', 'card_tags')
+                   if k in prev}
+        missing = [k for k in ('illustration', 'img_alt', 'category', 'card_p', 'card_tags')
+                   if k not in carried]
+        if missing:
+            sys.exit('FAIL: tutorial %r has no author-only %s to carry from the previous '
+                     'content/tutorials.json, and extract cannot guess them' % (slug, missing))
         tuts.append({'slug': slug, 'file': 'tutorial-%s.html' % slug,
-                     'title': title, 'desc': desc,
+                     'title': title, 'desc': desc, **carried,
                      'h1': {'en': d['en']['tut-detail.%s.h1' % slug], 'zh': d['zh']['tut-detail.%s.h1' % slug]},
                      'intro': {'en': d['en']['tut-detail.%s.p' % slug], 'zh': d['zh']['tut-detail.%s.p' % slug]},
                      'steps': steps, 'related': related})

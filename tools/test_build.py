@@ -817,6 +817,38 @@ def t_content_roster():
     check('card order is declared once, in content/tutorial-cards.json',
           list(cards) == [c['slug'] for c in build.load_cards()],
           'shipped %s vs declared %s' % (list(cards), [c['slug'] for c in build.load_cards()]))
+    # Round 34 moved the card copy into content, so the dictionary values are generated. Three
+    # assertions turn that from a claim into a fact: the data exists bilingually, the shipped
+    # dictionary still agrees with it byte for byte, and the keys are classified as derived (only
+    # then does the stale-key pruning cover them - otherwise a renamed tutorial leaves a blurb).
+    i18n_en = json.loads(read(os.path.join('assets', 'locales', 'en.json')))
+    i18n_zh = json.loads(read(os.path.join('assets', 'locales', 'zh.json')))
+    card_problems, drift, not_derived = [], [], []
+    for t in tuts:
+        slug = t['slug']
+        if not (t.get('card_p') and t['card_p'].get('en', '').strip() and t['card_p'].get('zh', '').strip()):
+            card_problems.append('%s: no bilingual card_p' % slug)
+        tags = t.get('card_tags') or []
+        if not tags or any(not (g.get('en', '').strip() and g.get('zh', '').strip()) for g in tags):
+            card_problems.append('%s: card_tags missing or not bilingual' % slug)
+        want = [('tut.%s.h3' % slug, t['h1']), ('tut.%s.p' % slug, t['card_p'])]
+        want += [('tut.%s.tag%d' % (slug, i), g) for i, g in enumerate(tags, 1)]
+        for key, pair in want:
+            if i18n_en.get(key) != pair['en'] or i18n_zh.get(key) != pair['zh']:
+                drift.append(key)
+            if not build.is_generated_key(key):
+                not_derived.append(key)
+    check('every tutorial carries bilingual card copy in content', not card_problems,
+          ' | '.join(card_problems[:3]))
+    check('dictionary card copy equals content card copy (generated, cannot drift)', not drift,
+          str(drift[:4]))
+    check('card keys are classified as derived so pruning covers them', not not_derived,
+          str(not_derived[:4]))
+    for lang, blob in (('en', i18n_en), ('zh', i18n_zh)):
+        keys = list(blob)
+        check('assets/locales/%s.json is written in sorted order' % lang, keys == sorted(keys),
+              'first out-of-order: %s' % next((k for a, b in zip(keys, keys[1:]) if a > b
+                                               for k in [a]), ''))
     chips = set(re.findall(r'data-filter="([a-z]+)"', html)) - {'all'}
     check('every filter chip is a real category', 
           not {c for c in cards.values() if c not in chips},
@@ -929,6 +961,27 @@ def t_last_updated():
     check('stamps exist only where a source can be named',
           all(fp.startswith('pages/tutorial-') for fp in ledger),
           'hand-written pages are not stamped - "updated" there would have no source')
+    # The stamp answers "did this guide's own text move". Round 34 proved the whole-object hash
+    # could not tell: adding the library-card copy fields moved all six guides, which would have
+    # told six readers that pages they had not changed were updated today. So both directions are
+    # asserted here - grid-only data must not move the hash, real text must.
+    probe = json.loads(json.dumps(tuts[0]))
+    probe['card_p'] = {'en': 'a blurb nobody sees on this page', 'zh': '本页看不到的简介'}
+    probe['card_tags'] = [{'en': 'Grid', 'zh': '网格'}]
+    probe['category'] = 'something-else'
+    probe['slug'] = 'renamed-slug'
+    probe['file'] = 'tutorial-renamed-slug.html'
+    check('adding grid-only or identity fields does not move a guide stamp',
+          tool.entry_hash(probe) == tool.entry_hash(tuts[0]),
+          '%s vs %s' % (tool.entry_hash(probe), tool.entry_hash(tuts[0])))
+    moved = json.loads(json.dumps(tuts[0]))
+    moved['steps'][0]['p']['en'] += ' (reworded)'
+    check('rewording a step really does move the stamp (the narrowed hash is not inert)',
+          tool.entry_hash(moved) != tool.entry_hash(tuts[0]))
+    check('the narrowed field set still covers the visible text',
+          set(tool.PAGE_VISIBLE_FIELDS) >= {'title', 'desc', 'h1', 'intro', 'steps', 'related',
+                                            'img_alt'},
+          str(sorted(tool.PAGE_VISIBLE_FIELDS)))
     for t in tuts:
         fp = 'pages/' + t['file']
         ent = ledger.get(fp) or {}

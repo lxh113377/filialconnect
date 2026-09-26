@@ -21,7 +21,11 @@
 
 1. 往 `content/tutorials.json` 追加一条，含 `slug`、`file`、`category`（必须是教程页筛选 chips 里的
    一个：`health` / `transport` / `banking` / `daily`），每段文案带 `{en, zh}`。
-2. `python tools/build.py build`：教程页 **和** 两侧字典键都由这一步生成（实测一篇 = 18 键 × 2 语言），
+   列表卡片要显示的两样也写在这里（第三十四轮起是**必填**，缺了构建会点名拒绝）：
+   `card_p`（一句简介 `{en, zh}`）与 `card_tags`（1–2 个标签 `{en, zh}`）；卡片标题不再单独写，
+   它就是本页已翻译的 `<h1>`（实测六篇全等）。
+2. `python tools/build.py build`：教程页 **和** 两侧字典键都由这一步生成
+   （键数不在此处写死，以 `python tools/check-i18n.py` 的打印为准），
    不要手抄文案，也不要改 `assets/js/i18n.js`。
 3. `python tools/last-updated.py --write` 更新「最近更新」账本（`reports/last-updated.json`），
    然后再跑一次 `python tools/build.py build` 把日期渲染进页面。**这一步必须在本地做**：
@@ -29,10 +33,11 @@
    在 CI 现算 git 日期会让全站都声称"今天刚更新"。账本按每篇内容自己的哈希决定要不要换日期，
    改一篇不会把另五篇的"最近更新"一起刷新（实测：改 hospital 只有它 refreshed，其余 unchanged）。
 4. 卡片自第三十三轮起**也是生成产物**：往 `content/tutorial-cards.json` 追加一条
-   `{"slug": "…", "label": "…", "category": "…"}`（顺序即展示顺序，`label` 只用于源码注释），
+   `{"slug": "…", "label": "…"}`（顺序即展示顺序，`label` 只用于源码注释），
    并把那张手绘图放成 `content/card-art/<slug>.svg`。**不要再改 `pages/tutorials.html`**——
    卡片区在 `BEGIN/END:TUTORIAL-CARDS` 标记之间，构建会整段重写，手改会被判据点名。
    缺图时构建直接拒绝并点名（不给静默产出无图卡片的机会）；每篇画仍由人绘制，这是内容决策，不是工具决策。
+   卡片文案不在这里写，在第 1 步的 `card_p` / `card_tags`（第三十四轮起是派生的，改内容即改卡片）。
 5. `node tools/build.mjs build` 更新 `sitemap.xml` / `sw.js` precache / Lighthouse URL 矩阵，
    然后三条检查全绿再提：`python tools/build.py check`、`node tools/build.mjs check`、
    `python tools/test_build.py`。
