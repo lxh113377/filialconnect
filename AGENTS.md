@@ -17,6 +17,7 @@ python tools/judge_coverage.py --selftest  # the ledger generator may not read g
 node_modules/.bin/htmlhint "index.html" "pages/*.html"
 
 python tools/verify-live.py           # after a deploy: does production equal this commit? (needs net)
+python tools/ci-watch.py --once       # after a push: green / red(+repair hint) / UNVERIFIED (needs net)
 python tools/package-offline.py --verify   # the offline ZIP is reproducible from one commit
 ```
 
@@ -76,6 +77,23 @@ own log and the failing audit's own `target`/`node` before touching CSS — the 
 two rounds because the diagnosis guessed at the wrong element. Every claim in a report needs a
 command that would falsify it, and a mutation that turns the new check red.
 
+## Triage: 报错特征 → 处置（每条都对应一次真实踩坑）
+
+签名字符串的权威是 `tools/ci-watch.py` 的 `HINTS` 表（`--selftest` 保证它非空且可编译）；本节只是给人看的
+速查，改判据文案时**先改那张表**，否则这里会烂（失败类别 7）。
+
+| 日志里的原话 | 真实成因 | 处置 |
+|---|---|---|
+| `ERR_MODULE_NOT_FOUND` / `Cannot find package` | 缺依赖，**不是**产物漂移 | `npm ci`；worktree 需要依赖就在里面装，绝不链接真仓（`t_no_link_code`） |
+| `ABORTED JUDGES: t_xxx` | 某判据崩了 ⇒ 它之后所有判据的结论丢失（含已收集失败的打印） | 先修崩的那条；不要顺手"抬 timeout"或跳过它 |
+| `matches this measurement: run: python tools/…` | 生成物/台账过期 | 跑它点名的那个生成器，提交它的输出，别手改台账 |
+| `no build input is untracked` | 上一笔提交用了 `git add -u`（漏新文件） | `git add <显式路径>`；收口看 `git show --name-only` |
+| 本地全绿、CI 红 | 提交缺件，或台账里抄了随工作树变化的量 | 比对 `git ls-tree` 与本地；把不可移植的字段删掉（不是改 CI 环境） |
+| `verify-live … UNVERIFIED` | 网络不可达 | UNVERIFIED ≠ 通过 ≠ 失败；复跑或如实写"未核验" |
+| job 数秒失败且 `steps=0` | 没拿到 runner（配额/环境），不是代码错 | 读 `gh api repos/<slug>/check-runs/<id>/annotations` |
+| `gh api` 返回 404（GET） | 参数被当 body 发了 | GET 的参数拼进 query string，`-f` 是写请求用的 |
+| 后台任务通知"exit 0" | 那是 shell 最后一条命令的码，不是被测对象的结论 | 读日志里的 `rc=`，或 `gh run view --json conclusion` |
+
 ## Tool wiring, declared (round 27)
 
 `tools/gate_wiring.py --check` (a CI step) reads `tools/gate-wiring.json` and fails if a tool in
@@ -91,6 +109,12 @@ being written here. Declared hand-only or release-only:
   browser run does not belong in the CI job, so nothing regenerates its input automatically.
   `t_perf_provenance` pins what it can: the Lighthouse version and the sample sizes recorded in
   `reports/perf-baseline.json`. Re-run it before changing budgets: `node tools/perf-probe.mjs`.
+- `ci-watch.py` - hand-only by classification, and that is the honest label: nothing in a CI job can
+  watch CI. It is the post-push waiter - `python tools/ci-watch.py --once` reuses `release.ci_verdict`
+  (so the two tools can never disagree) and on red prints a named repair hint from its `HINTS` table
+  plus the log tail. Exit 0 green / 1 red / 2 pending-or-UNVERIFIED; `--selftest` covers the
+  signature table and the state→exit mapping offline. A client hook may call it after `git push` -
+  that config lives on the machine, not in this repository, so wiring it is a local decision.
 - `verify-live.py` - a job of the Pages workflow, so it runs on every push to `main` but never
   on a pull request (it needs the deployed site). It exits 2 (`UNVERIFIED`) when the network is
   unreachable rather than pretending, and it probes build outputs by the names the live manifest

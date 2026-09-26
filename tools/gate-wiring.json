@@ -4,6 +4,7 @@
   "build.py": "ci",
   "check-i18n.py": "ci",
   "ci-audit-nodes.py": "hand",
+  "ci-watch.py": "hand",
   "contrast_audit.py": "test",
   "contrast_coverage.py": "ci",
   "fetch-fraud-feeds.py": "ci",
