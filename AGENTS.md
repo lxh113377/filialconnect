@@ -103,6 +103,21 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    `sites=0` is refused by name (`must_number`) alongside `must_guard` - and both reasons print,
    because the first red must not swallow the second. A zero is still allowed to exist; it is no
    longer allowed to be silent.
+13. **A second top-level `def` with the same name silently replaces the first - and a precondition
+   you invented will red-book the wrong party.** Round 40 added a widened `meta_verdict(log, items,
+   ok_line)` *above* the round-39 definition in the same module; Python keeps the last binding, so
+   the widened signature was dead until a selftest crashed with `TypeError: meta_verdict() takes 1
+   positional argument but 3 were given`. This repository has judged the shape since round 20
+   (`t_no_duplicate_defs` over `tools/`), but the harness that lives outside the repository had no
+   equivalent - so the rule existed and did not reach me. `python _internal/audit_dupes.py --verify`
+   (close-out gate 11) now enumerates module-level `def`/`class` names across the archive. Measure
+   before wiring: the wide form, which also counted `s = ...` re-assignments, flagged 18 of 86
+   modules and 17 of them were one-shot patch scripts where linear rebinding is the design - so the
+   judge ships narrowed to callables, with the wide run recorded as the reason. The mirror-image
+   mistake the same round made: a new "the tree must be dirty before the reset" precondition reddened
+   a case whose mutation was real and whose *own build step* restored the file. Put effectiveness on
+   the mutation's receipt (`fixture_guard` per edit), never on a state the system under test is
+   allowed to undo.
 
 ## Attribution before action
 

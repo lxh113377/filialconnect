@@ -163,6 +163,13 @@ def fetch_repo_api(slug):
     raise RuntimeError('no GITHUB_TOKEN and no gh CLI available to read repo metadata')
 
 
+#: the fields GitHub shows outside the working tree, and the one line that says all of them matched.
+#: The archive's close-out gate imports these two names instead of copying the strings - the same
+#: judgment must not live in two files (round 40).
+META_ITEMS = ('description', 'topics', 'homepage')
+META_OK_LINE = 'metadata check: description/topics/homepage match the expectation'
+
+
 def check_metadata(slug):
     """The repository's About box is public copy that no file-level gate can see.
 
@@ -177,17 +184,25 @@ def check_metadata(slug):
                 % (type(e).__name__, str(e)[:120])]
     want = json.loads(io.open(os.path.join(ROOT, 'reports', 'repo-metadata.json'),
                               encoding='utf-8').read())
+    observed = {'description': api.get('description'), 'topics': sorted(api.get('topics') or []),
+                'homepage': api.get('homepage')}
     problems = []
-    if api.get('description') != want['description']:
-        problems.append('description differs from reports/repo-metadata.json:\n    live: %r'
-                        '\n    want: %r' % (api.get('description'), want['description']))
-    live_topics = sorted(api.get('topics') or [])
-    if live_topics != sorted(want['topics']):
-        problems.append('topics differ: live=%s want=%s' % (live_topics, sorted(want['topics'])))
-    if api.get('homepage') != want['homepage']:
-        problems.append('homepage differs: live=%r want=%r' % (api.get('homepage'), want['homepage']))
+    for field in META_ITEMS:
+        live, expected = observed[field], sorted(want[field]) if field == 'topics' else want[field]
+        if live != expected:
+            msg = ('%s differs from reports/repo-metadata.json: live=%r want=%r'
+                   % (field, live, expected))
+            problems.append(msg)
+            # the mismatch gets the same per-field shape as the match, so a reader cannot tell
+            # "compared and differed" apart from "never compared" (round 40)
+            print('metadata item %s: MISMATCH (%s)' % (field, msg.replace('\n', ' ')[:180]))
     if not problems:
-        print('metadata check: description/topics/homepage match the expectation')
+        # one receipt per field, not one substring for all three: the archive's close-out reads
+        # this log, and a single line cannot tell "the homepage was compared and matched" from
+        # "the homepage was never reached" (round 40).
+        for field in META_ITEMS:
+            print('metadata item %s: match' % field)
+        print(META_OK_LINE)
     return problems
 
 

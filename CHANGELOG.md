@@ -6,6 +6,17 @@
 ## [Unreleased]
 
 ### Added
+- **`tools/verify-live.py` 的仓外 metadata 改为逐字段回执**（第 40 轮）。它原来只在三项全等时打印一行
+  总结，归档侧 close-out 读的是这条 CI 日志——一行总结无法区分"homepage 比过且相等"与
+  "homepage 根本没走到"。现在导出 `META_ITEMS` / `META_OK_LINE` 两个常量，并按字段各印一行
+  `metadata item <field>: match`；不匹配时同样按字段印 `MISMATCH`（原来只有 `description` 的消息里带
+  "differs"，`topics`/`homepage` 的错串形状不同，读日志的一侧会漏判）。
+  归档侧 close-out 第⑩条不再自带字面量，改为 importlib 载入这两个常量并逐项回问；取不到契约即
+  `UNVERIFIED`，绝不退回本地副本凑绿。同轮新增 `_internal/audit_dupes.py`（close-out 第⑪条），
+  治的是本轮自己踩到的另一件事：第二个同名顶层 `def` 会静默替换第一个。
+- **归档侧把「救援副本」与「粘贴块」两处自造缺陷装进了闸**（第 39 轮，详见
+  `_internal/reports/…第三十九轮.md` §3）。本轮继续同族：`audit_dupes` 先按宽口径实测 18/86 命中，
+  其中 17 个是一次性补丁脚本的线性重赋值 ⇒ 判为该形状不作数，收窄到 `def`/`class` 同名后才接闸。
 - **归档侧把「计数器只认得它认识的形状」这条缺口装成了闸**（第 39 轮）。`_internal/audit_fixtures.py`
    原来只认 `case(...)` 与 M/A 标注元组两种记录形状，却把结果打印成 `cases=`：靠
    `results[k]=`、`checks.append()`、`*_CASES=[...]` 记案例的电池全部显示 `cases=0`，
