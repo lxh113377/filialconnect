@@ -2116,9 +2116,64 @@ def isolate():
     return 1 if aborted else 0
 
 
+def attribute(basename):
+    """Why did the chain move by N? Mask one file out of the per-file enumerations and diff.
+
+    Rounds 36 and 37 each carried an unattributed difference, because reconstructing a HEAD baseline
+    needs a working tree that has both `.git` and `node_modules`, and a throwaway copy is missing one
+    or the other - the comparison instrument was itself the unreliable thing. This measures on the
+    live tree: it hides `basename` from `os.listdir` (in memory, nothing on disk moves) and reports
+    how each judge's count responds. Two judges unchanged while two move by one is the control that
+    proves the mask is targeted rather than global. Cost: two full chain passes - it is a diagnostic
+    run when a count moved and nobody can say why, not a CI step.
+    """
+    real = os.listdir
+
+    def measure(mask):
+        def patched(path, *a, **k):
+            names = real(path, *a, **k)
+            return [n for n in names if not (str(path).replace('\\', '/').endswith('tools')
+                                             and n == mask)] if mask else names
+        os.listdir = patched
+        out = {}
+        try:
+            for fn in JUDGES:
+                del FAILS[:]
+                COUNT[0] = 0
+                try:
+                    fn()
+                except BaseException:                    # noqa: BLE001 - counts only, verdicts elsewhere
+                    pass
+                out[fn.__name__] = COUNT[0]
+        finally:
+            os.listdir = real
+        return out
+
+    base, masked = measure(None), measure(basename)
+    moved = {k: base[k] - masked[k] for k in base if base[k] != masked[k]}
+    total = sum(moved.values())
+    print(json.dumps({'mask': basename, 'total': base and sum(base.values()),
+                      'delta': total, 'moved': moved,
+                      'unchanged': len(base) - len(moved)}, ensure_ascii=False))
+    print('ATTRIBUTE mask=%s delta=%d moved=%s unchanged=%d judges'
+          % (basename, total, ', '.join('%s+%d' % (k, v) for k, v in sorted(moved.items())),
+             len(base) - len(moved)))
+    if not moved:
+        print('  note: nothing moved - the masked file is not in any per-file population, so it '
+              'cannot explain a count change')
+        return 2
+    return 0
+
+
 def main():
     if '--isolate' in sys.argv:
         return isolate()
+    if '--attribute' in sys.argv:
+        idx = sys.argv.index('--attribute')
+        if idx + 1 >= len(sys.argv):
+            print('UNVERIFIED: --attribute needs a file basename to mask (e.g. --attribute triage.py)')
+            return 2
+        return attribute(sys.argv[idx + 1])
     aborted = []
     for fn in JUDGES:
         try:

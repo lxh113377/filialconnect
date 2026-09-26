@@ -6,6 +6,22 @@
 ## [Unreleased]
 
 ### Added
+- **`tools/test_build.py --attribute <file>`**：把"链为什么动了 N 项"变成一次实测而不是回忆。它在内存里
+  把某个文件从按文件计数的枚举面里遮掉，跑两遍全链，逐判据报差值，并打印**未受影响判据数**作为对照组
+  （只遮一个文件却有半数判据变动 ⇒ 遮罩本身就是坏的）。第 36、37 轮各留了一笔"未归因差额"，
+  根因不是没人想看，而是重建 HEAD 基线需要一份同时有 `.git` 和 `node_modules` 的树——
+  一次性导出必缺一样，**比较工具自己不可信**。成本说明：两遍全链，它是诊断不是 CI 步骤。
+  本轮用它把上一轮那 +2 关掉了：`t_no_duplicate_defs +1`、`t_no_control_bytes +1`，
+  `t_pipeline`/`-tracked_inputs` 各 0（对照成立）。
+- **`AGENTS.md` 反复缺陷类别 11**：变异夹具没真的改输入 ⇒ 什么也没证；`git checkout -- <path>`
+  打 `rc=0` 也不证明还原成功（它在不脏时同样返回 0）。两条都由归档侧的
+  `fixture_guard.py` / `restore_guard.py` 承担，`audit_fixtures.py --verify` 逐份电池点名无守卫者。
+  同族另两处形态是本轮写工具时现场踩到的：先 `'wb'` 打开再读回会把副本截成空文件
+  （而空副本是任何内容的"前缀"，于是它还判绿），以及"路径在 HEAD"不等于"这些字节在 HEAD"。
+
+### Fixed
+- 链计数不变（`PASS: 2096 checks`）。本轮公开仓无功能改动：新增的是一个诊断入口与一条文档类别。
+### Added
 - **`AGENTS.md` 的「报错特征 → 处置」表从手抄副本改为生成物**（第 37 轮）。第 36 轮把它写成"给人看的副本、
   权威是 `tools/ci-watch.py` 的 `HINTS`"，第 37 轮实测这句话已经假了：两边当时都是 9 行，内容错位 3↔3——
   文档丢了 `node half reports no drift`、`HTTP 404`、`precache revision` 三行真签名，

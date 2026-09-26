@@ -80,6 +80,17 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    judge `t_triage_copy`); if it cannot be generated, the claim must not be written. The same rule
    applies to artifacts, not just prose: `legacy-report-findings.json` sat in the archive with no
    generator and no consumer, which is a fossil of a number, not a ledger.
+11. **A mutation fixture that does not change its input proves nothing, and a restore that prints
+   `rc=0` proves nothing either.** Round 37 shipped a "violation" whose search string was not in the
+   value being replaced, so the bytes came back identical and the case looked like a control. Round 38
+   found the mirror-image defect: the same batteries restored with a bare `git checkout -- <path>`,
+   which exits 0 whether or not anything was dirty. Both shapes are refused by
+   `python _internal/fixture_guard.py --selftest` and `_internal/restore_guard.py --selftest`, and
+   `_internal/audit_fixtures.py --verify` (a close-out gate) enumerates every battery and fails a new
+   one that has neither guard. Two more forms measured while writing them: opening a file `'wb'`
+   before reading it back truncates the copy to nothing (and an empty copy is a prefix of
+   everything, so it also "passed"), and "is the path in HEAD" is not "are these bytes in HEAD" on an
+   append-only log. Read first, then write; compare content, never existence.
 
 ## Attribution before action
 
