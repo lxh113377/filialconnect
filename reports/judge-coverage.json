@@ -1,0 +1,12 @@
+{
+  "checks_last_run": null,
+  "deploy_profile_files": 101,
+  "judge_functions": 34,
+  "judge_functions_registered": 34,
+  "judges_defined_but_unregistered": [],
+  "offline_package_entries": 88,
+  "offline_package_site_files": 49,
+  "offline_package_source_files": 39,
+  "pagefind_shards_local": 52,
+  "probe_profile_files": 42
+}

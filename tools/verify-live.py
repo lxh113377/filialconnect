@@ -63,6 +63,64 @@ def fetch(url, timeout=30):
         return 0, b'', {'x-error': type(e).__name__ + ': ' + str(e)[:90]}, '', None
 
 
+# Files a Pagefind 1.5.x bundle really ships, measured from this tree (`ls pagefind/en`).
+# Strict = the search cannot work without them, so a 404 is a real failure.
+# Best-effort = UI variants we do not necessarily load; a 404 is reported, not judged.
+LANG_STRICT = ('pagefind.js', 'pagefind-worker.js', 'wasm.unknown.pagefind')
+LANG_OPTIONAL = ('pagefind-ui.js', 'pagefind-ui.css', 'pagefind-component-ui.js',
+                 'pagefind-component-ui.css', 'pagefind-modular-ui.js',
+                 'pagefind-modular-ui.css', 'pagefind-highlight.js')
+
+
+def probe_base(base):
+    """One cheap request before touching 101 paths.
+
+    On this network github.io is reachable only through a proxy; without one every fetch
+    burns its full socket timeout, so the tool spent 300s producing no output. That reads as
+    "slow", not as "not measured" - which is the worse failure.
+    """
+    status, body, hdr, _enc, _len = fetch(base.rstrip('/') + '/robots.txt', timeout=10)
+    if status == 200:
+        return None
+    return ('%s/robots.txt -> http %s %s (github.io usually needs a proxy here: set '
+            'HTTPS_PROXY and retry)' % (base.rstrip('/'), status, hdr.get('x-error', '')))
+
+
+def live_index_paths(base, langs=("en", "zh")):
+    """Which search-index files does the DEPLOYED site serve? Ask its own manifest.
+
+    The hashed primary/meta/index trio is named by pagefind-entry.json, so it can be probed
+    by real name. The per-page fragment files are hashed too and are not listed anywhere
+    public, so they are counted and reported as unnameable rather than skipped in silence.
+    """
+    strict, best_effort, notes = [], [], []
+    for lang in langs:
+        entry = base.rstrip('/') + '/pagefind/%s/pagefind-entry.json' % lang
+        status, body, hdr, _enc, _len = fetch(entry)
+        if status != 200:
+            notes.append('pagefind/%s: entry manifest http %s %s'
+                         % (lang, status, hdr.get('x-error', '')))
+            continue
+        try:
+            h = json.loads(body.decode('utf-8'))['languages'][lang]['hash']
+        except Exception as exc:                                # noqa: BLE001 - report, never guess
+            notes.append('pagefind/%s: entry manifest unreadable (%s)' % (lang, type(exc).__name__))
+            continue
+        root = 'pagefind/%s' % lang
+        # Verified by a real E2E probe: the browser fetches entry.json, pagefind.js, the worker,
+        # the wasm and the fragments. The hashed `.pf_meta`/`.pf_index` pair is a BUILD-time
+        # artifact - absent from production on both the last build and this one - so probing it
+        # over HTTP manufactures a false red. Fragments are per-page hashed and cannot be named
+        # from the manifest, so they are counted in the coverage note instead.
+        strict += [root + '/pagefind-entry.json', root + '/pagefind.' + h + '.p']
+        strict = [x for x in strict if not x.endswith('.p')]
+        strict += ['%s/%s' % (root, f) for f in LANG_STRICT]
+        if lang == 'en':
+            strict.append(root + '/wasm.en.pagefind')
+        best_effort += ['%s/%s' % (root, f) for f in LANG_OPTIONAL]
+    return strict, best_effort, notes
+
+
 def check_wire_size(base, rel, advertised_kb, tolerance=0.05):
     """README advertises the fraud list by its *transferred* size, which is a property of the
     server, not of the repository. Verify the server really compresses and that the compressed
@@ -158,19 +216,47 @@ def main():
 
     sets, audit = stager.staging_sets()
     bad = 0
+    # An uncommitted working tree is not a deployment; say so before the byte diffs arrive.
+    dirty = subprocess.run(['git', '-C', ROOT, 'status', '--porcelain'],
+                           capture_output=True, text=True, timeout=60).stdout.strip()
+    if dirty:
+        print('note: the working tree has uncommitted changes, so byte comparisons below are '
+              'against THIS tree, not against the commit production was built from')
+
+    unreachable = probe_base(args.base)
+    if unreachable:
+        print('UNVERIFIED: the live site could not be reached, so nothing about the '
+              'deployment was measured: ' + unreachable)
+        print('exit 2 = not measured. A green would be a lie; a red would blame the deploy.')
+        return 2
     # The search index is shipped, so an unbuilt index means this probe would quietly check less
     # of the site than production serves. Ask for it by name instead of shrinking the denominator.
     for p in stager.audit_problems(audit, require_build_outputs=(args.profile == 'deploy')):
         print('STAGING FAIL: ' + p)
         bad += 1
-    paths = [p for p in sets[args.profile]
-             if not any(p.startswith(d) for d in args.skip_dir)]
+    kept = [p for p in sets[args.profile]
+            if not any(p.startswith(d) for d in args.skip_dir)]
+    dropped = len(sets[args.profile]) - len(kept)
+    if dropped:
+        print('note: --skip-dir removed %d/%d paths from the denominator'
+              % (dropped, len(sets[args.profile])))
+    paths = kept
     if not paths:
         print('FAIL: zero paths to probe - an empty denominator is never a pass')
         return 1
 
     fails = []
     committed = git_tracked()
+    local_index = [p for p in paths if p.startswith('pagefind/')]
+    live_strict, live_optional, index_notes = live_index_paths(args.base)
+    if local_index and not live_strict:
+        fails.append('pagefind: the live site published no readable entry manifest, so %d '
+                     'shipped index files could not be probed by their real names'
+                     % len(local_index))
+    optional = set(live_optional)
+    paths = [p for p in paths if not p.startswith('pagefind/')] + live_strict + live_optional
+    hashed_local = len([p for p in local_index if '.pf_' in p])
+    frag_local = len([p for p in local_index if '/fragment/' in p])
     for rel in paths:
         url = args.base.rstrip('/') + ('/' if rel == 'index.html' else '/' + rel)
         status, body, hdr, _enc, _len = fetch(url)
@@ -178,8 +264,9 @@ def main():
             fails.append('%s -> http %s %s' % (rel, status, hdr.get('x-error', '')))
             continue
         if rel not in committed:
-            # A build output (the search index) is regenerated in the deploy job, so its bytes
-            # belong to whichever runner built it. Reachability is the property under test.
+            # A build output is regenerated in the deploy job, so its bytes belong to whichever
+            # runner built it. Reachability is the property under test - and the name now comes
+            # from the live manifest, so a 404 here really is a file production is missing.
             continue
         local = hashlib.sha256(open(os.path.join(ROOT, rel), 'rb').read()).hexdigest()
         remote = hashlib.sha256(body).hexdigest()
@@ -196,7 +283,22 @@ def main():
     if not args.skip_metadata:
         fails += check_metadata(args.slug)
     if not args.quiet:
-        print('probed %d paths from the %s profile' % (len(paths), args.profile))
+        n_live_index = len([p for p in paths if p.startswith('pagefind/')])
+        hashed_local = len([p for p in local_index if '.pf_' in p])
+        print('probed %d paths from the %s profile: %d committed (byte-compared) + %d build '
+              'outputs named by the live manifest'
+              % (len(paths), args.profile, len(paths) - n_live_index, n_live_index))
+        print('coverage note: %d hashed fragment files are served by production but cannot be '
+              'named from the live manifest (per-page hashes); %d local build outputs are '
+              'build-time artifacts that production never serves (.pf_meta/.pf_index, verified). '
+              'Runtime-verifiable build outputs probed: %d' % (frag_local, hashed_local - frag_local,
+                                                               n_live_index))
+        coverage = {'fragment_paths_unnameable': frag_local,
+                   'build_only_artifacts_not_served': hashed_local - frag_local,
+                   'runtime_outputs_probed': n_live_index,
+                   'committed_probed': len(paths) - n_live_index}
+        for note in index_notes:
+            print('note: ' + note)
     if fails or bad:
         for f in fails:
             print('LIVE FAIL: ' + f)
@@ -207,6 +309,11 @@ def main():
     print('PASS: live site matches %s - %d committed files byte-identical, %d build outputs reachable'
           % (head, len([p for p in paths if p in committed]),
              len([p for p in paths if p not in committed])))
+    # Only an achieved verification is worth committing.
+    io.open(os.path.join(ROOT, 'reports', 'live-verify-coverage.json'), 'w',
+            encoding='utf-8', newline='').write(
+        json.dumps(coverage, indent=2, sort_keys=True) + '\n')
+    print('wrote reports/live-verify-coverage.json (only on a pass)')
     return 0
 
 

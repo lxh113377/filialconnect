@@ -1,0 +1,20 @@
+{
+  "build-search.mjs": "ci",
+  "build.mjs": "ci",
+  "build.py": "ci",
+  "check-i18n.py": "ci",
+  "ci-audit-nodes.py": "ci",
+  "contrast_audit.py": "test",
+  "contrast_coverage.py": "ci",
+  "fetch-fraud-feeds.py": "ci",
+  "gate_wiring.py": "ci",
+  "judge_coverage.py": "ci",
+  "last-updated.py": "test",
+  "package-offline.py": "test",
+  "perf-probe.mjs": "hand",
+  "release.py": "test",
+  "stage-site.py": "ci",
+  "test_build.py": "ci",
+  "verify-dom.mjs": "ci",
+  "verify-live.py": "ci"
+}

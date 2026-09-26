@@ -62,6 +62,24 @@ own log and the failing audit's own `target`/`node` before touching CSS — the 
 two rounds because the diagnosis guessed at the wrong element. Every claim in a report needs a
 command that would falsify it, and a mutation that turns the new check red.
 
+## Tool wiring, declared (round 27)
+
+`tools/gate_wiring.py --check` (a CI step) reads `tools/gate-wiring.json` and fails if a tool in
+`tools/` declares no consumer, declares CI but is named by no workflow, or is hand-only without
+being written here. Declared hand-only or release-only:
+
+- `perf-probe.mjs` - hand-only. It feeds the blocking `t_perf_measurement` budget, and a real
+  browser run does not belong in the CI job, so nothing regenerates its input automatically.
+  `t_perf_provenance` pins what it can: the Lighthouse version and the sample sizes recorded in
+  `reports/perf-baseline.json`. Re-run it before changing budgets: `node tools/perf-probe.mjs`.
+- `verify-live.py` - a job of the Pages workflow, so it runs on every push to `main` but never
+  on a pull request (it needs the deployed site). It exits 2 (`UNVERIFIED`) when the network is
+  unreachable rather than pretending, and it probes build outputs by the names the live manifest
+  publishes; hashed fragment files are reported as unnameable instead of silently skipped.
+- `release.py`, `package-offline.py` - declared `test` because the suite really executes them
+  (`classify_checks()` over five fixtures, `pkg.build()` twice for reproducibility), even though
+  their only *human* use is the release path.
+
 ## Git and paths
 
 Never force-push, never move a published tag, never `git add -A` (this worktree sits inside a shared

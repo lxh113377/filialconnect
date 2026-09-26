@@ -1419,6 +1419,18 @@ label {
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
+/* Demo state: the remote-assist page connects to nothing, so it must not borrow the
+   "online" colour and the pulse that means "a session is live". */
+.status-demo {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.status-demo::before {
+  background: var(--color-warning);
+  animation: none;
+}
+
 .status-offline {
   background: var(--color-bg-alt);
   color: var(--color-text-muted);

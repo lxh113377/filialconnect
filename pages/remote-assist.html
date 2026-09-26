@@ -6,7 +6,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2715%27 fill=%27%232B5797%27 opacity=%270.12%27/%3E%3Ccircle cx=%2716%27 cy=%2712%27 r=%275%27 fill=%27%232B5797%27/%3E%3Cpath d=%27M8 26c0-5 3.5-8 8-8s8 3 8 8%27 fill=%27%232B5797%27/%3E%3C/svg%3E">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#2B5797">
-  <meta name="description" content="Remote screen sharing for family assistance - secure, private, family-only access">
+  <meta name="description" content="Guide for asking family to share your phone screen - the practice code here is a demo and connects to nothing">
   <title>Remote Assistance - FilialConnect</title>
   <link rel="stylesheet" href="../assets/css/main.css">
   <script src="../assets/vendor/i18next.min.js"></script>
@@ -15,10 +15,10 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="FilialConnect 孝心联">
   <meta property="og:title" content="Remote Assistance - FilialConnect">
-  <meta property="og:description" content="Remote screen sharing for family assistance - secure, private, family-only access">
+  <meta property="og:description" content="Guide for asking family to share your phone screen - the practice code here is a demo and connects to nothing">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Remote Assistance - FilialConnect">
-  <meta name="twitter:description" content="Remote screen sharing for family assistance - secure, private, family-only access">
+  <meta name="twitter:description" content="Guide for asking family to share your phone screen - the practice code here is a demo and connects to nothing">
   <!-- BEGIN:HEAD-META (tools/build.py) -->
   <link rel="manifest" href="../manifest.json">
   <link rel="apple-touch-icon" href="../assets/images/icon-192.png">
@@ -82,42 +82,50 @@
 
     <header class="page-header" aria-labelledby="page-title">
       <h1 id="page-title" data-i18n="remote.h1">Remote Assistance</h1>
-      <p data-i18n="remote.p">Let your children see your screen and guide you through any digital task. Secure, private, and only your family can connect.</p>
+      <p data-i18n="remote.p">Ask your child to guide you through a phone problem: this page gives you the words to say, and shows which screen-sharing features your phone already has. Nothing here connects to anything.</p>
     </header>
 
     <!-- Connection Demo -->
     <section class="remote-demo" aria-labelledby="demo-heading">
       <div class="connection-panel animate-in">
-        <span class="status-badge status-online" data-i18n="remote.status">Ready to Connect</span>
-        <h2 id="demo-heading" style="margin-top: var(--space-lg); margin-bottom: var(--space-sm);" data-i18n="remote.code.h2">Your Connection Code</h2>
-        <p style="color: var(--color-text-secondary); margin-bottom: var(--space-md);" data-i18n="remote.code.p">Tell this code to your child to start a remote assistance session</p>
+        <span class="status-badge status-demo" data-i18n="remote.status">Demo</span>
+        <h2 id="demo-heading" style="margin-top: var(--space-lg); margin-bottom: var(--space-sm);" data-i18n="remote.code.h2">Practice Code</h2>
+        <p style="color: var(--color-text-secondary); margin-bottom: var(--space-md);" data-i18n="remote.code.p">This is a practice code, not a connection. Real screen sharing happens inside the app you agree on with your family.</p>
         <div class="connection-code" aria-label="Connection code: A7F 3K9">A7F 3K9</div>
-        <p style="font-size: var(--text-sm); color: var(--color-text-muted);" data-i18n="remote.code.note">Codes change with every session for your security</p>
+        <p style="font-size: var(--text-sm); color: var(--color-text-muted);" data-i18n="remote.code.note">Every visit shows a different practice code, so you can point at what you are looking at without sharing anything.</p>
+      </div>
+    </section>
+
+    <!-- Demo disclosure: this page connects to nothing (round 27) -->
+    <section class="section" aria-labelledby="demo-notice-heading">
+      <div class="section-header">
+        <h2 id="demo-notice-heading" data-i18n="remote.demo.h4">Real Screen Sharing Lives In Another App</h2>
+        <p data-i18n="remote.demo.p">This page is a rehearsal, not a remote-control tool. To let a relative see your phone, open the app you both trust, start its screen share, and stop it when you are done.</p>
       </div>
     </section>
 
     <!-- How Remote Assist Works -->
     <section class="section" aria-labelledby="steps-heading">
       <div class="section-header">
-        <h2 id="steps-heading" data-i18n="remote.steps.h2">How Remote Assistance Works</h2>
-        <p data-i18n="remote.steps.p">Get help from your family no matter where they are, in three simple steps</p>
+        <h2 id="steps-heading" data-i18n="remote.steps.h2">How To Get Screen Help</h2>
+        <p data-i18n="remote.steps.p">Three steps, using a phone feature you already have</p>
       </div>
 
       <div class="connection-steps">
         <div class="step-card">
           <div class="step-number">1</div>
-          <h3 data-i18n="remote.step1.h4">Open Remote Assistance</h3>
-          <p style="font-size: var(--text-sm);" data-i18n="remote.step1.p">Tap the remote assist button. A unique 6-digit code will appear on your screen.</p>
+          <h3 data-i18n="remote.step1.h4">Open This Page</h3>
+          <p style="font-size: var(--text-sm);" data-i18n="remote.step1.p">A short code appears on the screen. It is only a label for practising - this site does not connect to anything.</p>
         </div>
         <div class="step-card">
           <div class="step-number">2</div>
-          <h3 data-i18n="remote.step2.h4">Share the Code</h3>
-          <p style="font-size: var(--text-sm);" data-i18n="remote.step2.p">Tell the code to your child over the phone or through WeChat.</p>
+          <h3 data-i18n="remote.step2.h4">Call Your Child</h3>
+          <p style="font-size: var(--text-sm);" data-i18n="remote.step2.p">Use the Call For Help page, or phone them yourself. Read the code out so you both know which screen you mean.</p>
         </div>
         <div class="step-card">
           <div class="step-number">3</div>
-          <h3 data-i18n="remote.step3.h4">They Guide You</h3>
-          <p style="font-size: var(--text-sm);" data-i18n="remote.step3.p">Your child can see your screen and draw arrows and circles to show you what to tap.</p>
+          <h3 data-i18n="remote.step3.h4">Share The Screen In That App</h3>
+          <p style="font-size: var(--text-sm);" data-i18n="remote.step3.p">WeChat on a computer can share your phone screen, and phones have a built-in screen share for support. This site does not do it for you - it only helps you ask for it.</p>
         </div>
       </div>
     </section>
@@ -125,37 +133,37 @@
     <!-- Security Section -->
     <section class="section" aria-labelledby="security-heading">
       <div class="section-header">
-        <h2 id="security-heading" data-i18n="remote.security.h2">Your Privacy is Protected</h2>
-        <p data-i18n="remote.security.p">We take security seriously. Here is how we protect you</p>
+        <h2 id="security-heading" data-i18n="remote.security.h2">What This Page Does Not Do</h2>
+        <p data-i18n="remote.security.p">Read this before you share your screen with anyone</p>
       </div>
 
       <ul class="feature-list stagger-children animate-in">
         <li class="feature-item">
           <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4L6 12v14c0 12 18 20 18 20s18-8 18-20V12L24 4z" stroke="#2B5797" stroke-width="2"/><path d="M16 24l5 5 11-11" stroke="#2B5797" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <div>
-            <h3 data-i18n="remote.family.h4">Family-Only Access</h3>
-            <p data-i18n="remote.family.p">Only people you approve can connect to your screen. Strangers cannot request access under any circumstances.</p>
+            <h3 data-i18n="remote.family.h4">It Never Connects To Anything</h3>
+            <p data-i18n="remote.family.p">This page has no server and no session. Nobody can join your phone from here, and it does not start any app on your phone.</p>
           </div>
         </li>
         <li class="feature-item">
           <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="10" y="14" width="28" height="24" rx="4" stroke="#2B5797" stroke-width="2"/><circle cx="24" cy="28" r="6" stroke="#2B5797" stroke-width="2"/><line x1="24" y1="28" x2="24" y2="34" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/></svg>
           <div>
-            <h4 data-i18n="remote.codes.h4">One-Time Codes</h4>
-            <p data-i18n="remote.codes.p">Each session generates a new, unique connection code. Old codes cannot be reused, preventing unauthorized access.</p>
+            <h4 data-i18n="remote.codes.h4">The Code Is A Practice Label</h4>
+            <p data-i18n="remote.codes.p">It is generated in your own browser and never leaves your phone. Do not treat it as a security feature of any real tool.</p>
           </div>
         </li>
         <li class="feature-item">
           <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="20" stroke="#2B5797" stroke-width="2"/><path d="M24 34v-2M24 20V14" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/></svg>
           <div>
-            <h4 data-i18n="remote.control.h4">You Are Always in Control</h4>
-            <p data-i18n="remote.control.p">You can end the session at any time with one tap. Your child can only view your screen and never controls your device without permission.</p>
+            <h4 data-i18n="remote.control.h4">Your Device, Your Control</h4>
+            <p data-i18n="remote.control.p">When you share your screen in another app, that app decides what the other person can do, and you can stop it there at any time.</p>
           </div>
         </li>
         <li class="feature-item">
           <svg class="feature-item-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M8 8l32 32M8 40L40 8" stroke="#2B5797" stroke-width="2" stroke-linecap="round"/></svg>
           <div>
-            <h4 data-i18n="remote.nodata.h4">No Data Stored</h4>
-            <p data-i18n="remote.nodata.p">Your screen content is never recorded or saved. When the session ends, everything disappears. Your privacy is absolute.</p>
+            <h4 data-i18n="remote.nodata.h4">Nothing Stored</h4>
+            <p data-i18n="remote.nodata.p">This site records no visits and no screen content. If you share your screen through another app, that app's own rules apply.</p>
           </div>
         </li>
       </ul>
@@ -164,7 +172,7 @@
     <!-- Call to Action -->
     <section style="text-align:center; padding: var(--space-2xl) var(--space-lg);" aria-labelledby="cta-heading">
       <h2 id="cta-heading" style="margin-bottom: var(--space-md);" data-i18n="remote.cta.h2">Need Urgent Help?</h2>
-      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="remote.cta.p">If you cannot wait for remote assistance, send an instant help request.</p>
+      <p style="margin-bottom: var(--space-xl); color: var(--color-text-secondary);" data-i18n="remote.cta.p">If you cannot wait, use the Call For Help page: it opens the dialer or a message on your own phone and sends nothing by itself.</p>
       <a href="call-help.html" class="btn btn-accent btn-lg" data-i18n="remote.cta.btn">Call for Help Now</a>
     </section>
   </main>

@@ -39,6 +39,20 @@ jobs:
       - name: Staging ledger drift check (what the deploy and probe servers actually copy)
         run: python3 tools/stage-site.py check
 
+      - name: Contrast audit denominator (a judge must not silently see less)
+        run: python3 tools/contrast_coverage.py --check
+
+      - name: Contrast audit denominator (a judge must not silently see less)
+        run: python3 tools/contrast_coverage.py --check
+
+      - name: Contrast audit denominator (a judge must not silently see less)
+        run: python3 tools/contrast_coverage.py --check
+
+      - name: Judge denominators and tool wiring (a ledger nobody can regenerate is a rumour)
+        run: |
+          python3 tools/gate_wiring.py --check
+          python3 tools/judge_coverage.py --check
+
       - name: DOM audit (parsed pages vs dictionary; head meta and fallback text)
         run: node tools/verify-dom.mjs
 

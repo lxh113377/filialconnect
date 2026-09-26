@@ -1331,13 +1331,211 @@ def t_offline_package():
           'mod.build(dest)' in rel, 'the build must be on the release path, not beside it')
 
 
+
+def says(pattern, text):
+    """| means an alternation and goes through re; anything else is a plain substring.
+    Keeping the parentheses of `window.print()` out of a regex is the difference between a
+    judge and a false alarm - a regex over an escaped literal silently stops matching when
+    the escape depth changes hands."""
+    if '|' in pattern:
+        return re.search(pattern, text) is not None
+    return pattern in text
+
+
+# Failure class 1, fifth occurrence: remote-assist promised live screen sharing, session
+# control and approval, while `git ls-files | xargs grep -l 'getDisplayMedia|RTCPeerConnection|
+# getUserMedia|WebSocket'` returned nothing. A banned-word list only grows after a defect is
+# reported, so it is the wrong shape: a promise is a claim about the CODE. This judge reads the
+# code. The phrase column is deliberately specific to the *feature*, not the *word* - matching
+# "search" or "print" anywhere would let a CSS class vouch for a capability. It writes its own
+# positive-control file first, because a matcher over an empty set prints "no unbacked claims"
+# and passes.
+CLAIM_PHRASES = {
+    'tel_dialer': r'opens the dialer|打开拨号盘',
+    'sms_message': r'短信草稿|message on your own phone',
+    'print': 'window.print()|打印',  # literal (| = alternation, see loop)
+    'read_aloud': r'朗读|read aloud',
+    'font_scale': r'Large text|大号|字号',
+    'offline_search': r'全文检索|full-text',
+    'offline_list': r'destroylist|离线名单',
+    'i18n': r'语言切换|Switch to Chinese',
+}
+CLAIM_EVIDENCE = {
+    'tel_dialer': ('assets/js/main.js', r"'tel:'"),
+    'sms_message': ('assets/js/main.js', r"'sms:'"),
+    'print': ('pages/printable-guides.html', 'window.print()'),  # literal
+    'read_aloud': ('assets/js/main.js', r'speechSynthesis'),
+    'font_scale': ('assets/js/main.js', r"data-fontscale"),
+    'offline_search': ('assets/js/search.js', r'pagefind'),
+    'offline_list': ('assets/js/main.js', r'destroylist'),
+    'i18n': ('assets/js/main.js', r'function initI18n'),
+}
+# Screen sharing needs a peer connection or a capture API; neither exists in this repository.
+SCREEN_SHARE_PHRASE = 'see your screen and draw'
+ALWAYS_BANNED = ('will notify your family', '会通知您的家人')
+DEMO_PAGES = ('pages/remote-assist.html', 'pages/call-help.html')
+CONTROL_PATH = 'tools/.capability-control-sample.html'
+
+
+def t_capability_claims():
+    """Every capability the copy advertises must have implementing code in this repository."""
+    io.open(os.path.join(ROOT, CONTROL_PATH), 'w', encoding='utf-8').write(
+        '<!DOCTYPE html><html lang=en><head><meta charset=UTF-8><title>control</title></head>'
+        '<body><main><p>Your child can %s a circle to show you what to tap.</p>'
+        '<p>The site will notify your family when you finish a tutorial.</p></main></body></html>'
+        % SCREEN_SHARE_PHRASE)
+    try:
+        control = read(CONTROL_PATH)
+        check('the positive control really carries the phrases under test',
+              SCREEN_SHARE_PHRASE in control and 'will notify your family' in control,
+              'control rewritten: every assertion below is vacuous')
+        check('the control is matched by the same expression as the real pages',
+              any(re.search(p, control) for p in
+                  (SCREEN_SHARE_PHRASE,) + tuple(CLAIM_PHRASES.values())),
+              'the matcher never fires even on a known-bad page')
+
+        corpus = ''.join(read(fp) for fp in pages())
+        dicts = ''.join(read(fp) for fp in ('assets/js/i18n.js', 'assets/locales/en.json',
+                                            'assets/locales/zh.json'))
+        check('the scanned page set is the real site, not an empty glob',
+              len(pages()) >= 14 and len(corpus) > 200000,
+              '%d pages, %d chars' % (len(pages()), len(corpus)))
+
+        for key, phrase in CLAIM_PHRASES.items():
+            fp, pat = CLAIM_EVIDENCE[key]
+            if not (says(phrase, corpus) or says(phrase, dicts)):
+                continue
+            check('advertised capability %s is backed by code in %s' % (key, fp),
+                  says(pat, read(fp)), 'the copy promises it and the implementation is gone')
+
+        offenders = [fp for fp in pages() if SCREEN_SHARE_PHRASE in read(fp)]
+        check('no page claims screen sharing this site cannot do', not offenders, str(offenders[:2]))
+        notify = [(fp, w) for fp in pages() + ['assets/js/i18n.js']
+                  if fp != CONTROL_PATH for w in ALWAYS_BANNED if w in read(fp)]
+        check('no unimplementable notification promise in shipped copy', not notify, str(notify[:2]))
+
+        for fp in DEMO_PAGES:
+            s = read(fp)
+            check('%s discloses its demo scope in the markup' % fp,
+                  'remote.demo.h4' in s or 'cannot send' in s or '不会自己发' in s,
+                  'a simulated control shipped without a disclosure')
+    finally:
+        os.remove(os.path.join(ROOT, CONTROL_PATH))
+
+# --- round 27: generalized prose numbers, tool wiring, generated ledgers --------------------
+# Each entry: (file, the sentence fragment carrying the number, how to measure it now). The old
+# judge matched one regex, so four other numbers in the same document rotted green.
+DOC_NUMBERS = [
+    ('README.md', r'\*\*HTMLHint\*\* — (\d+) 页', lambda: len(build.all_pages())),
+    ('README.md', r'收紧到 (\d+) 条规则', lambda: len(json.loads(read('.htmlhintrc')))),
+    ('README.md', r'pages/\s*# (\d+) 个子页面',
+     lambda: len([f for f in os.listdir(os.path.join(ROOT, 'pages')) if f.endswith('.html')])),
+    ('README.md', r'IIFE，(\d+) 个 init 模块',
+     lambda: len([l for l in read('assets/js/main.js').splitlines()
+                  if re.match(r'^    init[A-Z][A-Za-z0-9]*\(\);$', l)])),
+    ('README.md', r'（(\d[\d,]{2,}) 条，gzip',
+     lambda: json.loads(read('assets/data/fraud-feeds-meta.json'))['domains']),
+]
+
+
+def t_documented_numbers():
+    """Numbers written as prose must equal a measurement taken now, or the judge fails."""
+    located = 0
+    for fp, pattern, measure in DOC_NUMBERS:
+        text = read(fp)
+        m = re.search(pattern, text)
+        check('%s still states %s' % (fp, pattern[:26]), m is not None, 'sentence moved or died')
+        if not m:
+            continue
+        want = measure()
+        got = int(m.group(1).replace(',', ''))
+        check('%s: %s equals the measured %d' % (fp, pattern[:26], want), got == want,
+              'doc says %d, repository measures %d' % (got, want))
+        located += 1
+    check('the prose-number judge kept its denominator', located >= len(DOC_NUMBERS),
+          '%d of %d patterns located' % (located, len(DOC_NUMBERS)))
+    a = read('pages/accessibility-statement.html')
+    # only a bare `WCAG 2.x` states a level; `WCAG 2.4.11` is a success criterion - attribute before counting
+    levels = set(re.findall(r'WCAG (2\.\d)(?!\.\d)', a))
+    check('the accessibility statement publishes exactly one WCAG level',
+          levels == {'2.2'}, str(sorted(levels)))
+    check('no public document reintroduces the older level', 'WCAG 2.1' not in read('README.md'),
+          'README claims a second conformance level')
+
+
+def t_gate_wiring():
+    """The guard against a half-finished tool must itself be finished and inside the chain."""
+    gw = load_tool('gate_wiring', 'gate_wiring.py')
+    ledger = gw.measure()
+    check('every tool in tools/ declares a consumer', not ledger['undeclared'],
+          str(ledger['undeclared']))
+    check('no declaration points at a deleted tool', not ledger['declared_but_absent'],
+          str(ledger['declared_but_absent']))
+    check('a tool declared ci/test is really named by CI or executed by the suite',
+          not ledger['silent_gap'], str(ledger['silent_gap']))
+    check('a hand-only tool is disclosed in AGENTS.md rather than silently unbuilt',
+          not ledger['undocumented_hand_only'], str(ledger['undocumented_hand_only']))
+    check('the wiring ledger is not computed from an empty tool list',
+          ledger['tools_on_disk'] >= 18, '%d tools' % ledger['tools_on_disk'])
+    check('gate_wiring.py is itself wired into CI', 'gate_wiring.py' in gw.ci_names(),
+          'the guard escaped its own rule')
+    check('reports/gate-wiring.json matches this measurement',
+          read('reports/gate-wiring.json') == gw.render(), 'run: python tools/gate_wiring.py')
+
+
+def t_judge_ledger():
+    """The judge-coverage ledger is generated, so it cannot silently disagree with reality."""
+    jc = load_tool('judge_coverage', 'judge_coverage.py')
+    ledger = jc.measure()
+    check('the ledger enumerates the judges', ledger['judge_functions'] >= 33,
+          '%d' % ledger['judge_functions'])
+    check('no judge is defined but never registered',
+          not ledger['judges_defined_but_unregistered'],
+          str(ledger['judges_defined_but_unregistered']))
+    _entries, counts = load_tool('package_offline', 'package-offline.py').members()
+    committed = json.loads(read('reports/judge-coverage.json'))
+    check('the committed ledger records the package the packager really builds',
+          committed['offline_package_entries'] == counts['total'],
+          'ledger %s vs measured %d' % (committed['offline_package_entries'], counts['total']))
+    check('reports/judge-coverage.json matches this measurement',
+          read('reports/judge-coverage.json') == jc.render(),
+          'run: python tools/judge_coverage.py')
+
+
+def t_perf_provenance():
+    """perf-probe.mjs stays hand-run on purpose (a browser does not belong in a 3-minute CI
+    job). What CI can insist on is provenance of the file that judge reads as input."""
+    base = json.loads(read('reports/perf-baseline.json'))
+    lock = json.loads(read('package-lock.json'))
+    want = (lock.get('packages', {}).get('node_modules/lighthouse') or {}).get('version')
+    versions = sorted({p.get('lighthouse') for prof in base['profiles'].values()
+                       for p in prof.get('pages', [])})
+    check('every measured page records the Lighthouse that produced it',
+          len(versions) == 1 and versions[0] is not None, str(versions))
+    check('the perf baseline came from the pinned Lighthouse',
+          versions == [want], 'baseline %s vs package-lock %s' % (versions, want))
+    check('the perf baseline declares its sampling depth',
+          isinstance(base.get('runs_per_url'), int) and base['runs_per_url'] >= 3,
+          str(base.get('runs_per_url')))
+    mob = len(json.loads(read('lighthouserc.mobile.json'))['ci']['collect']['url'])
+    check('the perf baseline really measured the whole roster and the declared sample',
+          base['summary']['desktop']['pages'] == len(build.all_pages())
+          and base['summary']['mobile']['pages'] == mob,
+          'desktop %s mobile %s' % (base['summary']['desktop']['pages'],
+                                    base['summary']['mobile']['pages']))
+    check('a hand-only measurement tool is disclosed in AGENTS.md',
+          'hand-only' in read('AGENTS.md') and 'perf-probe.mjs' in read('AGENTS.md'),
+          'it feeds a blocking budget but nothing regenerates it; say it where contributors read')
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
                t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
                t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw, t_page_nav,
                t_contrast_coverage, t_perf_coverage, t_perf_measurement,
-               t_deploy_staging, t_public_metadata, t_offline_package):
+               t_deploy_staging, t_public_metadata, t_offline_package,
+               t_capability_claims, t_documented_numbers, t_gate_wiring,
+               t_judge_ledger, t_perf_provenance):
         fn()
     for f in FAILS:
         print('FAIL:', f)

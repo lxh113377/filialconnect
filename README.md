@@ -74,7 +74,7 @@ python tools/fetch-fraud-feeds.py  # 手动刷新防骗域名离线名单（CI �
 
 `.github/workflows/ci.yml` 在每次 push / PR 自动执行：
 
-1. **HTMLHint** — 13 页（`.htmlhintrc` 收紧到 28 条规则：`button-type-required`、
+1. **HTMLHint** — 14 页（`.htmlhintrc` 收紧到 27 条规则：`button-type-required`、
    `label-has-associated-control`、`id-unique`、`attr-no-duplication` 等）
 2. **Linkinator** — 站内递归 + fragment + 外部链接；Markdown 文档单独一轮
 3. **i18n 对称门禁** — `tools/check-i18n.py`
@@ -107,7 +107,7 @@ python tools/fetch-fraud-feeds.py  # 手动刷新防骗域名离线名单（CI �
 | 非文本链接提供语音阅读 | 整页朗读（`speechSynthesis`）+ 全站 `aria-label`/`data-i18n-aria-label` 双语 |
 | 背景高对比、色彩区分信息区 | 全站 ≥4.5:1（含暗色模式），风险等级另用形状 + 文字标注 |
 
-WCAG 2.1 AA 之外的适老细节：`prefers-reduced-motion` 同时约束 CSS 与 JS 滚动；
+WCAG 2.2 AA 之外的适老细节：`prefers-reduced-motion` 同时约束 CSS 与 JS 滚动；
 隐藏元素退出 Tab 顺序；正文最小 18px。
 
 ## 已知边界（如实说明）
@@ -132,12 +132,12 @@ WCAG 2.1 AA 之外的适老细节：`prefers-reduced-motion` 同时约束 CSS �
 ```
 filialconnect/
 ├── index.html / 404.html     # 404 与 sitemap.xml 由 tools/build.py 生成
-├── pages/            # 11 个子页面（教程详情页为全页生成）
+├── pages/            # 12 个子页面（教程详情页为全页生成）
 ├── content/          # 教程与防骗案例的唯一权威文案源（JSON）
 ├── assets/
 │   ├── css/main.css  # 设计令牌 + 全部组件样式（单文件）
 │   ├── js/i18n.js    # EN/ZH 双语字典（含生成块）
-│   ├── js/main.js    # IIFE，14 个 init 模块
+│   ├── js/main.js    # IIFE，16 个 init 模块
 │   └── data/         # 离线诈骗域名名单 + 来源元数据
 ├── tools/            # 构建与门禁脚本：build.py（页面）+ build.mjs（i18n/sitemap/lighthouserc/sw，Node 成熟库）
 ├── .github/          # workflows + dependabot

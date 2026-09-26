@@ -1,0 +1,32 @@
+{
+  "ci": [
+    "build-search.mjs",
+    "build.mjs",
+    "build.py",
+    "check-i18n.py",
+    "ci-audit-nodes.py",
+    "contrast_coverage.py",
+    "fetch-fraud-feeds.py",
+    "gate_wiring.py",
+    "judge_coverage.py",
+    "stage-site.py",
+    "test_build.py",
+    "verify-dom.mjs",
+    "verify-live.py"
+  ],
+  "declared": 18,
+  "declared_but_absent": [],
+  "hand": [],
+  "release": [],
+  "silent_gap": [],
+  "test": [
+    "contrast_audit.py",
+    "last-updated.py",
+    "package-offline.py",
+    "perf-probe.mjs",
+    "release.py"
+  ],
+  "tools_on_disk": 18,
+  "undeclared": [],
+  "undocumented_hand_only": []
+}
