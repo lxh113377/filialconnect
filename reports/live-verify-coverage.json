@@ -1,6 +1,9 @@
 {
   "build_only_artifacts_not_served": 4,
+  "build_outputs_shipped": 52,
+  "build_outputs_unclassified": 0,
   "committed_probed": 49,
   "fragment_paths_unnameable": 25,
+  "named_build_outputs_probed": 23,
   "runtime_outputs_probed": 23
 }

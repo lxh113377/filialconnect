@@ -66,6 +66,24 @@
   `git ls-files --others --exclude-standard`，`content/assets/tools/pages` 之下（或根目录 `*.html`）
   出现未跟踪文件即红，并带一条正控（新建文件必须被扫描看见，否则规则是装饰）。
 
+### Added
+- **`verify-live` 覆盖面从"打印四个数"改成"能算平的恒等式"**（第 35 轮）。旧实现用两个独立的
+  substring 测试分桶，且两者相减的顺序恰好对上，所以账面看着对：命名不到就消失、匹配两类就重复计数。
+  现按**实测的 Pagefind 布局**分三类（named 23 / fragment 25 / build-only 4 = shipped 52），
+  恒等式 `named + fragment + build-only == shipped` 且 `probed == named`；
+  落进任何一类之外的文件＝**形状漂移即红**（盲区的尺寸依赖那个命名形状，不能"不知道就算没看见"）。
+  新增 `--selftest`（6 例，双向 + 零分母绝不判 PASS），并由判据 `t_coverage_identity` 接进阻断链；
+  台账 `reports/live-verify-coverage.json` 的键随之改名，且判据要求台账自身对账闭合。
+- 判据同时断言**自检套件报出自己的用例数**（0 用例的"全绿"不算通过）。
+
+### Fixed
+- `verify-live.py --quiet` 通过时会崩溃：`coverage` 只在打印分支里赋值，写台账那一行却无条件读它
+  （happy path 的第二个入口从未被执行过）。现改为无条件计算。
+- **缺依赖不再被误报成"产物漂移"**：`node_modules` 缺失时，链上原来同时亮两条红——
+  `node half reports no drift` 与 `DOM audit ...`，都把读者指向 build.mjs，而真正要做的是 `npm ci`。
+  现在识别 `ERR_MODULE_NOT_FOUND` 并只给一条具名判定（实测：把依赖移到一边 ⇒ `1/2071 checks failed`
+  且红项名字直说 `run npm ci`；移回 ⇒ 全链 `2072` 绿。两条断言的差 1 正是该分支的构造）。
+
 ## [1.11.0] - 2026-09-26
 
 第三十二轮（同一命令第 24 次重发 = 完整重执行）。补完第 30 轮留下的那一半：`manual` 名单当时只是

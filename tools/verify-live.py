@@ -191,6 +191,100 @@ def check_metadata(slug):
     return problems
 
 
+NAMED_SUFFIXES = ('.css', '.js', '.json', '.pagefind', '.wasm')
+
+
+def classify_build_outputs(paths):
+    """Sort shipped `pagefind/` output by what the measured layout actually is.
+
+    Kinds are decided in one order, so a file cannot be double counted. A file that lands in
+    `unclassified` is not a shrug: it means Pagefind changed a naming shape, and the size of the
+    declared blind spot (the fragments) depends on that shape, so the accounting must stop.
+    """
+    buckets = {'named': [], 'fragment': [], 'build_only': [], 'unclassified': []}
+    for p in paths:
+        name = p.rsplit('/', 1)[-1]
+        if '/fragment/' in p:
+            # still under fragment/, but no longer the extension we sized the blind spot by
+            key = 'fragment' if name.endswith('.pf_fragment') else 'unclassified'
+        elif name.endswith('.pf_index') or name.endswith('.pf_meta'):
+            key = 'build_only'
+        elif name.endswith(NAMED_SUFFIXES):
+            key = 'named'
+        else:
+            key = 'unclassified'
+        buckets[key].append(p)
+    return {k: sorted(v) for k, v in buckets.items()}
+
+
+def coverage_identity(counts, local_total, probed_build_outputs):
+    """named + fragment + build-only == shipped, and probed must equal the named kind.
+
+    The fragments are the acknowledged blind spot (production serves them, the public manifest
+    never names them); the `.pf_*` pair is a build-time artifact production has no reason to serve.
+    Nothing may fall between those three, and every named file must actually have been fetched -
+    otherwise "we could not name it" quietly becomes "we did not check it".
+    """
+    problems = []
+    if local_total == 0:
+        return False, ['no build outputs enumerated - a coverage claim needs a denominator (R247)']
+    named, frag, build_only = counts['named'], counts['fragment'], counts['build_only']
+    if counts['unclassified']:
+        problems.append('%d build output(s) match no known kind, so the blind spot is mis-sized: %s'
+                        % (len(counts['unclassified']), counts['unclassified'][:3]))
+    bucketed = len(named) + len(frag) + len(build_only)
+    if bucketed != local_total:
+        problems.append('named %d + fragment %d + build-only %d = %d != shipped %d'
+                        % (len(named), len(frag), len(build_only), bucketed, local_total))
+    if probed_build_outputs == 0:
+        problems.append('the live manifest named no build output to probe, so reachability is '
+                        'unverified for all %d shipped' % local_total)
+    elif probed_build_outputs != len(named):
+        problems.append('%d build outputs are named and served but %d were probed'
+                        % (len(named), probed_build_outputs))
+    return not problems, problems
+
+
+def selftest():
+    """Both directions, offline, using the names the real build produced.
+
+    The identity must close on the real shapes, must catch every kind of shape drift, and must
+    never read a missing denominator as a pass.
+    """
+    named = ['pagefind/%s' % f for f in
+             ('pagefind-entry.json', 'pagefind-highlight.js', 'pagefind-component-ui.css',
+              'pagefind-component-ui.js', 'wasm.en.pagefind')]
+    frag = ['pagefind/en/fragment/en_%07x.pf_fragment' % i for i in range(25)]
+    build_only = ['pagefind/en/index/en_dab4a82.pf_index', 'pagefind/zh/index/zh_dab4a82.pf_index',
+                  'pagefind/en/pagefind.en_96b08b50ce.pf_meta',
+                  'pagefind/zh/pagefind.zh_96b08b50ce.pf_meta']
+    real = sorted(named * 5 + frag + build_only)   # 25 named + 25 fragments + 4 build-only
+    cases = [
+        ('measured layout closes (25 named + 25 fragments + 4 build-only)',
+         real, len(real), len(classify_build_outputs(real)['named']), True),
+        ('a fragment that lost its extension is shape drift, not a shrug',
+         real + ['pagefind/en/fragment/en_odd.md'], len(real) + 1, 25, False),  # red: unclassified
+        ('a brand new service file type is unclassified until it is named',
+         real + ['pagefind/en/pagefind-newthing.br'], len(real) + 1, 25, False),
+        ('25 named files but only 20 surfaced by the manifest cannot pass',
+         real, len(real), 20, False),
+        ('no shipped list means no denominator, never a pass',
+         [], 0, 0, False),
+        ('a manifest naming nothing cannot prove reachability',
+         real, len(real), 0, False),
+    ]
+    bad = 0
+    for name, paths, total, probed, want_ok in cases:
+        ok, problems = coverage_identity(classify_build_outputs(paths), total, probed)
+        if ok != want_ok:
+            bad += 1
+            print('  SELFTEST-FAIL %s: ok=%s want=%s %s' % (name, ok, want_ok, problems[:1]))
+        else:
+            print('  ok  %s' % name)
+    print('verify-live selftest: %d cases, %d failures' % (len(cases), bad))
+    return 1 if bad else 0
+
+
 def main():
     stager = load_stager()
     ap = argparse.ArgumentParser()
@@ -205,7 +299,12 @@ def main():
                     help='check the repository About box and skip the file probe')
     ap.add_argument('--skip-metadata', action='store_true')
     ap.add_argument('--slug', default='lxh113377/filialconnect')
+    ap.add_argument('--selftest', action='store_true',
+                    help='re-check the coverage identity arithmetic offline and exit')
     args = ap.parse_args()
+
+    if args.selftest:
+        return selftest()
 
     if args.metadata_only:
         problems = check_metadata(args.slug)
@@ -255,8 +354,8 @@ def main():
                      % len(local_index))
     optional = set(live_optional)
     paths = [p for p in paths if not p.startswith('pagefind/')] + live_strict + live_optional
-    hashed_local = len([p for p in local_index if '.pf_' in p])
-    frag_local = len([p for p in local_index if '/fragment/' in p])
+    build_buckets = classify_build_outputs(local_index)
+    n_local_build = len(local_index)
     for rel in paths:
         url = args.base.rstrip('/') + ('/' if rel == 'index.html' else '/' + rel)
         status, body, hdr, _enc, _len = fetch(url)
@@ -282,21 +381,29 @@ def main():
         fails += check_wire_size(args.base, args.wire_asset, int(advertised.group(1)))
     if not args.skip_metadata:
         fails += check_metadata(args.slug)
+    n_live_index = len([p for p in paths if p.startswith('pagefind/')])
+    # built whether or not --quiet was passed: the ledger write below used to read a name that
+    # only existed inside the printing branch, so a quiet passing run died with a NameError
+    coverage = {'build_outputs_shipped': n_local_build,
+                'named_build_outputs_probed': len(build_buckets['named']),
+                'fragment_paths_unnameable': len(build_buckets['fragment']),
+                'build_only_artifacts_not_served': len(build_buckets['build_only']),
+                'build_outputs_unclassified': len(build_buckets['unclassified']),
+                'runtime_outputs_probed': n_live_index,
+                'committed_probed': len(paths) - n_live_index}
+    identity_ok, identity_problems = coverage_identity(build_buckets, n_local_build, n_live_index)
+    if not identity_ok:
+        fails += ['coverage identity: ' + p for p in identity_problems]
     if not args.quiet:
-        n_live_index = len([p for p in paths if p.startswith('pagefind/')])
-        hashed_local = len([p for p in local_index if '.pf_' in p])
         print('probed %d paths from the %s profile: %d committed (byte-compared) + %d build '
               'outputs named by the live manifest'
               % (len(paths), args.profile, len(paths) - n_live_index, n_live_index))
-        print('coverage note: %d hashed fragment files are served by production but cannot be '
-              'named from the live manifest (per-page hashes); %d local build outputs are '
-              'build-time artifacts that production never serves (.pf_meta/.pf_index, verified). '
-              'Runtime-verifiable build outputs probed: %d' % (frag_local, hashed_local - frag_local,
-                                                               n_live_index))
-        coverage = {'fragment_paths_unnameable': frag_local,
-                   'build_only_artifacts_not_served': hashed_local - frag_local,
-                   'runtime_outputs_probed': n_live_index,
-                   'committed_probed': len(paths) - n_live_index}
+        print('coverage note: %d shipped build outputs = %d named and probed by real name + %d '
+              'fragment files production serves but the public manifest never names (declared '
+              'blind spot) + %d build-time artifacts production has no reason to serve; '
+              'unclassified %d'
+              % (n_local_build, n_live_index, len(build_buckets['fragment']),
+                 len(build_buckets['build_only']), len(build_buckets['unclassified'])))
         for note in index_notes:
             print('note: ' + note)
     if fails or bad:

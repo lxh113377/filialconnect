@@ -68,18 +68,26 @@ def t_pipeline():
     out = build.build_outputs()
     check('python half owns every page', set(out) >= set(pages()),
           'missing %s' % sorted(set(pages()) - set(out)))
-    check('node half reports no drift (i18n.js / sitemap / lighthouserc / sw)',
-          subprocess.run([shutil.which('node') or 'node',
-                          os.path.join(ROOT, 'tools', 'build.mjs'), 'check'],
-                         capture_output=True, text=True).returncode == 0,
-          'run: node tools/build.mjs check')
+    node = shutil.which('node') or 'node'
+    drift = subprocess.run([node, os.path.join(ROOT, 'tools', 'build.mjs'), 'check'],
+                           capture_output=True, text=True)
     # The regex writer and the regex reader can share a blind spot; this re-reads
     # every page as a parsed DOM and compares against the dictionary itself.
-    dom = subprocess.run([shutil.which('node') or 'node',
-                          os.path.join(ROOT, 'tools', 'verify-dom.mjs')],
+    dom = subprocess.run([node, os.path.join(ROOT, 'tools', 'verify-dom.mjs')],
                          capture_output=True, text=True)
-    check('DOM audit: fallback text and head meta agree with assets/locales',
-          dom.returncode == 0, (dom.stdout or '').strip().split('\n')[0:3][-1])
+    silent_toolchain = any('ERR_MODULE_NOT_FOUND' in ((r.stdout or '') + (r.stderr or ''))
+                           for r in (drift, dom))
+    if silent_toolchain:
+        # Deleted node_modules is not drift: nothing was compared, so reporting "artifacts moved"
+        # sends the reader to build.mjs when the real fix is `npm ci`. Measured twice on
+        # 2026-09-26 - both times the pair of reds below looked like content problems.
+        check('node toolchain is installed - with it missing no node-owned check ran at all',
+              False, 'ERR_MODULE_NOT_FOUND: run npm ci (lockfile is committed), then re-run')
+    else:
+        check('node half reports no drift (i18n.js / sitemap / lighthouserc / sw)',
+              drift.returncode == 0, 'run: node tools/build.mjs check')
+        check('DOM audit: fallback text and head meta agree with assets/locales',
+              dom.returncode == 0, (dom.stdout or '').strip().split('\n')[0:3][-1])
     check('derived artifacts are committed in built form',
           all(read(fp) == text for fp, text in out.items()),
           'drift in %s' % [fp for fp, text in out.items() if read(fp) != text])
@@ -1888,6 +1896,42 @@ def t_tracked_inputs():
         os.remove(probe)
 
 
+def t_coverage_identity():
+    """The live-verification coverage arithmetic has to close, and close offline.
+
+    verify-live used to print four counts derived from two substring tests and never reconciled
+    them, so a Pagefind naming change could shrink the declared blind spot without any verdict
+    moving. The selftest below is what makes "coverage" a claim that can be wrong.
+    """
+    r = subprocess.run([sys.executable, os.path.join('tools', 'verify-live.py'), '--selftest'],
+                       cwd=ROOT, capture_output=True, text=True, timeout=300)
+    out = (r.stdout or '') + (r.stderr or '')
+    check('verify-live coverage identity selftest is green (both directions, offline)',
+          r.returncode == 0, out.strip().splitlines()[-1:])
+    check('the selftest reports its own case count (a silent 0-case suite is not a pass)',
+          ' 0 failures' in out and 'cases,' in out, out.strip().splitlines()[-1:])
+    led = json.loads(read('reports/live-verify-coverage.json'))
+    want = {'build_outputs_shipped', 'named_build_outputs_probed', 'fragment_paths_unnameable',
+            'build_only_artifacts_not_served', 'build_outputs_unclassified',
+            'runtime_outputs_probed', 'committed_probed'}
+    check('the coverage ledger names the three closing kinds plus the probes',
+          set(led) == want, 'missing %s extra %s' % (sorted(want - set(led)), sorted(set(led) - want)))
+    closed = (led['named_build_outputs_probed'] + led['fragment_paths_unnameable']
+              + led['build_only_artifacts_not_served'] + led['build_outputs_unclassified'])
+    check('recorded coverage closes: named + blind-spot + build-only == shipped',
+          closed == led['build_outputs_shipped'],
+          '%d + %d + %d + %d vs %d' % (led['named_build_outputs_probed'],
+                                       led['fragment_paths_unnameable'],
+                                       led['build_only_artifacts_not_served'],
+                                       led['build_outputs_unclassified'],
+                                       led['build_outputs_shipped']))
+    check('nothing was unclassified when the ledger was written',
+          led['build_outputs_unclassified'] == 0, str(led['build_outputs_unclassified']))
+    check('the probe really named as many build outputs as the ledger calls named',
+          led['runtime_outputs_probed'] == led['named_build_outputs_probed'],
+          '%s vs %s' % (led['runtime_outputs_probed'], led['named_build_outputs_probed']))
+
+
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
           t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
           t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
@@ -1896,7 +1940,7 @@ JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets,
           t_deploy_staging, t_public_metadata, t_offline_package,
           t_capability_claims, t_documented_numbers, t_gate_wiring,
           t_judge_ledger, t_perf_provenance, t_deploy_reasons,
-          t_page_title, t_aria_locale, t_tracked_inputs)
+          t_page_title, t_aria_locale, t_tracked_inputs, t_coverage_identity)
 
 
 def _abort_note(name, exc):
