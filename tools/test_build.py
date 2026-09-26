@@ -41,6 +41,22 @@ def pages():
     return build.all_pages()
 
 
+# One list, two consumers: the public-file scan below and the repository-metadata expectation in
+# t_public_metadata. Duplicating it is how the slogan survived in the one place no file gate read.
+BANNED_SLOGAN = ('零依赖', '零外部依赖', '保持无依赖', '不引入 CDN', 'dependency-free',
+                 'zero-dependency', 'Zero dependencies', 'dependencies-0',
+                 'no third-party dependency')
+
+
+def load_tool(name, fname):
+    """tools/ files with a hyphen in the name cannot be imported by module name."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, os.path.join(ROOT, 'tools', fname))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def html_only(fp):
     s = read(fp)
     return s[s.index('<html'):]
@@ -172,9 +188,7 @@ def t_promises():
     # 2026-09-25: the user revoked "zero dependency" as a goal or selling point, and it
     # had already crept back into 6 files (two of them as hard rules). This guard is the
     # machine-side lock so the phrasing cannot return silently in a future round.
-    banned_slogan = ('零依赖', '零外部依赖', '保持无依赖', '不引入 CDN', 'dependency-free',
-                     'zero-dependency', 'Zero dependencies', 'dependencies-0',
-                     'no third-party dependency')
+    banned_slogan = BANNED_SLOGAN
     targets = ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'CODE_OF_CONDUCT.md',
                'SOURCES.md', 'AGENTS.md', 'manifest.json', 'sw.js', 'assets/css/main.css',
                'assets/js/i18n.js'] + pages()
@@ -190,6 +204,12 @@ def t_promises():
           not claims, str(claims[:3]))
     check('link checker discloses its coverage limit',
           '83,000' in s and '8.3 万' in s and 'does not mean' in s and '并不等于' in s)
+    # Prose numbers rot: README said "1,426 条" and CONTRIBUTING said "1100+" while the chain had
+    # reached 1,879. A number nobody re-measures is a claim, so the documents now point at the
+    # command that prints it, and this stops a fresh one from being typed back in.
+    stale = [(fp, m) for fp in ('README.md', 'CONTRIBUTING.md')
+             for m in re.findall(r'test_build\.py[^\n]{0,24}?([\d,]{3,})\s*条', read(fp))]
+    check('documents do not restate the self-test count as prose', not stale, str(stale[:2]))
     feed = json.loads(read('assets/data/fraud-feeds-meta.json'))
     cn_pct = 100.0 * feed['mainland_cn_domains'] / feed['domains']
     check('mainland-coverage wording matches the measured feed (<1% claim)',
@@ -437,29 +457,14 @@ PAGEFIND_BUDGET = 640 * 1024
 
 
 def shipped_files():
-    """deploy-pages.yml's `cp -r` line is the only place that declares the artifact set."""
-    wf = read(os.path.join('.github', 'workflows', 'deploy-pages.yml'))
-    m = re.search(r'cp -r ([^\n]*?)(?=\s+_site/)', wf)
-    if not m:
-        return None
-    tokens = m.group(1).split()
-    out = set()
-    for tok in tokens:
-        if tok.endswith('.md'):
-            continue  # repo docs copied beside the site, never fetched by a browser
-        path = os.path.join(ROOT, tok)
-        if os.path.isdir(path):
-            for root, dirs, files in os.walk(path):
-                dirs[:] = [d for d in dirs if d != '__pycache__']
-                for f in files:
-                    out.add(os.path.relpath(os.path.join(root, f), ROOT).replace(os.sep, '/'))
-        elif any(c in tok for c in '*?['):
-            import glob
-            for g in glob.glob(path):
-                out.add(os.path.relpath(g, ROOT).replace(os.sep, '/'))
-        elif os.path.exists(path):
-            out.add(tok.replace(os.sep, '/'))
-    return out
+    """The artifact set, from the one enumerator that decides it (tools/stage-site.py).
+
+    This used to regex the `cp -r` line out of deploy-pages.yml, which made a workflow's prose a
+    load-bearing definition: the byte budgets and the deployment could disagree without either
+    gate noticing, and the same list was hand-maintained in two workflows.
+    """
+    files = load_tool('stage_site_budgets', 'stage-site.py').staging_sets()[0]['deploy']
+    return {f for f in files if not f.endswith('.md')}
 
 
 def gz_size(fp):
@@ -624,13 +629,18 @@ def t_search_ui():
           'window.I18N' in src,
           "main.js keeps t() inside its own IIFE; there is no global t to call here")
     wf = read(os.path.join('.github', 'workflows', 'deploy-pages.yml'))
-    # Anchor on the real staging command, not on `cp -r` anywhere: the comment above it also
-    # contains that phrase, and an assertion satisfied by prose is not an assertion.
-    stage = 'cp -r index.html'
-    check('deploy stages the search index', re.search(stage + r' [^\n]*pagefind', wf) is not None)
+    # Anchor on the real staging command, not on prose: an assertion satisfied by a comment that
+    # happens to contain the phrase is not an assertion (it previously read `cp -r index.html`,
+    # and the hand-copied list it guarded no longer exists).
+    stage = 'tools/stage-site.py stage'
+    check('deploy stages through the enumerator', stage in wf)
+    shipped = load_tool('stage_site_ui', 'stage-site.py').staging_sets()[0]['deploy']
+    check('the staged set ships the search index',
+          any(f.startswith('pagefind/') for f in shipped),
+          'pagefind/ is a gitignored build output; a checkout has none')
     check('deploy builds the index before staging it',
           'build-search.mjs index' in wf and wf.index('build-search.mjs index') < wf.index(stage),
-          'pagefind/ is a gitignored build output; a checkout has none')
+          'the enumerator can only ship an index that has already been built')
     # build_zip.py lives outside this repository, so a CI checkout has no parent directory to
     # read it from. Reaching for it unconditionally crashed the CI gate with FileNotFoundError:
     # a check that can only run on one person's machine is not a gate. Where the file is
@@ -1129,12 +1139,133 @@ def t_perf_measurement():
           'the click path must load the list with its own urgency')
 
 
+def t_deploy_staging():
+    """The last hop: which files actually leave the repository.
+
+    Two hand-copied `cp -r` lists used to decide that, and they had already drifted - CI served
+    `content/` (generator input, fetched by nothing) while Pages served `sw.js` and `pagefind/`
+    (which CI therefore never measures). A page that referenced a path only one list carried
+    would be green in CI and 404 for a visitor, so this is the shrinking-denominator class with
+    the largest blast radius. tools/stage-site.py is now the only enumerator, and the derived
+    set is asserted to equal the 101 files the hand list shipped.
+    """
+    stager = load_tool('stage_site', 'stage-site.py')
+    sets, audit = stager.staging_sets()
+    deploy, probe = sets['deploy'], sets['probe']
+    check('staging enumerator found a plausible reference denominator',
+          len(audit['html_refs']) >= stager.FLOOR,
+          '%d references, floor is %d' % (len(audit['html_refs']), stager.FLOOR))
+    check('derived deploy set is as large as the hand list it replaced',
+          len(deploy) >= 100, '%d files' % len(deploy))
+    for kind in ('refs_not_staged', 'unresolved_dynamic', 'precache_not_staged',
+                 'missing_from_disk', 'probe_only'):
+        check('staging audit: %s is empty' % kind, not audit[kind], str(audit[kind][:3]))
+    check('probe profile stays inside what Pages serves', set(probe) <= set(deploy),
+          str(sorted(set(probe) - set(deploy))[:3]))
+    for page in pages():
+        check('every built page is deployed: %s' % page, page in deploy, page)
+    check('the fraud list is deployed (the self-check fetches it)',
+          'assets/data/destroylist-domains.txt' in deploy)
+    check('service-worker chunks are deployed, not just the worker',
+          'sw.js' in deploy and any(f.startswith('workbox-') for f in deploy),
+          str([f for f in deploy if 'workbox' in f or f == 'sw.js']))
+    for fn, verb in (('ci.yml', 'probe'), ('deploy-pages.yml', 'deploy')):
+        body = read(os.path.join('.github', 'workflows', fn))
+        check('%s stages through the enumerator' % fn,
+              'tools/stage-site.py stage' in body and '--profile %s' % verb in body, verb)
+        stray = [l.strip() for l in body.split('\n')
+                 if re.match(r'^\s*cp -r?\s', l) and re.search(r'\b(assets|pages|index\.html)\b', l)]
+        check('%s keeps no private copy of the file list' % fn, not stray, str(stray[:2]))
+    ledger_path = os.path.join('reports', 'deploy-staging.json')
+    check('staging ledger is committed', os.path.isfile(os.path.join(ROOT, ledger_path)))
+    ledger = json.loads(read(ledger_path))
+    check('ledger deploy count matches the enumerator',
+          ledger['profiles']['deploy']['count'] == len(deploy),
+          'ledger %d vs live %d' % (ledger['profiles']['deploy']['count'], len(deploy)))
+    check('ledger file list matches the enumerator byte for byte',
+          ledger['profiles']['deploy']['files'] == deploy,
+          str(sorted(set(ledger['profiles']['deploy']['files']) ^ set(deploy))[:3]))
+    check('ledger records how it was made', ledger.get('generated_by') == 'tools/stage-site.py')
+
+
+def t_public_metadata():
+    """GitHub's About box is public copy that sits outside the file tree.
+
+    The file-level slogan ban could not reach it, so the repository still advertised itself as a
+    "Zero-dependency static site" after that framing was revoked - in the one sentence every
+    search result and every visitor reads. A local gate cannot call the API (no token guarantee,
+    and a network read must not decide a file test), so this pins the *expectation*; the live
+    read-back is `tools/verify-live.py --metadata`, wired into the post-deploy job.
+    """
+    want = json.loads(read(os.path.join('reports', 'repo-metadata.json')))
+    desc = want.get('description', '')
+    hits = [w for w in BANNED_SLOGAN if w.lower() in desc.lower()]
+    check('repo description does not revive the revoked slogan', not hits, str(hits))
+    m = re.search(r'(\d+) pages generated', desc)
+    check('description commits to a page count', bool(m), desc)
+    if m:
+        check('description page count matches the roster', int(m.group(1)) == len(pages()),
+              'description says %s, roster builds %d' % (m.group(1), len(pages())))
+    check('description does not promise a backend action',
+          not re.search(r'notified|notify|send(s|ing)? (a )?(sms|email)', desc.lower()), desc)
+    topics = want.get('topics', [])
+    check('topics have no duplicates and none is empty',
+          len(topics) == len(set(topics)) and all(t.strip() for t in topics), str(topics))
+    check('topics are lowercase slugs as GitHub stores them',
+          all(re.fullmatch(r'[a-z0-9][a-z0-9.\-]*', t) for t in topics), str(topics))
+    stager = load_tool('stage_site_for_meta', 'stage-site.py')
+    check('expectation homepage equals the sitemap origin',
+          want.get('homepage') == stager.site_base(),
+          '%r vs %r' % (want.get('homepage'), stager.site_base()))
+    check('expectation is generated by the same tool that checks it',
+          want.get('do_not_edit', '').startswith('this is the expectation'))
+
+
+def t_offline_package():
+    """The deliverable a non-developer can use, and the wiring that gets it onto the Release.
+
+    The README promises offline use while every published Release carried zero assets: the ZIP
+    existed on one machine, built by a script in another repository. Reproducibility is asserted
+    rather than assumed, because a package that changes between runs cannot be audited.
+    """
+    pkg = load_tool('package_offline', 'package-offline.py')
+    body = read(os.path.join('tools', 'package-offline.py'))
+    check('pagefind is excluded from the offline package, with its reason on the line above',
+          "'pagefind'" in str(pkg.DROP_DIRS) and 'resolves its shards over HTTP' in body)
+    entries, counts = pkg.members()
+    arcs = {a for _f, a in entries}
+    check('the package carries the whole deployed site bar the build outputs',
+          counts['site'] >= 45, '%d site files' % counts['site'])
+    check('the package carries the generator and its content input',
+          any(a.endswith('tools/build.py') for a in arcs)
+          and any(a.endswith('content/tutorials.json') for a in arcs), str(sorted(counts.items())))
+    check('no entry name is non-ASCII (the archive opens on non-UTF-8 locales)',
+          all(all(ord(c) < 128 for c in a) for a in arcs),
+          str([a for a in arcs if any(ord(c) > 127 for c in a)][:2]))
+    check('every entry sits under the agreed prefix',
+          all(a.startswith(pkg.PREFIX) for a in arcs), str([a for a in arcs if not a.startswith(pkg.PREFIX)][:2]))
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        one = pkg.build(os.path.join(td, 'one.zip'))
+        two = pkg.build(os.path.join(td, 'two.zip'))
+    check('the offline package is reproducible from one commit',
+          one['sha256'] == two['sha256'], '%s vs %s' % (one['sha256'][:12], two['sha256'][:12]))
+    check('the reproducibility claim has a denominator', one['entries'] == len(entries),
+          'zip %d entries vs membership %d' % (one['entries'], len(entries)))
+    rel = read(os.path.join('tools', 'release.py'))
+    check('release.py actually attaches the asset to the Release (not just builds it)',
+          "cmd.append(asset)" in rel and "'gh', 'release', 'upload'" in rel, 'build without upload is a half tool')
+    check('release.py refuses to publish when the packager fails',
+          'mod.build(dest)' in rel, 'the build must be on the release path, not beside it')
+
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
                t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
                t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw, t_page_nav,
-               t_contrast_coverage, t_perf_coverage, t_perf_measurement):
+               t_contrast_coverage, t_perf_coverage, t_perf_measurement,
+               t_deploy_staging, t_public_metadata, t_offline_package):
         fn()
     for f in FAILS:
         print('FAIL:', f)

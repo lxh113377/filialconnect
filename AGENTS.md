@@ -9,9 +9,13 @@ failures happened here and cost a round each time they were discovered late.
 python tools/test_build.py            # structure, i18n, copy-truth, budgets, determinism
 python tools/build.py check           # python-owned derived files in sync
 node tools/build.mjs check            # i18n.js / sitemap / lighthouserc / sw.js in sync
+python tools/stage-site.py check      # the deploy/probe file lists match reports/deploy-staging.json
 python tools/check-i18n.py            # EN/ZH key symmetry and data-i18n coverage
 python tools/contrast_coverage.py --check   # contrast audit denominator ledger
 node_modules/.bin/htmlhint "index.html" "pages/*.html"
+
+python tools/verify-live.py           # after a deploy: does production equal this commit? (needs net)
+python tools/package-offline.py --verify   # the offline ZIP is reproducible from one commit
 ```
 
 A release is cut with `python tools/release.py` (dry run) then `--apply`. It refuses to tag when
@@ -40,6 +44,16 @@ rebuilding, not appending by hand (`t_perf_coverage` fails otherwise).
    measurement prints its own sample count and run count; zero input never records PASS.
 5. **A tool that is not wired into a blocking chain is a half-finished tool.** Judges live in
    `tools/test_build.py` or CI, not in a README note someone has to remember.
+6. **A list maintained by hand in two places stops being true.** The deploy file set was copied by
+   hand into `deploy-pages.yml` and `ci.yml`, and the two had already drifted (CI served generator
+   input; Pages served the service worker CI never measured). `tools/stage-site.py` is now the only
+   enumerator and `t_deploy_staging` fails if a workflow keeps a private copy of the list. The same
+   class covers public copy that is not a file: the repository's About box kept selling the site
+   on what it does not use, long after that framing was revoked - because no gate looked outside
+   the working tree.
+7. **A number written in prose rots silently.** Three documents quoted a self-test count that had
+   doubled. Do not restate measurable quantities in copy - either point at the command that prints
+   it, or pin it with a judge (`t_public_metadata` pins the one number the About box commits to).
 
 ## Attribution before action
 

@@ -1,0 +1,16 @@
+{
+  "description": "FilialConnect 孝心联 — bilingual EN/中文 elderly-friendly tech tutorials: hospital booking, rail tickets, WeChat, offline scam-link checker. 14 pages generated from one content file, WCAG AA, works offline, CI-gated.",
+  "topics": [
+    "accessibility",
+    "elderly",
+    "i18n",
+    "offline-first",
+    "pwa",
+    "scam-prevention",
+    "senior",
+    "static-site",
+    "wcag"
+  ],
+  "homepage": "https://lxh113377.github.io/filialconnect/",
+  "do_not_edit": "this is the expectation, not a recording; tools/verify-live.py --metadata compares GitHub's About box against it"
+}

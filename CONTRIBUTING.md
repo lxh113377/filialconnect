@@ -55,7 +55,8 @@
 python tools/build.py build      # 重新生成派生产物
 python tools/build.py check      # 漂移门禁（CI 同款）
 python tools/check-i18n.py       # 双语对称 + HTML 覆盖 + 孤儿键
-python tools/test_build.py       # 1100+ 条管线/结构/无障碍/文案真实性断言
+python tools/test_build.py     # 管线/结构/无障碍/文案真实性断言（条数以实跑输出为准，本文不写死）
+python tools/stage-site.py check   # 「哪些文件离得开这个仓」与已提交台账对账（部署集 = 页面引用集）
 npx --yes htmlhint "index.html" "404.html" "pages/*.html"
 npx --yes linkinator . --recurse --check-fragments \
     --skip "https://lxh113377.github.io/filialconnect.*"
@@ -69,10 +70,25 @@ python -m http.server 8765       # 再用 Chrome DevTools 看四个断点与暗�
 
 1. 从 `main` 开分支 → 修改 → 本地过上述检查。
 2. Commit 遵循 [Conventional Commits](https://www.conventionalcommits.org/)（`feat(tutorial): ...` / `fix(a11y): ...`）。
-3. 提 PR，等待 CI 全绿：HTMLHint（14 页）→ i18n → 管线漂移 → 管线自测 →
+3. 提 PR，等待 CI 全绿：HTMLHint（14 页）→ i18n → 管线漂移 → 部署集台账 → 管线自测 →
    链接检查（HTML + Markdown）→ 子路径起服务 → Lighthouse CI（14 页，
    Performance ≥0.9、Accessibility ≥0.95 为 error 级）。
 4. 附修改前后截图（桌面 + 手机两个断点；改到颜色时补暗色模式各一张）。
+
+## 发版前清单（`python tools/release.py` 只替你做其中一部分）
+
+```bash
+node tools/perf-probe.mjs --runs=3          # 3 次/URL；runs=1 会把双峰压成一个漂亮值，判据会拒绝它
+python tools/build.py check && node tools/build.mjs check
+python tools/stage-site.py check --write    # 动了引用才需要重算台账，随后把台账一起提交
+python tools/test_build.py                  # 全绿
+python tools/release.py                     # 干跑：版本三处一致 + CI 结论 + 会发什么资产
+python tools/release.py --apply             # 打 tag、推 tag、建 Release、挂离线 ZIP 资产
+```
+
+`--apply` 在 CI 为 red/unknown 时**拒绝**发版，这是正确结果不是障碍（发版必须落在绿提交上）。
+发完后 `deploy-pages.yml` 的 `verify-live` 作业会把线上逐文件取回来与本次提交比 sha256，
+并核对仓外元数据；`gh run watch <id> --exit-status` 已在链路里，不必另装 git hook。
 
 ## 数据源
 

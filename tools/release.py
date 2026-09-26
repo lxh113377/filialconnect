@@ -61,6 +61,30 @@ def ci_verdict(sha):
     return 'red', out
 
 
+def offline_package(apply):
+    """Build (and return the path to) the ZIP a visitor can actually download.
+
+    Every release used to carry zero assets while the README's promise was offline use: the
+    archive existed only on one machine, in a different repository. `tools/package-offline.py`
+    is reproducible, so the Release is the place the promise can be kept.
+    """
+    dest = os.path.join(ROOT, 'dist', 'FilialConnect-%s-offline.zip'
+                        % json.loads(read('package.json'))['version'])
+    if not apply:
+        print('offline asset  : would build %s' % os.path.relpath(dest, ROOT))
+        return None
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        'package_offline', os.path.join(ROOT, 'tools', 'package-offline.py'))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    info = mod.build(dest)
+    print('offline asset  : %s (%d entries, %.0f KB, sha256 %s)'
+          % (os.path.basename(info['path']), info['entries'], info['bytes'] / 1024.0,
+             info['sha256'][:12]))
+    return info['path']
+
+
 def main():
     version = json.loads(read('package.json')).get('version', '')
     log = read('CHANGELOG.md')
@@ -101,6 +125,7 @@ def main():
     print('tag          : %s%s' % (tag, ' (already exists, will be reused)' if exists else ''))
     print('release body : %d lines from CHANGELOG [%s]' % (len(body.splitlines()), version))
     print('mode         : %s' % ('APPLY' if APPLY else 'dry run (pass --apply to publish)'))
+    asset = offline_package(APPLY)
     if not APPLY:
         return 0
 
@@ -116,13 +141,19 @@ def main():
         bf = os.path.join(ROOT, '.release-body.tmp.md')
         io.open(bf, 'w', encoding='utf-8', newline='\n').write(body + '\n')
         try:
-            r = sh(['gh', 'release', 'create', tag, '--title', 'FilialConnect %s' % version,
-                    '--notes-file', bf])
+            cmd = ['gh', 'release', 'create', tag, '--title', 'FilialConnect %s' % version,
+                   '--notes-file', bf]
+            if asset:
+                cmd.append(asset)
+            r = sh(cmd)
             print('release      : %s' % r)
         finally:
             os.remove(bf)
     else:
         print('release already exists for %s' % tag)
+        if asset:
+            sh(['gh', 'release', 'upload', tag, asset, '--clobber'])
+            print('asset        : uploaded %s' % os.path.basename(asset))
     return 0
 
 

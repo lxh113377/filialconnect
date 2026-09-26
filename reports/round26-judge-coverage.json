@@ -1,0 +1,60 @@
+{
+  "generated_by": "round 26 (2026-09-26); evidence recorded by hand, floor assertions live in tools/test_build.py",
+  "purpose": "A judge that measures a shrinking denominator looks identical to one that measures everything. This file records what each round-26 judge actually sees, and what had to break to prove it can report.",
+  "judges": {
+    "t_deploy_staging": {
+      "assertions": 32,
+      "denominator": {
+        "html_references_enumerated": 28,
+        "floor": 20,
+        "dynamic_patterns": 10,
+        "deploy_files": 101,
+        "probe_files": 42,
+        "pages_checked_individually": 14
+      },
+      "equivalence_baseline": "the derived deploy set equals the two hand-copied lists file for file, minus assets/images/.gitkeep, which GitHub Pages never served (measured: 404)",
+      "mutations_tested": 6,
+      "mutations": [
+        "M1 a page references feeds/new.json -> 'refs_not_staged' red",
+        "M2 deploy workflow stops calling the enumerator -> 'stages through the enumerator' red",
+        "M3 a hand-copied cp list returns to ci.yml -> 'keeps no private copy of the file list' red",
+        "M4 committed ledger edited to count 40 -> 'ledger deploy count matches the enumerator' red",
+        "M5 sw.js imports a workbox chunk that is not on disk -> 'unresolved_dynamic' red",
+        "M6 ALWAYS_SHIP_DIRS narrowed to assets/css -> 'as large as the hand list it replaced' red (83 files)"
+      ],
+      "vacuous_assertion_removed": "references were originally merged into the deploy set by construction, so 'refs_not_staged' could never fire; the merge was removed and M1 re-run to prove the check is reachable"
+    },
+    "t_public_metadata": {
+      "assertions": 8,
+      "denominator": {
+        "banned_slogan_terms_shared_with_t_promises": 9,
+        "topics_compared": 9,
+        "description_numbers_cross_checked": 1
+      },
+      "why_local": "the expectation is pinned in reports/repo-metadata.json; reading GitHub's own copy needs a token, so tools/verify-live.py --metadata does the live read-back from the post-deploy job",
+      "defect_that_motivated_it": "the repository About box said 'Zero-dependency static site' after the user revoked that framing - a sentence the file-level ban could not reach because it is not a file",
+      "mutations_tested": 4,
+      "mutations": [
+        "M7 'Zero-dependency' returns to the description -> 'does not revive the revoked slogan' red",
+        "M8 page count in the description changed to 99 -> 'page count matches the roster' red",
+        "M9 a topic made 'Offline First' -> 'lowercase slugs' red",
+        "M10 homepage pointed at example.com -> 'equals the sitemap origin' red"
+      ]
+    },
+    "t_offline_package": {
+      "assertions": 10,
+      "denominator": {
+        "site_files_packaged": 49,
+        "source_files_packaged": 28,
+        "entries_total": 77
+      },
+      "reproducibility": "built twice into a temporary directory, sha256 compared; timestamps pinned to the ZIP epoch",
+      "defect_that_motivated_it": "7 published Releases, 0 assets each, while offline use is the stated promise",
+      "note": "peer evidence was measured, not assumed: only Pagefind ships release assets among the compared projects, because it distributes binaries - the justification here is our own delivery path, not a convention"
+    }
+  },
+  "chain": {
+    "before": 1879,
+    "after": 1939
+  }
+}

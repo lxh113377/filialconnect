@@ -37,12 +37,10 @@ jobs:
         run: node tools/build-search.mjs index
 
       - name: Stage site (public deliverable only)
+        # One enumerator for "what leaves the repo", shared with the CI probe server, instead of
+        # two hand-copied `cp -r` lists that had already drifted apart.
         run: |
-          mkdir _site
-          cp -r index.html 404.html pages assets sitemap.xml robots.txt manifest.json sw.js workbox-*.js pagefind _site/
-          cp README.md LICENSE SECURITY.md SOURCES.md CONTRIBUTING.md _site/
-          find _site -name '__pycache__' -type d -prune -exec rm -rf {} +
-          find _site -name '*.pyc' -delete
+          python3 tools/stage-site.py stage --out _site --profile deploy
           echo "staged $(du -sh _site | cut -f1), $(find _site -type f | wc -l) files"
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
@@ -50,3 +48,44 @@ jobs:
           path: _site
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+  # Everything else in this repository measures the working tree. This is the only check on the
+  # last hop - staging, the CDN, and the About box - so "pipeline green" and "site broken" can no
+  # longer both be true. Runs after deploy, on main pushes only: a transient CDN problem must not
+  # be able to block an unrelated pull request.
+  verify-live:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      # The ledger lists pagefind/** as shipped, and it can only do that from a build that
+      # exists: a fresh checkout has no index (it is gitignored), and an empty expansion is a
+      # staging problem, not a skipped check.
+      - name: Build the search index the ledger says is shipped
+        run: |
+          npm ci
+          node tools/build-search.mjs index
+          python3 tools/stage-site.py check
+
+      - name: Wait for Pages to serve this build
+        run: |
+          for i in $(seq 1 20); do
+            if curl -sf -o /dev/null "$BASE_URL/index.html"; then echo "up after ${i} tries"; exit 0; fi
+            sleep 15
+          done
+          echo "the site did not answer within 5 minutes"; exit 1
+        env:
+          BASE_URL: https://lxh113377.github.io/filialconnect
+
+      - name: Live site equals this commit
+        run: python3 tools/verify-live.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

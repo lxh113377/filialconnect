@@ -36,6 +36,9 @@ jobs:
       - name: Node-owned artifacts drift check (locales/sitemap/lighthouserc/workbox sw)
         run: node tools/build.mjs check
 
+      - name: Staging ledger drift check (what the deploy and probe servers actually copy)
+        run: python3 tools/stage-site.py check
+
       - name: DOM audit (parsed pages vs dictionary; head meta and fallback text)
         run: node tools/verify-dom.mjs
 
@@ -63,9 +66,8 @@ jobs:
 
       - name: Serve site under the production subpath
         run: |
-          mkdir -p /tmp/pages-root/filialconnect
-          cp -r index.html 404.html pages assets sitemap.xml robots.txt content \
-                /tmp/pages-root/filialconnect/
+          mkdir -p /tmp/pages-root
+          python3 tools/stage-site.py stage --out /tmp/pages-root/filialconnect --profile probe
           (cd /tmp/pages-root && python3 -m http.server 8765 >/tmp/http.log 2>&1 &)
           for i in $(seq 1 20); do
             curl -sf "http://127.0.0.1:8765/filialconnect/index.html" >/dev/null && break

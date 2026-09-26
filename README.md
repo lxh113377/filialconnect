@@ -65,7 +65,8 @@ python -m http.server 8000
 python tools/build.py build    # 改完 JSON 后重新生成页面与 i18n 键
 python tools/build.py check    # 校验派生件与内容源无漂移（CI 同款）
 python tools/check-i18n.py     # EN/ZH 键对称 + HTML 覆盖 + 孤儿键
-python tools/test_build.py     # 管线/结构/无障碍/文案真实性断言（1100+ 条）
+python tools/test_build.py     # 管线/结构/无障碍/文案真实性断言（条数以实跑输出为准，写死会烂）
+python tools/stage-site.py check   # 校验"哪些文件离得开这个仓"与已提交台账无漂移
 python tools/fetch-fraud-feeds.py  # 手动刷新防骗域名离线名单（CI 每周一自动开 PR）
 ```
 
@@ -78,16 +79,20 @@ python tools/fetch-fraud-feeds.py  # 手动刷新防骗域名离线名单（CI �
 2. **Linkinator** — 站内递归 + fragment + 外部链接；Markdown 文档单独一轮
 3. **i18n 对称门禁** — `tools/check-i18n.py`
 4. **内容管线漂移门禁** — `python tools/build.py check`（含导航/页脚 marker 覆盖检查）
-5. **管线自测** — `python tools/test_build.py`（1,426 条：幂等、单 h1、标题不跳级、本地链接可解析、
+5. **管线自测** — `python tools/test_build.py`（断言条数以实跑输出为准，本文不写死数字：幂等、单 h1、标题不跳级、本地链接可解析、
    子路径绝对路径防呆、双语对称、孤儿键、**文案真实性关键词**、`<head>` 引用的资源文件真实存在、
    og-cover.png 尺寸合规、名单与清单计数一致、sitemap 覆盖、**逐文件 gzip 字节预算**、
-   橙底元素必须使用不随主题翻转的前景令牌）
+   橙底元素必须使用不随主题翻转的前景令牌、**部署集与页面引用对账**）
 6. **子路径真实服务** — 按生产路径 `/filialconnect/` 起 http.server 并探测 1.5MB 离线名单可达
 7. **Lighthouse CI** — 全部 14 页 × 2 次，Performance ≥0.9、Accessibility ≥0.95、
    Best-Practices ≥0.9、SEO ≥0.9 全部 error 级；404.html 的 SEO 按名豁免并写明理由
 8. **性能实测（按需）** — `node tools/perf-probe.mjs --lang=zh-CN` 打印逐页真实四分类分数与
    LCP/CLS/TBT，落 `reports/perf-baseline.json`。CI 只显示"哪几项没达标"，看不到具体分数，
    也看不到只在中文浏览器下出现的排版抖动，所以两者都要跑
+9. **部署后线上对账**（`deploy-pages.yml` 的 `verify-live`）— 把已发布的站点逐文件取回来与
+   本次提交比 sha256，并核对名单的**传输字节**是否还是 README 写的那个 gzip 数字、
+   GitHub 仓外元数据（About 描述/主题）是否还是那句被作废的口号。链路上其余检查都只看工作树，
+   这一段此前没有任何判据（2026-09-26 实测：49 个已提交文件逐只一致，名单线上 532,283 B）
 
 ## 适老化与无障碍依据
 

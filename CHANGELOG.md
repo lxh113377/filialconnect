@@ -5,15 +5,69 @@
 
 ## [Unreleased]
 
+_（暂无未发布的变更；第二十六轮的判据与工具随 1.7.0 一起发出。）_
+
+## [1.7.0] - 2026-09-26
+
+第二十六轮对标：主轴是**交付链最后一段的口径一致性**——"仓库里绿"与"线上对"之间此前没有任何判据，
+而"哪些文件算站点"这件事被两份手抄清单分别决定。全部结论带实测与变异体，覆盖面台账见
+`reports/round26-judge-coverage.json`。
+
+### Added
+- **`tools/stage-site.py`：站点文件集合的唯一枚举器**。原先 `deploy-pages.yml` 与 `ci.yml`
+  各存一份手写 `cp -r` 清单，且**已经漂移**（CI 拷 `content/`＝生成器输入，没人 fetch；
+  Pages 拷 `sw.js`/`pagefind/`，CI 因此从没测过 Service Worker 那条路）。
+  现在两份清单都由它派生：`--profile deploy` 给 Pages，`--profile probe` 给 CI 的本地服务器，
+  台账落 `reports/deploy-staging.json` 并进 CI 漂移门禁。
+  派生集合与旧手抄清单**逐文件相同**（101 个），唯一差异是 `assets/images/.gitkeep`——
+  实测 GitHub Pages 对点文件回 404（`--compressed` 取回 404 页），它本来就不算交付物。
+  覆盖面：页面引用枚举 28 条（下限 20）、动态模式 10 条、逐页断言 14 条。
+  **写这个工具的过程中我自己引入过一次回归并被实测抓住**：只按 HTML `src/href` 枚举会漏掉
+  ① manifest.json 的四个图标（PWA 装机图标）② 只以绝对 URL 出现的 `og-*.png`（社交卡片图），
+  共 12 个文件会被静默不部署——修法是 `ALWAYS_SHIP_DIRS` 与 `manifest_refs()`，
+  并新增"绝对自站 URL 也算引用"的解析（站点基址从 `sitemap.xml` 读，不在第二处重述）。
+- **判据 `t_deploy_staging`（32 条）+ 变异体 6 条各自转红**：页面引用一个没人部署的路径 /
+  workflow 不再调枚举器 / 手抄清单回潮 / 台账被改数 / `sw.js` 指向不存在的 workbox 块 /
+  整目录不再全拷。**过程中删掉一条永真断言**：refs 原本被无条件并入 deploy 集，
+  导致 `refs_not_staged` 在构造上不可能红——改成"引用必须落进部署集"后 M1 才真正转红。
+- **`tools/verify-live.py`：线上态 == 仓库态**。按部署集逐个取回线上文件比 sha256
+  （已提交的比字节，构建产物只比可达——pagefind 索引由部署作业现建，哈希名本就不该跨构建相等），
+  并核对名单的**传输字节**是否还是 README 写的那个数、GitHub 仓外元数据是否还是那句被作废的话。
+  2026-09-26 实测：`deploy` 集 101 项里 49 个已提交文件逐个一致、52 个索引分片全部可达，
+  名单线上 `Content-Length: 532283` + `Content-Encoding: gzip` + `Vary: Accept-Encoding`
+  ⇒ **挂了一轮的 #135 就此结案**（本机直连 github.io 全天 000，走代理 200 才拿到证据）。
+  接进 `deploy-pages.yml` 的新 `verify-live` 作业（`needs: deploy`，只在 main 推送后跑：
+  CDN 抖动不许拦住无关 PR）。
+- **判据 `t_public_metadata`（8 条）**：把 About 描述钉成期望值 `reports/repo-metadata.json`，
+  与仓内**同一份**违禁口号名单回问（原先名单写在 `t_promises` 里，两份实现的坑本仓记过）。
+  描述里的页数交叉核对花名册、主题须为 GitHub 实际存储的小写 slug、homepage 须等于 sitemap origin。
+- **GitHub Release 开始挂离线 ZIP 资产**（`tools/package-offline.py` + `release.py` 上传）。
+  7 个已发布 Release 的 `assets=0`，而本站卖点是离线可用——离线包此前只存在于一台机器的私有归档仓。
+  打包器现在住在这个仓里，任何人 clone 后可复现，且 `--verify` 实测**同一提交两次构建逐字节相同**
+  （时间戳钉在 ZIP epoch、条目排序、名全 ASCII）。
+  ⚠️ 诚实记录一次被实测推翻的假设：我原以为"peer 都发产物资产"，实跑 8 个对等仓后只有
+  Pagefind 挂（它分发二进制），其余全是 0。所以本条的依据是**我们自己的交付路径**，不是惯例。
+
 ### Changed
-- **`xmlbuilder2` 3.1.1 → 4.0.3**（#132，9 项直接依赖里唯一落后的那一个，且是一个主版本）。
-  验收方式不是"装得上就算过"：`node tools/build.mjs build` 后对 `sitemap.xml` 做**逐字节比对**，
-  与升级前完全一致（XML 声明、转义还原那两行、换行都不差），`node tools/build.mjs check` 与
-  1,879 条门禁全绿。过程中本仓的"精确锁版本"判据还把我自己拦了一次——
-  `npm i -D xmlbuilder2@4` 默认写进 `^4.0.3`，判据立刻报
-  `lockfile pins the same dev tool versions package.json declares: {'xmlbuilder2': ('^4.0.3', '4.0.3')}`，
-  改用 `--save-exact` 才通过（这正是该判据该干的活）。
-  纯构建期依赖、产物零变化 ⇒ 按规矩留 Unreleased 随下次内容发版带走，不另开版本号。
+- **文档不再写死可测数字**：README 的"1100+ 条"/"1,426 条"与 CONTRIBUTING 的"1100+ 条"
+  全部改为指向打印该数字的命令，并加判据 `documents do not restate the self-test count as prose`
+  防止新数字被手抄回去（本仓第五类反复缺陷"文案承诺能力"的数字版）。
+- **CI 的本地探测服务器不再拷 `content/`**（生成器输入，无页面 fetch），改为 `--profile probe`；
+  由此 `probe ⊆ deploy` 成为可断言的关系。
+- `xmlbuilder2` 3.1.1 → 4.0.3（#132，第二十五轮登记，按规矩随下一次发版带走）。
+- 仓库元数据线上修正：About 描述去掉被作废的口号、补 `offline-first` 主题（`gh api` PATCH +
+  `topics` 端点，读回核对）。
+- 发版前清单写进 CONTRIBUTING（含 `perf-probe --runs=3`，第二十五轮计划项 3 的收尾）。
+
+### 账面
+- 门禁链 1,879 → **1,940 条**（+61：32 部署集 + 8 元数据 + 10 离线包 + 若干交叉断言与文案钉）。
+- AGENTS.md 反复缺陷清单从 5 类涨到 **7 类**（新增"手抄两份的清单会失真"、"散文里的数字会烂"）。
+
+### 环境事故（如实记录，未影响交付）
+- 本轮编辑期间 `security-scan` 的 PostToolUse L1 钩子自行崩溃
+  （`runtime: cannot allocate memory` + `findstr ... qodersec-version.json` 不被识别），
+  编辑均已落盘；判据链改由本仓门禁自证，不依赖该钩子。
+
 
 ## [1.6.1] - 2026-09-25
 
