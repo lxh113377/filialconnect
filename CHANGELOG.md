@@ -34,6 +34,20 @@
   "单标签卡"的差异只存在于手写的 HTML 里，现在它是字典状态的函数。
 - `CONTRIBUTING.md` 的"新增第 7 篇教程"第 4 步随之改写：不再手写卡片，改为加数据 + 放一张 svg。
 
+- 验收（worktree 里真加第 7 篇，脚本 `_internal/test_round33_add_tutorial.py`）**3/3**：
+  A 只改数据（花名册条目 + 卡片条目 + 一张 svg + 在 `assets/locales/*.json` 里写卡片文案三键）
+  ⇒ 构建 rc=0、卡片刻出 **7/7**、HTML 全部由构建写入；期间**唯一**的判据失败是
+  `CONTRIBUTING page counts match the roster`（roster 15 页 vs 文档 14），恰好证明贡献者文档
+  被钉在花名册上、不会静默过期；B 缺插画 ⇒ 构建点名拒绝；C 卡片条目指向不存在的教程 ⇒ 点名拒绝。
+  **仍然要人写的**：卡片文案（`tut.<slug>.h3/p/tag1[/tag2]`）与那张插画；**不再需要**的是任何 HTML 手改。
+
+### Added
+- 判据 `t_tracked_inputs`：**构建输入不得处于未跟踪状态**。本轮用 `git add -u` 收口时，
+  `-u` 只暂存**已跟踪**文件的修改，`content/card-art/*.svg` 与 `content/tutorial-cards.json`
+  当时仍是未跟踪 ⇒ 提交里缺文件、CI 必红，而本地链一路绿。判据查
+  `git ls-files --others --exclude-standard`，`content/assets/tools/pages` 之下（或根目录 `*.html`）
+  出现未跟踪文件即红，并带一条正控（新建文件必须被扫描看见，否则规则是装饰）。
+
 ## [1.11.0] - 2026-09-26
 
 第三十二轮（同一命令第 24 次重发 = 完整重执行）。补完第 30 轮留下的那一半：`manual` 名单当时只是
