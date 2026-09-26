@@ -49,6 +49,15 @@ _（暂无未发布的变更；第二十六轮的判据与工具随 1.7.0 一起
   Pagefind 挂（它分发二进制），其余全是 0。所以本条的依据是**我们自己的交付路径**，不是惯例。
 
 ### Changed
+- **打包规则从私有仓搬进本仓**：`tools/package-offline.py` 成为 ZIP 内容的唯一主人，
+  私有归档仓的 `build_zip.py` 降级为薄调用者（只负责交付物的日期命名）。
+  同时收掉一条老红因：`t_search_ui` 原先无条件读 `../_internal/build_zip.py`——第 11 轮 CI
+  就是因为这个 `FileNotFoundError` 红了 22 秒（"只能在一个人机器上跑的判据不算判据"）。
+  判据改读仓内文件，并新增 `the offline packager is the only owner of the ZIP membership`。
+  私有侧 `verify_zip_parity.py` 第一次跑就抓到两条真缺口：离线包少了
+  `lighthouserc.json` / `lighthouserc.mobile.json`（预算声明是"怎么自证达标"的入口），
+  以及"台账未提交就打包"→ 与 HEAD 不一致；两条都已修（包 80 → 82 条目）。
+  验证器自己补两条：找不到 ZIP 直接 SystemExit、距今 >7 天判 FAILED。
 - **文档不再写死可测数字**：README 的"1100+ 条"/"1,426 条"与 CONTRIBUTING 的"1100+ 条"
   全部改为指向打印该数字的命令，并加判据 `documents do not restate the self-test count as prose`
   防止新数字被手抄回去（本仓第五类反复缺陷"文案承诺能力"的数字版）。

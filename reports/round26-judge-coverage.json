@@ -57,7 +57,7 @@
   },
   "chain": {
     "before": 1879,
-    "after": 1946
+    "after": 1947
   },
   "ci_regressions_caused_and_fixed_this_round": [
     "run 36218739260 (22s): the fourth reader of the hand-copied list was tools/build-search.mjs, which regexed deploy-pages.yml for `cp -r ... _site/`. It failed loudly, not silently. Now reads the committed ledger with a >=40-file floor; index output unchanged at en:14p zh:11p | 1227 KiB.",
