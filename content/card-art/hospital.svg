@@ -1,0 +1,8 @@
+          <svg width="120" height="80" viewBox="0 0 120 80" fill="none" aria-hidden="true">
+            <rect x="10" y="10" width="100" height="60" rx="8" fill="#E8EFF8" stroke="#2B5797" stroke-width="2"/>
+            <rect x="30" y="25" width="60" height="5" rx="2" fill="#2B5797" opacity="0.5"/>
+            <rect x="30" y="38" width="40" height="5" rx="2" fill="#2B5797" opacity="0.3"/>
+            <rect x="30" y="51" width="50" height="5" rx="2" fill="#2B5797" opacity="0.2"/>
+            <circle cx="95" cy="17" r="8" fill="#E8833A"/>
+            <path d="M91 17h8M95 13v8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          </svg>

@@ -1,0 +1,28 @@
+{
+  "cards": [
+    {
+      "slug": "hospital",
+      "label": "Hospital"
+    },
+    {
+      "slug": "train",
+      "label": "Train Tickets"
+    },
+    {
+      "slug": "banking",
+      "label": "Mobile Banking"
+    },
+    {
+      "slug": "wechat",
+      "label": "WeChat Guide"
+    },
+    {
+      "slug": "medical",
+      "label": "Medical Report"
+    },
+    {
+      "slug": "ride",
+      "label": "Ride-Hailing"
+    }
+  ]
+}

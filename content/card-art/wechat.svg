@@ -1,0 +1,8 @@
+          <svg width="120" height="80" viewBox="0 0 120 80" fill="none" aria-hidden="true">
+            <rect x="10" y="10" width="100" height="60" rx="8" fill="#E8EFF8" stroke="#2B5797" stroke-width="2"/>
+            <circle cx="40" cy="40" r="18" fill="#2B5797" opacity="0.15"/>
+            <path d="M40 28c-4 0-8 2-8 6 0 3 2 5 3 8h10c1-3 3-5 3-8 0-4-4-6-8-6z" fill="#2B5797" opacity="0.4"/>
+            <circle cx="80" cy="40" r="18" fill="#2B5797" opacity="0.15"/>
+            <path d="M80 28c-4 0-8 2-8 6 0 3 2 5 3 8h10c1-3 3-5 3-8 0-4-4-6-8-6z" fill="#2B5797" opacity="0.3"/>
+            <path d="M45 38l26 4" stroke="#2D8B4E" stroke-width="1.5" stroke-dasharray="4 2"/>
+          </svg>
