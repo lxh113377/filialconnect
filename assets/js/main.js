@@ -226,6 +226,20 @@
       });
     });
 
+    // The tab title is user-visible chrome, not body copy: switching to ZH used to translate the
+    // page but leave the tab English. Pages that declare `derived` build the title from their own
+    // translated <h1> + brand, which reproduces the static English title byte-for-byte in EN (so
+    // this cannot regress EN); `manual` pages carry a hand-authored title that is not h1+brand, so
+    // we leave document.title exactly as the server wrote it rather than rewrite the English tab.
+    var titleMode = document.querySelector('meta[name="filialconnect:page-title"]');
+    var h1 = document.querySelector('h1[data-i18n]');
+    if (titleMode && titleMode.getAttribute('content') === 'derived' && h1) {
+      var h1Key = h1.getAttribute('data-i18n');
+      if (dictHas(lang, h1Key) && dictHas(lang, 'nav.brand')) {
+        document.title = tr(h1Key) + ' - ' + tr('nav.brand');
+      }
+    }
+
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
 
     var toggleBtn = document.querySelector('.lang-toggle');

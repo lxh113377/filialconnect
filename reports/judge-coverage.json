@@ -3,8 +3,8 @@
     "pagefind"
   ],
   "checks_last_run": null,
-  "judge_functions": 35,
-  "judge_functions_registered": 35,
+  "judge_functions": 36,
+  "judge_functions_registered": 36,
   "judges_defined_but_unregistered": [],
   "notes": "Deliberately NOT recorded here: any count owned by another authority. deploy/probe file counts belong to reports/deploy-staging.json (and to git itself), offline package membership belongs to package-offline.members(), and the check total belongs to the line tools/test_build.py prints. Each of those was copied here once and each copy went stale - three CI reds in one day. Field set is pinned by t_judge_ledger; adding a number needs a reason and a removal."
 }

@@ -448,6 +448,23 @@ def canonical_for(fp):
     return SITE_BASE + ('/' if fp == 'index.html' else '/' + fp)
 
 
+# 2026-09-29: switching to ZH translated the body but left the browser tab English, because no
+# page's <title> is localized and applyTranslations never touched document.title. These pages can
+# derive the tab title from their translated <h1> + brand (see t_page_title, which re-checks the
+# equality and rejects a stale `derived`); the rest keep a hand-authored title that is not
+# `h1 + brand`, so derivation would rewrite the English tab -> `manual`.
+PAGE_TITLE_MANUAL = frozenset({
+    'index.html',               # 'FilialConnect - Digital Bridge for Seniors' (brand leads, not h1)
+    '404.html',                  # 'Page not found (404) | FilialConnect 孝心联' (a | not a -)
+    'pages/call-help.html',     # 'Call for Help' vs h1 'Need Help Right Now?'
+    'pages/fraud-database.html',  # 'Fraud Alerts' vs h1 'Fraud Alert Database'
+})
+
+
+def page_title_mode(fp):
+    return 'manual' if fp in PAGE_TITLE_MANUAL else 'derived'
+
+
 def sync_head(s, fp):
     """Upsert the marker-delimited canonical / og:url / social-image block
     before </head>."""
@@ -469,6 +486,7 @@ def sync_head(s, fp):
                        '  <meta property="og:image:height" content="630">',
                        '  <meta property="og:image:alt" content="%s">' % og_alt,
                        '  <meta name="twitter:image" content="%s">' % og,
+                       '  <meta name="filialconnect:page-title" content="%s">' % page_title_mode(fp),
                        HEAD_MARK_END])
     if HEAD_MARK_BEG in s and HEAD_MARK_END in s:
         s = re.sub(re.escape(HEAD_MARK_BEG) + r'.*?' + re.escape(HEAD_MARK_END),

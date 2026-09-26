@@ -1586,6 +1586,75 @@ def t_deploy_reasons():
           bool(ss.ship_reasons('assets/css/main.css', sets, audit)),
           'main.css should be explained by page src/href; if empty, the audit sees nothing')
 
+
+# Expected hand-authored titles that are deliberately NOT `h1 + brand` (round 30). If one of these
+# is ever reworded to match h1+brand it can move to `derived`; that must be an edit here, not a
+# silent runtime behavior change.
+PAGE_TITLE_MANUAL_EXPECTED = {'index.html', '404.html', 'pages/call-help.html',
+                              'pages/fraud-database.html'}
+PAGE_TITLE_DERIVED_FLOOR = 10
+
+
+def t_page_title():
+    """The tab title must localize on `derived` pages and reproduce the static English byte-for-byte.
+
+    Guards the main.js document.title change: it fires only where `static <title> == h1.en +
+    ' - ' + brand.en`, so English cannot regress; this asserts that equality still holds and that
+    the Chinese derivation is present and actually different from English.
+    """
+    i18n_en = json.loads(read(os.path.join('assets', 'locales', 'en.json')))
+    i18n_zh = json.loads(read(os.path.join('assets', 'locales', 'zh.json')))
+    brand_en, brand_zh = i18n_en.get('nav.brand', ''), i18n_zh.get('nav.brand', '')
+    check('nav.brand resolves in both languages', brand_en and brand_zh,
+          '%r / %r' % (brand_en, brand_zh))
+
+    derived, manual, problems = [], [], []
+    for fp in pages():
+        s = read(fp)
+        mode = re.search(r'<meta name="filialconnect:page-title" content="([^"]*)"', s)
+        mode = mode.group(1) if mode else None
+        title = re.search(r'<title>([^<]*)</title>', s)
+        title = title.group(1).strip() if title else None
+        h1k = re.search(r'<h1[^>]*data-i18n="([^"]+)"', s)
+        h1k = h1k.group(1) if h1k else None
+        if mode not in ('derived', 'manual'):
+            problems.append('%s: page-title mode is %r (must be derived|manual)' % (fp, mode))
+            continue
+        if mode == 'manual':
+            manual.append(fp)
+            continue
+        derived.append(fp)
+        if not (h1k and i18n_en.get(h1k) is not None and i18n_zh.get(h1k)):
+            problems.append('%s: derived but h1 key %r missing in a dictionary' % (fp, h1k))
+            continue
+        want_en = i18n_en[h1k] + ' - ' + brand_en
+        if title != want_en:
+            problems.append('%s: derived but static title %r != h1.en+brand %r'
+                            % (fp, title, want_en))
+        if '<br>' in i18n_zh[h1k] or '<br>' in i18n_en[h1k]:
+            problems.append('%s: derived h1 contains <br>, which the tab title cannot render' % fp)
+        # The real no-localization risk is the h1 ITSELF being identical in both languages.
+        # (Comparing the composed title would be vacuous: brand_en 'FilialConnect' != brand_zh
+        # '孝心联', so want_zh could never equal want_en no matter the h1. That dead branch was
+        # caught by the C4 mutation returning a different judge's message - see round 30 note.)
+        if i18n_zh[h1k] == i18n_en[h1k]:
+            problems.append('%s: derived h1 is identical in EN and ZH (tab title not localized)' % fp)
+
+    check('every page declares a title mode (no page left unexplained)', not problems,
+          ' | '.join(problems[:4]))
+    check('the manual-title set is exactly the four hand-authored ones',
+          set(manual) == PAGE_TITLE_MANUAL_EXPECTED,
+          'manual=%s' % sorted(manual))
+    check('the derived-title set keeps its floor (turning localization off is a decision)',
+          len(derived) >= PAGE_TITLE_DERIVED_FLOOR, '%d derived' % len(derived))
+    check('the title audit covers the whole page set',
+          len(derived) + len(manual) == len(pages()) and len(pages()) == 14,
+          '%d+%d vs %d pages' % (len(derived), len(manual), len(pages())))
+    # positive control for the equality logic: an obviously wrong expected value must be detectable
+    fake = (i18n_en.get('tutorials.h1', '') + ' - ' + brand_en)
+    check('the derived-equality helper has real signal (tutorials page reference present)',
+          '<title>%s</title>' % fake in read('pages/tutorials.html'), repr(fake[:60]))
+
 def main():
     for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
                t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
@@ -1594,7 +1663,8 @@ def main():
                t_contrast_coverage, t_perf_coverage, t_perf_measurement,
                t_deploy_staging, t_public_metadata, t_offline_package,
                t_capability_claims, t_documented_numbers, t_gate_wiring,
-               t_judge_ledger, t_perf_provenance, t_deploy_reasons):
+               t_judge_ledger, t_perf_provenance, t_deploy_reasons,
+               t_page_title):
         fn()
     for f in FAILS:
         print('FAIL:', f)

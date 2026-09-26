@@ -5,6 +5,33 @@
 
 ## [Unreleased]
 
+### Fixed
+- **浏览器标签页标题此前只跟语言切换的正文走，切到中文标签仍是英文**（第 30 轮实测）。
+  正文所有 `data-i18n` 节点都翻了，但 `<title>` 没有 i18n、`applyTranslations` 也从没碰
+  `document.title`——对中文长者用户，标签页/书签/浏览器历史都是英文，是用户可见面的漏配。
+  现在 `derived` 页在切语言时用「本页已翻译的 `<h1>` + 本地化品牌」重算 `document.title`；
+  品牌后缀 `nav.brand`（FilialConnect / 孝心联）双语早已存在，**不新增任何字典键**
+  （避免制造「标题的第二权威」）。`manual` 页（index / 404 / call-help / fraud-database）的静态标题
+  本就 `≠ h1+品牌`，强制派生会改写它们的英文标签＝回归，故 main.js 对这四页**不接管**。
+  **英文逐字节不变**：`derived` 页的静态标题恰好等于 `h1.en + ' - ' + brand.en`，重算结果与原文相同。
+  浏览器实测两向：hospital 页 EN=`How to Book a Doctor Appointment - FilialConnect`、
+  切换后 ZH=`如何预约挂号 - 孝心联`；index 页（manual）跨切换恒为 `FilialConnect - Digital Bridge for Seniors`。
+
+### Added
+- **`t_page_title` 判据**（新增断言，条数以 `python tools/test_build.py` 实跑输出为准，不抄进散文）：每页必须声明 `derived|manual`；`manual` 集合
+  恰为那四个手写标题页；`derived` 数量有下限（关掉某页本地化是决策不是手滑）；每个 `derived` 页的
+  静态 `<title>` 必须逐字节等于 `h1.en + ' - ' + brand.en`（否则判据红，逼着要么改标题要么显式转
+  `manual`）；`derived` 的 h1 中英不得相同（标题没本地化）；h1 含 `<br>` 也判红（标签渲染不了换行）。
+- **每页 HEAD-META 增加 `<meta name="filialconnect:page-title" content="derived|manual">`**，
+  由 `build.py` 依 `PAGE_TITLE_MANUAL` 集合单向生成（页面不再各自手标模式）。
+
+### 自纠（本轮）
+- `t_page_title` 第一版的「中文标题==英文」断言**构造上永假**：它比的是拼好品牌的整串
+  （`brand_en` 恒 ≠ `brand_zh`，故 `want_zh` 永不可能等于 `want_en`）。是变异 C4 跑出
+  「被别的判据抢先命中、自己这条没响应」才暴露——与第 26/27 轮记过的"构造上永真/自比"同族。
+  改成比较 **h1 本身**是否中英相同（真正的未本地化形态），C4 随即由本判据点名转红。
+
+
 ## [1.8.2] - 2026-09-26
 
 第二十九轮（同一命令第 21 次重发 = 完整重执行）。主轴承接第 28 轮的「判据可信度」，把最后一条靠惯性挂账的债变成规则：每个被部署的资产都必须有理由，否则判红（#145 结案），部署集逐字节未变（实测 before==after==101，delta 为空）。另归因纠正一条被追错的账：桌面 SEO 0.63 来自 404.html 上刻意排除预算的 is-crawlable，不是待修缺陷。
