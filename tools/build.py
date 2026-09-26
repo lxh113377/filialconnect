@@ -453,16 +453,34 @@ def canonical_for(fp):
 # derive the tab title from their translated <h1> + brand (see t_page_title, which re-checks the
 # equality and rejects a stale `derived`); the rest keep a hand-authored title that is not
 # `h1 + brand`, so derivation would rewrite the English tab -> `manual`.
-PAGE_TITLE_MANUAL = frozenset({
-    'index.html',               # 'FilialConnect - Digital Bridge for Seniors' (brand leads, not h1)
-    '404.html',                  # 'Page not found (404) | FilialConnect 孝心联' (a | not a -)
-    'pages/call-help.html',     # 'Call for Help' vs h1 'Need Help Right Now?'
-    'pages/fraud-database.html',  # 'Fraud Alerts' vs h1 'Fraud Alert Database'
-})
+PAGE_TITLE_MANUAL = {
+    'index.html': 'page.title.index',                # 'FilialConnect - Digital Bridge for Seniors'
+    '404.html': 'page.title.404',                    # 'Page not found (404) | FilialConnect 孝心联'
+    'pages/call-help.html': 'page.title.call-help',  # 'Call for Help' vs h1 'Need Help Right Now?'
+    'pages/fraud-database.html': 'page.title.fraud-database',  # 'Fraud Alerts' vs h1 'Fraud Alert Database'
+}
 
 
 def page_title_mode(fp):
-    return 'manual' if fp in PAGE_TITLE_MANUAL else 'derived'
+    """`derived`, or `manual:<dict key>` for a hand-authored title.
+
+    Round 30 stopped at `manual` and left those four pages - the homepage, the 404, the help page
+    and the fraud page - showing an English tab on a Chinese site. Naming the key here lets the
+    runtime swap the tab while `t_page_title` keeps asserting the English half is untouched.
+    """
+    key = PAGE_TITLE_MANUAL.get(fp)
+    return 'manual:' + key if key else 'derived'
+
+
+def dynamic_dict_keys():
+    """Dictionary keys the runtime reads by a name no scanner can see as a literal.
+
+    main.js slices the key out of the generated meta tag, so neither the `data-i18n="..."` scan nor
+    the `t('a.b')` literal scan finds them and the orphan rule deletes them. The CI tool and the
+    local judge both import THIS function instead of restating the list - two copies of "is this key
+    used" once disagreed and turned a release commit red.
+    """
+    return set(PAGE_TITLE_MANUAL.values())
 
 
 def sync_head(s, fp):

@@ -231,12 +231,21 @@
     // translated <h1> + brand, which reproduces the static English title byte-for-byte in EN (so
     // this cannot regress EN); `manual` pages carry a hand-authored title that is not h1+brand, so
     // we leave document.title exactly as the server wrote it rather than rewrite the English tab.
+    // `manual:<key>` pages carry a hand-authored title that is not h1+brand, so the generator names
+    // the dictionary key holding both languages; the English half is byte-identical to the static
+    // title (t_page_title asserts it), which is what lets the tab localize without moving EN copy.
     var titleMode = document.querySelector('meta[name="filialconnect:page-title"]');
+    var titleContract = titleMode ? titleMode.getAttribute('content') : '';
     var h1 = document.querySelector('h1[data-i18n]');
-    if (titleMode && titleMode.getAttribute('content') === 'derived' && h1) {
+    if (titleContract === 'derived' && h1) {
       var h1Key = h1.getAttribute('data-i18n');
       if (dictHas(lang, h1Key) && dictHas(lang, 'nav.brand')) {
         document.title = tr(h1Key) + ' - ' + tr('nav.brand');
+      }
+    } else if (titleContract.indexOf('manual:') === 0) {
+      var manualTitleKey = titleContract.slice('manual:'.length);
+      if (dictHas(lang, manualTitleKey)) {
+        document.title = tr(manualTitleKey);
       }
     }
 

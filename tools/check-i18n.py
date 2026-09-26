@@ -59,9 +59,12 @@ def main():
         used |= set(re.findall(r'data-i18n(?:-placeholder|-aria-label|-alt)?="([^"]+)"', s))
 
     js_refs = js_key_refs(ROOT)
+    # Same helper as tools/test_build.py: these keys are named inside a generated meta tag and read
+    # by slice at runtime, so no literal scan can see them. Neither tool restates the list.
+    dynamic = _build.dynamic_dict_keys()
     for k in sorted(used - en):
         failures.append('data-i18n key missing from dict: %s' % k)
-    for k in sorted(en - used - js_refs):
+    for k in sorted(en - used - js_refs - dynamic):
         failures.append('orphan key (unused in HTML and JS): %s' % k)
 
     if failures:

@@ -161,8 +161,16 @@ def t_i18n():
             continue          # i18n.js is the dictionary itself, not a reference to it
         js_refs |= set(re.findall(r"'([A-Za-z0-9.\-]+\.[A-Za-z0-9.\-]+)'",
                                   read(os.path.join('assets', 'js', name))))
-    orphans = en - used - js_refs
+    dynamic = build.dynamic_dict_keys()
+    orphans = en - used - js_refs - dynamic
     check('no orphan dictionary keys', not orphans, str(sorted(orphans)[:8]))
+    # The exemption above has to pay rent: a dynamic key is only dynamic because a shipped page
+    # actually declares it in its title-mode meta. Anything else is a hiding place.
+    unbacked = sorted(k for k in dynamic
+                      if not any('filialconnect:page-title" content="manual:%s"' % k in read(fp)
+                                 for fp in pages()))
+    check('every dynamically-exempt key is really declared by a shipped page', not unbacked,
+          str(unbacked[:4]))
     # Two implementations of "is this key used" once disagreed: tools/check-i18n.py — the CI step —
     # still scanned only main.js, so it went red on its own after this gate had gone green.
     spec = importlib.util.spec_from_file_location(
@@ -1617,11 +1625,26 @@ def t_page_title():
         title = title.group(1).strip() if title else None
         h1k = re.search(r'<h1[^>]*data-i18n="([^"]+)"', s)
         h1k = h1k.group(1) if h1k else None
-        if mode not in ('derived', 'manual'):
-            problems.append('%s: page-title mode is %r (must be derived|manual)' % (fp, mode))
-            continue
-        if mode == 'manual':
+        if mode == 'derived':
+            pass
+        elif mode and mode.startswith('manual:'):
             manual.append(fp)
+            key = mode.split(':', 1)[1]
+            want = build.PAGE_TITLE_MANUAL.get(fp)
+            if key != want:
+                problems.append('%s: manual key %r != generator contract %r' % (fp, key, want))
+            elif key not in i18n_en or key not in i18n_zh:
+                problems.append('%s: manual title key %r missing in a dictionary' % (fp, key))
+            elif title != i18n_en[key]:
+                problems.append('%s: manual static title %r != %s.en %r (English tab must not move)'
+                                % (fp, title, key, i18n_en[key]))
+            elif not re.search(r'[一-鿿]', i18n_zh[key]):
+                problems.append('%s: manual title %s.zh carries no Chinese (tab stays English)' % (fp, key))
+            elif i18n_zh[key] == i18n_en[key] or '<br>' in i18n_zh[key]:
+                problems.append('%s: manual title %s.zh is untranslated or holds <br>' % (fp, key))
+            continue
+        else:
+            problems.append('%s: page-title mode is %r (must be derived|manual:<key>)' % (fp, mode))
             continue
         derived.append(fp)
         if not (h1k and i18n_en.get(h1k) is not None and i18n_zh.get(h1k)):
@@ -1640,6 +1663,21 @@ def t_page_title():
         if i18n_zh[h1k] == i18n_en[h1k]:
             problems.append('%s: derived h1 is identical in EN and ZH (tab title not localized)' % fp)
 
+    contract = []
+    for fp in pages():
+        s = read(fp)
+        declared = re.search(r'<meta name="filialconnect:page-title" content="([^"]*)"', s)
+        declared = declared.group(1) if declared else None
+        if declared != build.page_title_mode(fp):
+            contract.append('%s=%r want %r' % (fp, declared, build.page_title_mode(fp)))
+    check('every shipped title-mode meta equals the generator contract (nothing hand-edited)',
+          not contract, ' | '.join(contract[:3]))
+    check('every manual page really has a localized title key (the mechanism is wired)',
+          all(build.PAGE_TITLE_MANUAL.get(fp) in i18n_en
+              and build.PAGE_TITLE_MANUAL[fp] in i18n_zh
+              and i18n_zh[build.PAGE_TITLE_MANUAL[fp]] != i18n_en[build.PAGE_TITLE_MANUAL[fp]]
+              for fp in build.PAGE_TITLE_MANUAL),
+          str(sorted(build.PAGE_TITLE_MANUAL)))
     check('every page declares a title mode (no page left unexplained)', not problems,
           ' | '.join(problems[:4]))
     check('the manual-title set is exactly the four hand-authored ones',
