@@ -91,6 +91,18 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    before reading it back truncates the copy to nothing (and an empty copy is a prefix of
    everything, so it also "passed"), and "is the path in HEAD" is not "are these bytes in HEAD" on an
    append-only log. Read first, then write; compare content, never existence.
+12. **A counter that knows two shapes prints `0` for a population it cannot see, and the zero gets
+   read as a finding.** `_internal/audit_fixtures.py` printed `cases=` from a detector that only
+   recognised `case(...)` calls and M/A-labelled tuples, so on 2026-09-27 eleven of its fifteen
+   batteries printed `cases=0` - including every one that records verdicts through
+   `results[k] = ...`, `checks.append(...)` or a `*_CASES = [...]` list. Nothing was miscounted, but
+   the number was unowned: no reader could tell "measured nothing" from "runs no cases", which is the
+   shrinking-denominator class wearing a diagnostic column. `case_nodes()` now enumerates the shapes
+   present in the population, counts the **union** of nodes (a tuple inside a `CASES` list is one
+   case, not two shapes), the column is labelled `sites=`, and a battery added after the rule with
+   `sites=0` is refused by name (`must_number`) alongside `must_guard` - and both reasons print,
+   because the first red must not swallow the second. A zero is still allowed to exist; it is no
+   longer allowed to be silent.
 
 ## Attribution before action
 
