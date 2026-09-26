@@ -1739,19 +1739,39 @@ def t_aria_locale():
           every == len(pages()), '%d/%d pages' % (every, len(pages())))
 
 
+JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
+          t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
+          t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
+          t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw, t_page_nav,
+          t_contrast_coverage, t_perf_coverage, t_perf_measurement,
+          t_deploy_staging, t_public_metadata, t_offline_package,
+          t_capability_claims, t_documented_numbers, t_gate_wiring,
+          t_judge_ledger, t_perf_provenance, t_deploy_reasons,
+          t_page_title, t_aria_locale)
+
+
+def _abort_note(name, exc):
+    detail = ' | '.join(str(exc).strip().splitlines())[:200]
+    return ('judge %s aborted the run (%s), so its own checks and every later judge were lost'
+            ' - %s' % (name, type(exc).__name__, detail or 'no message'))
+
+
 def main():
-    for fn in (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
-               t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
-               t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
-               t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw, t_page_nav,
-               t_contrast_coverage, t_perf_coverage, t_perf_measurement,
-               t_deploy_staging, t_public_metadata, t_offline_package,
-               t_capability_claims, t_documented_numbers, t_gate_wiring,
-               t_judge_ledger, t_perf_provenance, t_deploy_reasons,
-               t_page_title, t_aria_locale):
-        fn()
+    aborted = []
+    for fn in JUDGES:
+        try:
+            fn()
+        except (SystemExit, Exception) as exc:
+            # check() only accumulates: a judge that raised used to take the whole verdict with it
+            # (measured in round 31 - adding a 7th tutorial printed one line, the 5 roster failures
+            # collected before it vanished, and no "N/M checks failed" summary was ever reached).
+            COUNT[0] += 1
+            FAILS.append(_abort_note(fn.__name__, exc))
+            aborted.append(fn.__name__)
     for f in FAILS:
         print('FAIL:', f)
+    if aborted:
+        print('ABORTED JUDGES: %s' % ', '.join(aborted))
     if FAILS:
         print('%d/%d checks failed' % (len(FAILS), COUNT[0]))
         return 1

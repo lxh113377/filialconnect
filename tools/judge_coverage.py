@@ -16,6 +16,7 @@ Usage:
   python tools/judge_coverage.py            # rewrite reports/judge-coverage.json
   python tools/judge_coverage.py --check    # exit 1 if the committed ledger is stale
 """
+import ast
 import io
 import json
 import os
@@ -40,11 +41,34 @@ def _sibling(alias, fname):
     return mod
 
 
+def registered_from_text(text):
+    """The judge names actually wired into the run, read structurally.
+
+    Both spellings count: `for fn in (t_a, t_b):` and `JUDGES = (t_a, t_b)`. The previous parser
+    grep'd for the literal text of the first form, so renaming the tuple - same code, different
+    spelling - returned nothing and the guard died inside `.group(1)` of None (round 31).
+    """
+    out = []
+    for node in ast.walk(ast.parse(text)):
+        if isinstance(node, ast.For) and isinstance(node.iter, ast.Tuple):
+            seq = node.iter
+        elif (isinstance(node, ast.Assign) and isinstance(node.value, ast.Tuple)
+              and any(isinstance(t, ast.Name) and t.id.isupper() for t in node.targets)):
+            seq = node.value
+        else:
+            continue
+        out += [e.id for e in seq.elts if isinstance(e, ast.Name) and e.id.startswith('t_')]
+    return sorted(set(out))
+
+
 def judge_functions():
-    text = io.open(os.path.join(ROOT, 'tools', 'test_build.py'), encoding='utf-8').read()
+    path = os.path.join(ROOT, 'tools', 'test_build.py')
+    text = io.open(path, encoding='utf-8').read()
     defined = sorted(set(re.findall(r'^def (t_[a-z0-9_]+)\(', text, re.M)))
-    registered_block = re.search(r'for fn in \(([^)]*)\):', text, re.S)
-    registered = sorted(set(re.findall(r'\bt_[a-z0-9_]+', registered_block.group(1))))
+    registered = registered_from_text(text)
+    if not registered:
+        raise SystemExit('FAIL: judge_coverage found no judge registration in test_build.py; '
+                         'a parser that silently returns nothing is a guard that stopped guarding')
     return defined, registered
 
 
@@ -115,11 +139,26 @@ def selftest():
     fx_mods = {n.id for n in ast.walk(fx) if isinstance(n, ast.Name) and n.id in forbidden_mods}
     fired = sorted((fx_calls & forbidden_calls) | (fx_mods & forbidden_mods))
 
+    loop_src = "def main():\n    for fn in (t_alpha, t_beta):\n        fn()\n"
+    tup_src = "JUDGES = (t_alpha, t_beta)\n\n\ndef main():\n    for fn in JUDGES:\n        fn()\n"
+    seen_loop = registered_from_text(loop_src)
+    seen_tup = registered_from_text(tup_src)
+    seen_none = registered_from_text("def main():\n    for x in items:\n        x()\n")
+    defined_real, registered_real = judge_functions()
+
     cases = [
         ('the fixture trips the rule (positive control)', len(fired) >= 2, fired),
         ('this file\'s measure() is clean (real run)', not problems, problems),
         ('the forbidden vocabulary is non-empty (rule is not inert)',
          bool(forbidden_calls & {'members', 'staging_sets', 'listdir'}), sorted(forbidden_calls)),
+        ('registration read from a for-tuple', seen_loop == ['t_alpha', 't_beta'], seen_loop),
+        ('registration read from an UPPERCASE tuple (same code, other spelling)',
+         seen_tup == seen_loop, seen_tup),
+        ('a file with no registration reads as empty, so the caller can refuse to guess',
+         seen_none == [], seen_none),
+        ('the real test_build.py registers every judge it defines',
+         defined_real == registered_real,
+         '%d defined vs %d registered' % (len(defined_real), len(registered_real))),
     ]
     failed = ['%s -> %s' % (name, detail) for name, ok, detail in cases if not ok]
     print('judge_coverage selftest: %d cases, %d violations in measure(), %d case failures'
