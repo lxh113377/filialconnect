@@ -10,6 +10,13 @@ Scanning is AST-based, not text-based: the harnesses deliberately *mention* junc
 while explaining why they must not be used. A text grep would either flag that explanation (false
 positive that trains people to ignore the gate) or need an exemption list (a hole). Comments are not
 code, so they are not read.
+
+What this cannot see, stated because a gate that hides its blind spot gets trusted too much: the
+string rule reads the constants of Call / Assign / AnnAssign nodes and joins them with one space, so
+a marker split across two literals, or parked in an `assert`, `return` or an `if` condition, does
+not match. Widening it to every string in the tree would also read the docstrings that explain this
+rule. The call rule (`os.symlink(...)`) and the import rule (`_winapi`, `win32file`) do not depend on
+string spelling at all, and a harness that wants to link a worktree has to execute something.
 """
 import argparse
 import ast

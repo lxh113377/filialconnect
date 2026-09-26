@@ -29,13 +29,26 @@ COUNT = [0]
 
 
 def check(name, cond, detail=''):
+    """Record one verdict. `detail` is coerced, because a failing judge that raises while formatting
+    its own evidence destroys the evidence: measured in round 36, a list-valued `detail` raised
+    `TypeError: can only concatenate str (not "list") to str` inside `check`, the abort guard reported
+    a crash, and the mutation the judge had just caught was never named. The failure path is the one
+    path that must not be able to fail."""
     COUNT[0] += 1
     if not cond:
-        FAILS.append('%s%s' % (name, ': ' + detail if detail else ''))
+        text = detail if isinstance(detail, str) else repr(detail)
+        FAILS.append('%s: %s' % (name, text) if text else name)
 
 
 def read(fp):
     return io.open(os.path.join(ROOT, fp), encoding='utf-8').read()
+
+
+def last_line(text):
+    """The verdict line of a tool's own output, as a string: `check()` formats its detail by
+    concatenation, and round 36 measured a list here raising TypeError on the failure path."""
+    lines = text.strip().splitlines()
+    return lines[-1] if lines else ''
 
 
 def pages():
@@ -1907,9 +1920,9 @@ def t_coverage_identity():
                        cwd=ROOT, capture_output=True, text=True, timeout=300)
     out = (r.stdout or '') + (r.stderr or '')
     check('verify-live coverage identity selftest is green (both directions, offline)',
-          r.returncode == 0, out.strip().splitlines()[-1:])
+          r.returncode == 0, last_line(out))
     check('the selftest reports its own case count (a silent 0-case suite is not a pass)',
-          ' 0 failures' in out and 'cases,' in out, out.strip().splitlines()[-1:])
+          ' 0 failures' in out and 'cases,' in out, last_line(out))
     led = json.loads(read('reports/live-verify-coverage.json'))
     want = {'build_outputs_shipped', 'named_build_outputs_probed', 'fragment_paths_unnameable',
             'build_only_artifacts_not_served', 'build_outputs_unclassified',
@@ -1966,10 +1979,11 @@ def t_no_link_code():
     out = (st.stdout or '') + (st.stderr or '')
     tail = [ln for ln in out.splitlines() if 'selftest:' in ln]
     check('link_guard self-proves both directions (fires on real code, quiet on a comment, '
-          'UNVERIFIED on nothing)', st.returncode == 0 and bool(tail), tail[:1] or out[-160:])
+          'UNVERIFIED on nothing)', st.returncode == 0 and bool(tail),
+          last_line(' '.join(tail)) or out[-160:])
     check('its selftest counts its own cases out loud (a silent 0-case suite is not a pass)',
           bool(re.search(r'selftest: (\d+) cases, 0 failures', out)) and
-          int(re.search(r'selftest: (\d+) cases', out).group(1)) >= 12, tail[:1])
+          int(re.search(r'selftest: (\d+) cases', out).group(1)) >= 12, last_line(' '.join(tail)))
 
 
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
