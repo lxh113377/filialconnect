@@ -170,9 +170,9 @@ function shippedPaths() {
   } catch (e) {
     throw new Error(`${LEDGER} is missing or unreadable - run: python tools/stage-site.py check --write`);
   }
-  const files = (ledger.profiles && ledger.profiles.deploy && ledger.profiles.deploy.files) || [];
-  if (files.length < 50) {
-    throw new Error(`${LEDGER} lists ${files.length} deploy files, expected >= 50 - refusing to index a subset`);
+  const files = (ledger.profiles && ledger.profiles.deploy && ledger.profiles.deploy.committed_files) || [];
+  if (files.length < 40) {
+    throw new Error(`${LEDGER} lists ${files.length} committed deploy files, expected >= 40 - refusing to index a subset`);
   }
   return files.filter((f) => !f.endsWith('.md'));
 }

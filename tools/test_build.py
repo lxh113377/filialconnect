@@ -1198,12 +1198,27 @@ def t_deploy_staging():
     ledger_path = os.path.join('reports', 'deploy-staging.json')
     check('staging ledger is committed', os.path.isfile(os.path.join(ROOT, ledger_path)))
     ledger = json.loads(read(ledger_path))
-    check('ledger deploy count matches the enumerator',
-          ledger['profiles']['deploy']['count'] == len(deploy),
-          'ledger %d vs live %d' % (ledger['profiles']['deploy']['count'], len(deploy)))
-    check('ledger file list matches the enumerator byte for byte',
-          ledger['profiles']['deploy']['files'] == deploy,
-          str(sorted(set(ledger['profiles']['deploy']['files']) ^ set(deploy))[:3]))
+    committed = ledger['profiles']['deploy']['committed_files']
+    check('ledger deploy list matches the enumerator (committed part only)',
+          committed == stager.ledger_files(deploy),
+          str(sorted(set(committed) ^ set(stager.ledger_files(deploy)))[:3]))
+    check('ledger deploy count matches', ledger['profiles']['deploy']['committed_count'] == len(committed),
+          'ledger %d vs %d' % (ledger['profiles']['deploy']['committed_count'], len(committed)))
+    # The ledger used to list the search index's shard files, which made `check` fail on a fresh
+    # CI checkout (no pagefind/) while passing on any machine that had built one. A ledger that
+    # contains regenerated output is a drift machine waiting to happen, so the rule is now pinned.
+    leaked = [f for f in committed if stager.is_build_output(f)]
+    check('ledger lists no build output (it must be order-independent)',
+          not leaked, str(leaked[:3]))
+    check('build outputs are declared rather than enumerated',
+          ledger['profiles']['deploy']['build_outputs_declared'] == list(stager.BUILD_OUTPUT_DIRS)
+          and 'build_output_count_when_built' not in ledger['profiles']['deploy'],
+          str(sorted(ledger['profiles']['deploy'])))
+    check('volatile audit fields stay out of the committed ledger',
+          'build_outputs_absent' not in ledger['audit'], str(sorted(ledger['audit'])))
+    rc = subprocess.run([sys.executable, os.path.join('tools', 'stage-site.py'), 'check'],
+                        cwd=ROOT, capture_output=True, text=True).returncode
+    check('tools/stage-site.py check passes as CI runs it', rc == 0, 'rc=%d' % rc)
     check('ledger records how it was made', ledger.get('generated_by') == 'tools/stage-site.py')
 
 

@@ -180,11 +180,34 @@ def expand(pattern):
     return {pattern} if pattern in files else set()
 
 
+def is_build_output(rel):
+    """A path that a downstream build step regenerates, so its bytes belong to a runner."""
+    return rel.startswith(tuple(d + '/' for d in BUILD_OUTPUT_DIRS))
+
+
+def ledger_files(paths):
+    """The part of a profile that a checkout can be compared against deterministically.
+
+    The ledger used to list the search index's 52 shard files. That made `check` order-dependent:
+    run it before `build-search.mjs index` - as CI does on a fresh checkout, where pagefind/ does
+    not exist - and the pattern resolves to nothing, so the gate that is supposed to catch drift
+    became the drift. Committed files are what a ledger can honestly pin.
+    """
+    return [p for p in paths if not is_build_output(p)]
+
+
 def staging_sets():
     """Return {'deploy': …, 'probe': …} as sorted file lists, plus the audit trail."""
     refs = html_refs()
     dyn = dynamic_refs() + manifest_refs()
-    unresolved = ['%s -> %s' % (o, p) for o, p in dyn if not expand(p)]
+    unresolved, absent_outputs = [], []
+    for origin, pattern in dyn:
+        if expand(pattern):
+            continue
+        if pattern in BUILD_OUTPUT_DIRS:
+            absent_outputs.append(pattern)
+        else:
+            unresolved.append('%s -> %s' % (origin, pattern))
     precache = sorted({u.strip('/') for u in
                        re.findall(r'\{url:"([^"]+)"', read('sw.js'))})
     deploy = {p for p in html_pages()} | {'404.html', 'sitemap.xml', 'robots.txt'}
@@ -204,6 +227,7 @@ def staging_sets():
         'refs_not_staged': sorted(p for p in refs if p not in deploy),
         'dynamic_patterns': ['%s -> %s' % (o, p) for o, p in dyn],
         'unresolved_dynamic': sorted(unresolved),
+        'build_outputs_absent': sorted(set(absent_outputs)),
         # The service worker promises these URLs are available offline; if one is not staged,
         # the promise is a 404 with a nice cache name.
         'precache_not_staged': sorted(u for u in precache if u not in deploy),
@@ -218,10 +242,15 @@ def build_ledger():
         'generated_by': 'tools/stage-site.py',
         'do_not_edit': 'run: python tools/stage-site.py check --write',
         'floor': FLOOR,
-        'profiles': {name: {'count': len(paths), 'files': paths} for name, paths in sets.items()},
+        'profiles': {name: {'committed_count': len(ledger_files(paths)),
+                            'committed_files': ledger_files(paths),
+                            'build_outputs_declared': sorted(BUILD_OUTPUT_DIRS)}
+                     for name, paths in sets.items()},
         'probe_excludes': list(PROBE_EXCLUDE_PATTERNS),
+        # `build_outputs_absent` is the one audit field that legitimately differs between a fresh
+        # checkout and a built tree; storing it would put the same non-determinism back in.
         'audit': {k: sorted(v) if isinstance(v, (list, set, dict)) else v
-                  for k, v in audit.items()},
+                  for k, v in audit.items() if k != 'build_outputs_absent'},
     }
     return body
 
@@ -234,7 +263,7 @@ def serialise(body):
     return json.dumps(body, indent=2, sort_keys=True, ensure_ascii=False) + '\n'
 
 
-def audit_problems(audit):
+def audit_problems(audit, require_build_outputs=False):
     """Non-empty audit lists that mean the enumerator stopped seeing reality."""
     out = []
     if audit['refs_not_staged']:
@@ -242,6 +271,9 @@ def audit_problems(audit):
                    % audit['refs_not_staged'][:3])
     if audit['unresolved_dynamic']:
         out.append('dynamic pattern matches no file: %s' % audit['unresolved_dynamic'][:3])
+    if require_build_outputs and audit['build_outputs_absent']:
+        out.append('refusing to stage a site whose search index was never built: %s'
+                   % audit['build_outputs_absent'])
     if audit['precache_not_staged']:
         out.append('sw.js precaches a path that is not staged: %s' % audit['precache_not_staged'][:3])
     if audit['missing_from_disk']:
@@ -253,7 +285,7 @@ def audit_problems(audit):
 
 def cmd_stage(profile, out):
     sets, audit = staging_sets()
-    problems = audit_problems(audit)
+    problems = audit_problems(audit, require_build_outputs=(profile == 'deploy'))
     if problems:
         raise SystemExit('FAIL: staging set is not sound\n  ' + '\n  '.join(problems))
     paths = sets[profile]
@@ -284,9 +316,10 @@ def cmd_check(write):
     if write:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         io.open(path, 'w', encoding='utf-8', newline='\n').write(fresh)
-        print('wrote %s: deploy=%d probe=%d refs=%d' % (
-            LEDGER, len(body['profiles']['deploy']['files']),
-            len(body['profiles']['probe']['files']), len(body['audit']['html_refs'])))
+        print('wrote %s: deploy=%d probe=%d refs=%d (build outputs declared: %s)' % (
+            LEDGER, body['profiles']['deploy']['committed_count'],
+            body['profiles']['probe']['committed_count'], len(body['audit']['html_refs']),
+            ','.join(body['profiles']['deploy']['build_outputs_declared'])))
         return 0
     if not os.path.isfile(path):
         print('FAIL: %s is not committed (run: check --write)' % LEDGER)
@@ -296,13 +329,14 @@ def cmd_check(write):
         print('FAIL: %s is stale - the staging set moved without the ledger' % LEDGER)
         old = json.loads(committed)
         for name in ('deploy', 'probe'):
-            o = set(old['profiles'][name]['files'])
-            n = set(body['profiles'][name]['files'])
+            o = set(old['profiles'][name].get('committed_files', []))
+            n = set(body['profiles'][name]['committed_files'])
             if o != n:
                 print('  %s: -%s +%s' % (name, sorted(o - n)[:4], sorted(n - o)[:4]))
         return 1
     print('staging ledger in sync: deploy=%d probe=%d refs=%d dynamic=%d' % (
-        len(body['profiles']['deploy']['files']), len(body['profiles']['probe']['files']),
+        body['profiles']['deploy']['committed_count'],
+        body['profiles']['probe']['committed_count'],
         len(body['audit']['html_refs']), len(body['audit']['dynamic_patterns'])))
     return 0
 

@@ -158,7 +158,9 @@ def main():
 
     sets, audit = stager.staging_sets()
     bad = 0
-    for p in stager.audit_problems(audit):
+    # The search index is shipped, so an unbuilt index means this probe would quietly check less
+    # of the site than production serves. Ask for it by name instead of shrinking the denominator.
+    for p in stager.audit_problems(audit, require_build_outputs=(args.profile == 'deploy')):
         print('STAGING FAIL: ' + p)
         bad += 1
     paths = [p for p in sets[args.profile]
