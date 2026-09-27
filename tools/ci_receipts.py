@@ -211,8 +211,18 @@ def selftest():
     # `verified` reading says nothing about a shallow runner.
     import shutil
     import tempfile
-    probe = os.path.join(tempfile.gettempdir(), 'ci_receipts_shallow_probe')
-    shutil.rmtree(probe, ignore_errors=True)
+    # A fixed path + `rmtree(ignore_errors=True)` was the first version, and it failed in the worst
+    # shape: a manual probe run left the directory behind, the silent cleanup did not remove it, and
+    # git then refused to clone into it - the case reported "clone failed" about an environment
+    # leftover instead of what it means. So: claim a unique path, and refuse to continue if the
+    # empty directory cannot be released (a probe that cannot run must say so, not pass quietly).
+    staging = tempfile.mkdtemp(prefix='ci_receipts_probe_')
+    try:
+        shutil.rmtree(staging)                     # git clone wants to create the directory itself
+    except OSError as exc:
+        cases.append(('shallow probe path could not be released (named, not silently skipped)',
+                      False, '%s: %s' % (type(exc).__name__, str(exc)[:70])))
+    probe = staging
     clone = run(['git', 'clone', '--depth', '1', '-q',
                  'file://' + ROOT.replace('\\', '/'), probe], cwd=tempfile.gettempdir())
     if clone.returncode != 0:
@@ -226,6 +236,14 @@ def selftest():
                       'depth=%s rc=%d %s' % (depth, seen.returncode,
                                              (seen.stdout or '').strip()[-56:])))
         shutil.rmtree(probe, ignore_errors=True)
+        # Windows leaves the (now empty) directory behind after rmtree of a git work tree; git itself
+        # can remove an empty dir, so retry instead of calling it unreclaimed
+        if os.path.isdir(probe) and not os.listdir(probe):
+            os.rmdir(probe)
+        if os.path.exists(probe):
+            # clutter the probe leaves behind is how the next run gets a confusing failure, so the
+            # path is printed rather than swallowed
+            sys.stderr.write('NOTE: shallow probe dir not reclaimed: %s\n' % probe)
     bad = sum(1 for _n, o, _d in cases if not o)
     for name, ok_c, detail in cases:
         print('  %s %s (%s)' % ('ok ' if ok_c else 'SELFTEST-FAIL', name, detail))
