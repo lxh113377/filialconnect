@@ -6,6 +6,20 @@
 ## [Unreleased]
 
 ### Added
+- **手数的零不算量过：`t_ci_hygiene` 每条腿自报样本数**（第 43 轮）。第 42 轮用
+  `grep "^  permissions:"` 手数得出"真实树没有 job 级权限块"，并把这句写进了报告优先级、
+  下一轮首项与全局记忆；第 43 轮改用枚举器复测，`deploy-pages.yml:59` 有一个**四空格**缩进的
+  `permissions:` 块，而那个模式只允许两格 ⇒ 一个由缩进假设造出来的零被下游当成事实继承。
+  现在 `tools/ci_hygiene.py` 为每条腿报 `leg_samples`（实测 `pull_request_target=4`、
+  `wildcard_scope=4`、`permissions_block=4`、`job_within_header=1`），零样本的腿进 `untested_legs`
+  而不是记绿，`coverage_identity_issues()` 拒绝"标签与自身样本数矛盾"的报告（标签会说谎），
+  常驻电池 `_internal/test_round43_leg_coverage_mutations.py`（9/9）再把枚举计数与一次独立扫描对账。
+  同时修掉两处真实缺陷：旧的固定四空格模式会把块后的 `runs-on:` 读成幽灵权限（现按表头缩进回引用
+  锚定）；未知权限键此前被静默忽略（`contets: write` 拼错即失权），现按 `KNOWN_SCOPES` 具名判红，
+  **不加豁免名单**。链 2101 → 2102（判据数不变，hygiene 多一条恒等式断言）；
+  Triage 表加一行 `unknown permission key / declared untested` 并自带会触发它的样本行
+  （`ci-watch` 自检要求每行有探针，无探针直接判红），顺手把 `"nine for nine"` 这类手写数字
+  改成由行数派生。`AGENTS.md` 反复缺陷清单加第 16 类。
 - **新增判据 `t_ci_hygiene`（第 42 轮）**：CI 的**作用域**此前无人判。第 42 轮先量人口再写规则——
   四个工作流今天都已声明顶层 `permissions:`、每条 `uses:` 都已钉 SHA 并带 `#vX.Y.Z` 注释
   （钉位由第 12 轮起的 `t_workflows` 判着），所以本轮补的不是"修缺陷"而是"把已成立的事实钉住"：

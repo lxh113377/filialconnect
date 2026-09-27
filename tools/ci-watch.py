@@ -94,6 +94,14 @@ HINTS = (
      'cause': '报告里的收尾回执不是本次实测（或字段残缺）',
      'action': 're-run `python _internal/closeout_round.py --emit` and paste the whole block again; '
                'a receipt from last round is not evidence this round closed'},
+    # Round 43's shape: the hygiene judge went from "one green" to "four legs with sample counts",
+    # so a red here means the workflow text or the report itself is inconsistent, not that CI broke.
+    {'sig': '`unknown permission key` / `declared untested`',
+     'pattern': r'unknown permission key|declared untested|permissions block parsed empty',
+     'cause': '工作流里写了 GitHub 不认识的权限键（拼错即静默失权），或判据报告自称某腿无样本却与'
+              '样本数矛盾（块锚定把 `runs-on` 之类误当权限项）',
+     'action': '按 `tools/ci_hygiene.py` 的 `KNOWN_SCOPES` 改键名或删掉那行；若是锚定问题，'
+               '修 `job_blocks()` 的缩进回引用，不要放宽判据或把键加进豁免名单'},
 )
 
 # One synthetic log line per row, in the words the real failure actually printed. This is the
@@ -125,6 +133,13 @@ FIXTURES = {
     '`stale receipt` / `malformed receipt`':
         'RED  the report carries the close-out receipt  stale receipt: inner says f7fd452ab, '
         'measured 6999601',
+    # Round 43's row: the sample text is a real judge line, so the row cannot be added without a
+    # signature that actually fires (that is what the selftest below enforces for every row).
+    '`unknown permission key` / `declared untested`':
+        'FAIL: no workflow grants a wildcard scope, write-all, or a job wider than its header: '
+        "[\'deploy.yml: top-level permissions has contets (unknown permission key)\'] | every "
+        'hygiene leg is judged or declared untested: declared untested [job_within_header] != '
+        "zero-sample legs []",
 }
 
 
@@ -191,7 +206,8 @@ def selftest():
         ('every signature is distinctive enough to name a row (no row is the empty string)',
          len(set(row['sig'] for row in HINTS)) == len(HINTS),
          '%d distinct signatures' % len(set(row['sig'] for row in HINTS))),
-        ('every row can still fire: a fixture log line per signature, nine for nine',
+        ('every row can still fire: a fixture log line per signature, %d for %d'
+         % (len(HINTS), len(FIXTURES)),
          [row['sig'] for row in HINTS if row['action'] not in advice(FIXTURES[row['sig']])] == [],
          'dead rows: %s' % [row['sig'] for row in HINTS
                              if row['action'] not in advice(FIXTURES[row['sig']])][:70]),

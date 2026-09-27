@@ -145,6 +145,18 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    both `reports/gate-wiring.json` and `reports/judge-coverage.json` regenerated, or three checks
    fail at once (undeclared consumer, ledger drift, untracked build input) - that is the chain
    telling you the new file has no owner yet.
+16. **A hand-counted zero becomes next round's plan table.** Round 42 measured the CI-hygiene
+   population with `grep -n "^permissions:\|^  permissions:"`, saw no job-level block, and wrote that
+   conclusion into three places: a priority row in the report, the next round's first item, and a
+   line in global memory ("this leg is vacuous today"). Round 43 counted the same thing with an
+   enumerator: `deploy-pages.yml:59` carries a **four-space** `permissions:` block and the pattern
+   had allowed only two. The zero was not uncertain - it was invented by an indentation assumption,
+   and everything downstream inherited the invention. Now enforced in code (`tools/ci_hygiene.py`):
+   every leg reports its **sample count** on the verdict line (`leg_samples=… untested=…`), a leg
+   with no sample is declared untested instead of counting as verified, `coverage_identity_issues()`
+   refuses a label that contradicts its own counts, and the battery checks the enumerator against an
+   independent scan of the shipped files. Rule: if a number decides a priority, enumerate it -
+   a fixed indentation pattern is a guess wearing a measurement.
 
 ## Attribution before action
 
@@ -175,6 +187,7 @@ CI 跑 `--check` 逐字节回验，判据 `t_triage_copy` 在链上——因为�
 | `precache revision` / `service worker` | sw.js 早于它的输入生成 | sw.js was generated before its inputs changed - rebuild in order and re-run the determinism judge (t_deterministic_sw) |
 | `hand drift: N row(s) differ` | AGENTS.md 的 Triage 表被手改，或 `HINTS` 改了没重生成 | run `python tools/triage.py --write` and commit it; the section between the markers is generated, so hand edits there are not a second opinion (t_triage_copy) |
 | `stale receipt` / `malformed receipt` | 报告里的收尾回执不是本次实测（或字段残缺） | re-run `python _internal/closeout_round.py --emit` and paste the whole block again; a receipt from last round is not evidence this round closed |
+| `unknown permission key` / `declared untested` | 工作流里写了 GitHub 不认识的权限键（拼错即静默失权），或判据报告自称某腿无样本却与样本数矛盾（块锚定把 `runs-on` 之类误当权限项） | 按 `tools/ci_hygiene.py` 的 `KNOWN_SCOPES` 改键名或删掉那行；若是锚定问题，修 `job_blocks()` 的缩进回引用，不要放宽判据或把键加进豁免名单 |
 <!-- END:TRIAGE-TABLE -->
 
 两条**不是日志签名**的操作纪律（它们没法被 grep 到，所以不进表；表只收"原话"）：

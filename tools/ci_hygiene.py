@@ -30,7 +30,18 @@ WF_DIR = '.github/workflows'
 WILDCARD = re.compile(r'^\s*(?:-\s+)?["\x27]?\*["\x27]?\s*(?:[\s:,]|$)|permissions:\s*write-all\s*$',
                       re.M)
 TOP_PERMISSIONS = re.compile(r'^permissions:[ \t]*\n((?:[ \t]+\w[\w-]*:[ \t]*\S+\n?)+)', re.M)
-JOB_PERMISSIONS = re.compile(r'^ {2,}permissions:[ \t]*\n((?: {4,}\w[\w-]*:[ \t]*\S+\n?)+)', re.M)
+JOB_PERMISSIONS = re.compile(r'^([ \t]+)permissions:[ \t]*\n'
+                             r'((?:\1 [ \t]*\w[\w-]*:[ \t]*\S+[ \t]*\n?)+)', re.M)
+
+
+def job_blocks(text):
+    """The job-level `permissions:` bodies, each anchored on its own header indent.
+
+    A fixed four-space pattern swallowed the following `runs-on:` line (round 43 saw a phantom
+    `runs-on` permission), because the block was defined by indentation depth in the abstract rather
+    than by *deeper than this header*. Anchoring on the header's indent keeps the block to children.
+    """
+    return [m[1] for m in JOB_PERMISSIONS.findall(text)]
 PR_TARGET = re.compile(r'pull_request_target')
 
 
@@ -48,37 +59,96 @@ def _rank(level):
     return {'none': 0, 'read': 1, 'write': 2, 'admin': 3}.get(level, 2)   # unknown = treat as wide
 
 
+#: every way this tool can find a problem, named so a leg with no sample can be declared
+#: untested instead of passing (round 43). The tree today contains zero job-level `permissions:`
+#: blocks, so `job_within_header` has nothing to bite on - a green that says "verified" there is
+#: a green that measured nothing.
+LEGS = ('pull_request_target', 'wildcard_scope', 'permissions_block', 'job_within_header')
+
+
+#: GitHub's own permission keys. Anything else inside a `permissions:` block is a typo
+#: (`contets: write` grants nothing and reads fine in review), and the token silently falls back
+#: to the workflow default - so an unknown key is a finding, not noise to be skipped. Round 43
+#: found this while chasing a false positive: the block-scan had been reading `runs-on:` as a scope.
+KNOWN_SCOPES = ('actions', 'attestations', 'checks', 'contents', 'deployments', 'discussions',
+                'id-token', 'issues', 'pages', 'packages', 'pull-requests',
+                'repository-projects', 'security-events', 'statuses')
+KNOWN_LEVELS = ('read', 'write', 'none')
+
+
+def unknown_scopes(block):
+    """Keys or levels in a permissions block that GitHub does not know."""
+    bad = []
+    for scope, level in scope_map(block).items():
+        if scope not in KNOWN_SCOPES:
+            bad.append('%s (unknown permission key)' % scope)
+        elif level not in KNOWN_LEVELS:
+            bad.append('%s:%s (unknown level)' % (scope, level))
+    return bad
+
+
+def leg_samples(texts):
+    """How many inputs each leg could actually judge in this population.
+
+    `job_within_header` counts job-level blocks (a widening can only be seen where one exists);
+    the other three legs see every workflow file. Zero samples is reported, never inferred as clean.
+    """
+    jobs = 0
+    for text in texts:
+        if text:
+            jobs += len(job_blocks(text))
+    seen = [t for t in texts if t]
+    return {'pull_request_target': len(seen), 'wildcard_scope': len(seen),
+            'permissions_block': len(seen), 'job_within_header': jobs}
+
+
+def workflow_findings(text, name='(inline)'):
+    """The same verdicts as `workflow_issues`, tagged with the leg that produced each one."""
+    found = []
+    if PR_TARGET.search(text):
+        found.append(('pull_request_target',
+                      '%s: uses pull_request_target (runs the base workflow with write access '
+                      'against untrusted code)' % name))
+    if WILDCARD.search(text):
+        found.append(('wildcard_scope', '%s: grants a wildcard scope or write-all' % name))
+    tops = TOP_PERMISSIONS.findall(text)
+    if not re.search(r'^permissions:', text, re.M):
+        found.append(('permissions_block',
+                      '%s: no top-level permissions block (inherits the org/repo default, which '
+                      'this file cannot prove)' % name))
+        return found
+    if len(tops) == 0:
+        found.append(('permissions_block',
+                      '%s: permissions block parsed empty - the shape is not the one this scan '
+                      'reads (so nothing here would be judged)' % name))
+        return found
+    if len(tops) != 1:
+        found.append(('permissions_block',
+                      '%s: %d top-level permissions blocks, expected exactly 1' % (name, len(tops))))
+        return found
+    granted = scope_map(tops[0])
+    for bad in unknown_scopes(tops[0]):
+        found.append(('permissions_block', '%s: top-level permissions has %s' % (name, bad)))
+    for job_block in job_blocks(text):
+        for bad in unknown_scopes(job_block):
+            found.append(('job_within_header', '%s: job-level permissions has %s' % (name, bad)))
+        for scope, level in scope_map(job_block).items():
+            if scope not in KNOWN_SCOPES:
+                continue                                  # already reported above, not as a widening
+            if _rank(level) > _rank(granted.get(scope, 'none')):
+                found.append(('job_within_header',
+                              '%s: job grants %s:%s but the workflow declares %s'
+                              % (name, scope, level, granted.get(scope, '(nothing)'))))
+    return found
+
+
 def workflow_issues(text, name='(inline)'):
     """Pure predicate: every way a workflow's declared permissions can be wrong.
 
     A workflow with no `permissions:` block is a finding, not a pass: GitHub then hands out the
     repository default, which is a setting no file in this tree can show.
     """
-    issues = []
-    if PR_TARGET.search(text):
-        issues.append('%s: uses pull_request_target (runs the base workflow with write access '
-                      'against untrusted code)' % name)
-    if WILDCARD.search(text):
-        issues.append('%s: grants a wildcard scope or write-all' % name)
-    tops = TOP_PERMISSIONS.findall(text)
-    if not re.search(r'^permissions:', text, re.M):
-        issues.append('%s: no top-level permissions block (inherits the org/repo default, which '
-                      'this file cannot prove)' % name)
-        return issues
-    if len(tops) == 0:
-        issues.append('%s: permissions block parsed empty - the shape is not the one this scan '
-                      'reads (so nothing here would be judged)' % name)
-        return issues
-    if len(tops) != 1:
-        issues.append('%s: %d top-level permissions blocks, expected exactly 1' % (name, len(tops)))
-        return issues
-    granted = scope_map(tops[0])
-    for job_block in JOB_PERMISSIONS.findall(text):
-        for scope, level in scope_map(job_block).items():
-            if _rank(level) > _rank(granted.get(scope, 'none')):
-                issues.append('%s: job grants %s:%s but the workflow declares %s'
-                              % (name, scope, level, granted.get(scope, '(nothing)')))
-    return issues
+    return [msg for _leg, msg in workflow_findings(text, name)]
 
 
 def workflows(dirpath=None):
@@ -99,15 +169,44 @@ def workflows(dirpath=None):
 def scan(dirpath=None):
     items, base = workflows(dirpath)
     if items is None:
-        return None, [], 'workflow directory not found: %s' % base
-    findings, unreadable = [], []
+        return None, base          # the judge reads `rep is None` and reports the path it could not see
+    findings, unreadable, legs, readable = [], [], {}, []
+    for leg in LEGS:
+        legs[leg] = 0
     for name, text in items:
         if text is None:
             unreadable.append(name)
             continue
-        findings.extend(workflow_issues(text, name))
+        readable.append(text)
+        for leg, msg in workflow_findings(text, name):
+            findings.append(msg)
+            legs[leg] += 1
+    samples = leg_samples(readable)
     return {'workflows': len(items), 'names': [n for n, _ in items],
-            'unreadable': unreadable, 'findings': findings}, base
+            'unreadable': unreadable, 'findings': findings,
+            'leg_findings': legs, 'leg_samples': samples,
+            'untested_legs': [l for l in LEGS if samples[l] == 0]}, base
+
+
+def coverage_identity_issues(rep):
+    """The rules that make "untested" a claim instead of decoration.
+
+    A leg may be declared untested only when it truly had no sample; a finding may not come from a
+    leg with no sample; and the declared set must equal the computed one. Without this, a report can
+    say `untested=job_within_header` forever - which reads honest and proves nothing.
+    """
+    bad = []
+    for leg in LEGS:
+        if leg not in rep.get('leg_samples', {}) or leg not in rep.get('leg_findings', {}):
+            bad.append('leg %s missing from the report' % leg)
+    declared = sorted(l for l in LEGS if not rep.get('leg_samples', {}).get(l))
+    if declared != sorted(rep.get('untested_legs', [])):
+        bad.append('declared untested %s != zero-sample legs %s'
+                   % (sorted(rep.get('untested_legs', [])), declared))
+    for leg, hits in (rep.get('leg_findings') or {}).items():
+        if hits and not (rep.get('leg_samples') or {}).get(leg):
+            bad.append('leg %s reported %d findings with 0 samples' % (leg, hits))
+    return bad
 
 
 def selftest():
@@ -164,9 +263,59 @@ def selftest():
         'workflows=%s findings=%s' % (real and real['workflows'], real and real['findings'][:1]))
     io.open(os.path.join(tmp, 'wf_broken.yml'), 'wb').write(b'\xff\xfe not utf-8 \x81')
     rep3, _ = scan(tmp)
-    add('an unreadable file is named in the report and never counted as clean',
+    add('an unreadable file is named in the report and never counted clean',
         rep3['unreadable'] == ['wf_broken.yml'] and len(rep3['findings']) == 1
         and rep3['workflows'] == 5, str(rep3))
+    # round 43: a leg may only be called untested when an **independent** count agrees it has no
+    # sample. Round 42 declared this very leg empty from a hand-run grep that looked only for two
+    # spaces of indentation, and `deploy-pages.yml:59` has four - a false zero that went straight
+    # into next round's plan. The sample numbers below are therefore cross-checked, not asserted.
+    real_rep, _ = scan()
+    indep = {}
+    for n, txt in workflows(os.path.join(ROOT, WF_DIR))[0]:
+        if not txt:
+            continue
+        for leg in LEGS:
+            indep[leg] = indep.get(leg, 0) + (
+                1 if leg != 'job_within_header'
+                else sum(1 for ln in txt.splitlines()
+                         if ln.startswith('    ') and ln.strip().startswith('permissions:')))
+    add('per-leg samples match an independent count, so no leg is called untested off a typed grep',
+        all(real_rep['leg_samples'][k] == indep[k] for k in LEGS)
+        and real_rep['leg_samples']['job_within_header'] >= 1
+        and not coverage_identity_issues(real_rep),
+        'report=%s independent=%s' % (real_rep['leg_samples'], indep))
+    add('the leg that round 42 called empty actually has a sample today (false zero corrected)',
+        'job_within_header' not in real_rep['untested_legs']
+        and real_rep['leg_findings'].get('job_within_header', 0) == 0,
+        'untested=%s findings=%s' % (real_rep['untested_legs'], real_rep['leg_findings']))
+    empty_dir = os.path.join(tmp, 'nojob')
+    os.makedirs(empty_dir)
+    for i in range(2):
+        io.open(os.path.join(empty_dir, 'w%d.yml' % i), 'w', encoding='utf-8', newline='\n').write(good)
+    e0, _ = scan(empty_dir)
+    widen_dir = os.path.join(tmp, 'withjob')
+    os.makedirs(widen_dir)
+    io.open(os.path.join(widen_dir, 'a.yml'), 'w', encoding='utf-8', newline='\n').write(good)
+    io.open(os.path.join(widen_dir, 'b.yml'), 'w', encoding='utf-8', newline='\n').write(
+        good + 'jobs:\n  x:\n    permissions:\n      contents: write\n')
+    jw, _ = scan(widen_dir)
+    add('a population with no job-level block declares that leg untested, and one block ends it',
+        e0['untested_legs'] == ['job_within_header'] and e0['findings'] == []
+        and 'job_within_header' not in jw['untested_legs']
+        and jw['leg_samples']['job_within_header'] == 1
+        and any('contents:write' in f for f in jw['findings']),
+        'empty=%s withjob=%s' % (e0['leg_samples'], jw['leg_samples']))
+    liar = dict(real_rep, untested_legs=['job_within_header', 'wildcard_scope'])
+    add('declaring a leg untested while it had samples is caught (the label can lie)',
+        any('declared untested' in x for x in coverage_identity_issues(liar)),
+        str(coverage_identity_issues(liar))[:120])
+    missing = dict(real_rep)
+    missing['leg_samples'] = dict(missing['leg_samples'])
+    missing['leg_samples'].pop('wildcard_scope')
+    add('a leg that vanishes from the report fails the identity (coverage cannot shrink quietly)',
+        any('missing from the report' in x for x in coverage_identity_issues(missing)),
+        str(coverage_identity_issues(missing))[:120])
 
     bad = sum(1 for _n, ok, _d in cases if not ok)
     for name, ok, detail in cases:
@@ -189,11 +338,15 @@ def main():
     if args.as_json:
         print(json.dumps(rep, ensure_ascii=False))
     else:
-        print('CI-HYG: %d workflows, %d findings, unreadable=%s'
-              % (rep['workflows'], len(rep['findings']), rep['unreadable']))
+        print('CI-HYG: %d workflows, %d findings, unreadable=%s, leg_samples=%s, untested=%s'
+              % (rep['workflows'], len(rep['findings']), rep['unreadable'],
+                 ','.join('%s=%d' % (k, rep['leg_samples'][k]) for k in LEGS),
+                 ','.join(rep['untested_legs']) or '-'))
         for f in rep['findings'][:8]:
             print('  - %s' % f[:150])
-    return 0 if not rep['findings'] else 1
+        for x in coverage_identity_issues(rep)[:4]:
+            print('  ! %s' % x[:150])
+    return 0 if not rep['findings'] and not coverage_identity_issues(rep) else 1
 
 
 if __name__ == '__main__':

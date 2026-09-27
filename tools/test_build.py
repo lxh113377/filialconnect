@@ -467,6 +467,14 @@ def t_ci_hygiene():
           'workflows=%d unreadable=%s' % (rep['workflows'], rep['unreadable']))
     check('no workflow grants a wildcard scope, write-all, or a job wider than its header',
           not rep['findings'], str(rep['findings'][:3]))
+    # A leg with no sample is not a pass. Round 43: this tree has zero job-level `permissions:`
+    # blocks, so the job-widening leg cannot bite today - the judge must say so instead of
+    # contributing a green that measured nothing (same family as `unverified is not pass`).
+    check('every hygiene leg is judged or declared untested, and the declaration is consistent',
+          not hyg.coverage_identity_issues(rep),
+          'leg_samples=%s untested=%s' % (
+              ','.join('%s=%d' % (k, rep['leg_samples'][k]) for k in hyg.LEGS),
+              ','.join(rep['untested_legs']) or '-'))
 
 
 def t_vendor():
