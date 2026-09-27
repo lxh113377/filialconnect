@@ -157,6 +157,19 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    refuses a label that contradicts its own counts, and the battery checks the enumerator against an
    independent scan of the shipped files. Rule: if a number decides a priority, enumerate it -
    a fixed indentation pattern is a guess wearing a measurement.
+17. **A control that cannot fail is worse than no control - and a tool that reads no argv still has
+   an argv contract.** Two round-43 self-inflicted catches. (a) The duplicated-binding leg added to
+   `_internal/audit_dupes.py` was written *from* a real defect and then scored 0 hits on it, because
+   it walked into compound statements and let a nested write overwrite the value being compared; only
+   its own transcription fixture went red. Attributing a different finding, I built the mirror image
+   of that error: on Windows, `subprocess.run(..., env={'PATH': ...})` **does not** test PATH, since
+   CPython resolves a bare executable name against the parent's `os.environ` - the "control" returned
+   rc=0 and briefly disproved a correct diagnosis. So name the branch a negative control is meant to
+   break, then show it break. (b) `build_zip.py` read no arguments at all, so `--help` fell through to
+   the build and overwrote that day's deliverable ZIP - the third instance of this family in the
+   harness. The fix is structural, not per-accident: a side-effecting script states its argv policy in
+   one powerless predicate (`decide()` → build/help/refuse), refuses unknowns by name with rc=2, and
+   the refusal is proven by asserting the artefact's bytes and mtime are identical after the attempt.
 
 ## Attribution before action
 
