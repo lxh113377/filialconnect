@@ -170,6 +170,20 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    harness. The fix is structural, not per-accident: a side-effecting script states its argv policy in
    one powerless predicate (`decide()` → build/help/refuse), refuses unknowns by name with rc=2, and
    the refusal is proven by asserting the artefact's bytes and mtime are identical after the attempt.
+18. **A writing default must not be reachable by a typo - and a rule that fires on 64 dead files
+   gets switched off, not obeyed.** Round 44 inherited "generalise build_zip's argv refusal" as a
+   plan item. Enumerated first: 94 of 110 modules write something, and 64 of those are one-shot
+   fossil patch scripts that will never be invoked with a flag again, so the blanket rule was
+   rejected by its own denominator. The decidable surface is *tools the harness actually invoked*
+   (read back out of the newest instrument capture, never hand-listed) intersected with "can write":
+   `live=22 writers=19`, of which `tools/gate_wiring.py` - whose **default action rewrites the wiring
+   ledger**, so `--chk` silently means "mutate" - and `render_peers_table.py` had no refusal at all.
+   Both now route through a powerless `decide()` and prove the refusal path leaves the ledger bytes
+   unchanged; the standing judge is `_internal/audit_argv_contract.py --verify` (close-out gate ⑭).
+   Gate ⑮ ("every archive artefact a report cites is tracked") then caught itself once: `git ls-files`
+   octal-escapes CJK filenames by default, so the report's own name looked untracked until
+   `-c core.quotePath=false` was added. Both halves are the same lesson - **size the population
+   before writing the rule, and prove the probe can see the thing it claims is missing.**
 
 ## Attribution before action
 

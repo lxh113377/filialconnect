@@ -6,6 +6,21 @@
 ## [Unreleased]
 
 ### Added
+- **"写盘"不该是一个拼错的 flag 触发的动作；但一刀切规则被分母否证**（第 44 轮）。第 43 轮把
+  `build_zip.py --help` 覆盖当天交付物那件事修成了 `decide()` 谓词，本轮先回答"要不要推广"：
+  AST 枚举 110 个模块 ⇒ 94 个会写盘，其中 **64 个是一次性化石补丁脚本**（再也不会被带参数调用），
+  所以"每个有副作用的脚本都要拒未知参数"这条规则**在分母上不成立**（打了 64 个死文件的闸会被关掉，
+  不会被遵守）。可判的落点是"**这一轮真被调用过 ∧ 会写盘**"：从最新一份 `rNN_instruments.txt`
+  反读调用面（不手数、不手抄清单），实测 `live=22 writers=19`，其中 2 个没有拒参数能力——
+  `tools/gate_wiring.py`（**默认动作就是重写 wiring 台账**，`--chk` 拼错即从"校验"变成"改写"）
+  与 `_internal/render_peers_table.py`（认识 `--write/--verify/--check`，其余静默忽略）。
+  两处按 build_zip 同一形态修：策略收进无副作用谓词 + 点名拒 + 一条"跑完后台账字节不变"的
+  端到端断言（`gate_wiring` 新增 `--selftest` 5 例）。修完复测 `writers=19 exposed=0`。
+  新常驻判据 `_internal/audit_argv_contract.py --verify` 接成 close-out **第⑭条**，门面行印
+  `argv=writers/exposed`；另加**第⑮条**"报告引用的归档产物必须已被 git 跟踪"（第 43 轮的采集日志
+  靠 `git add -f` 才入库，忘一次就是新 clone 里的死链取证入口）。第⑮条首跑就把自己的假阳性量了出来：
+  `git ls-files` 默认把中文文件名八进制转义，回读永远匹配不上 ⇒ 加 `-c core.quotePath=false` 后
+  `cites=4/4`。闸 13 → 15 条，链计数 2102 不变（本轮改动不在公开判据链上）。
 - **一条判据抓不住它自己那次的缺陷，外加一个从不读参数的工具**（第 43 轮，两处都是本轮自己造的）。
   ① 本轮上午给 `_internal/audit_dupes.py` 加了 `dead_rebinds` 腿，动机是真实缺陷：`check_overrides()`
   里一份 `named = None` + `if report:` 块被**粘贴**进去而原件没删。但实现写成"记住每个名字最近一个字面量

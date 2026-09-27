@@ -180,9 +180,57 @@ def render():
     return json.dumps(measure(), indent=2, sort_keys=True) + '\n'
 
 
-def main():
+USAGE = 'usage: python tools/gate_wiring.py [--check]   (no arguments rewrites the ledger)'
+
+
+def decide(argv):
+    """('write'|'check'|'refuse', detail) - this tool writes the ledger when given nothing, so a
+    mistyped `--chk` used to mean "rewrite the wiring ledger" while the operator asked to verify it.
+    Round 44's argv-contract audit named it; the same shape cost round 43 a deliverable ZIP."""
+    for arg in argv:
+        if arg == '--check':
+            continue
+        return 'refuse', 'refusing to run: %r is not an option. %s' % (arg, USAGE)
+    return ('check', '') if '--check' in argv else ('write', '')
+
+
+def selftest(argv=None):
+    """The predicate has no powers, so the cases cost nothing; the last one proves the refusal path
+    cannot reach the writer."""
+    import os
     import sys
-    check = '--check' in sys.argv
+    path = os.path.join(ROOT, LEDGER)
+    before = (os.path.getmtime(path), os.path.getsize(path)) if os.path.exists(path) else None
+    rc = main(['--chk'])
+    after = (os.path.getmtime(path), os.path.getsize(path)) if os.path.exists(path) else None
+    cases = [
+        ('no argument writes the ledger', decide([]) == ('write', ''), str(decide([]))),
+        ('--check verifies instead', decide(['--check'])[0] == 'check', decide(['--check'])[0]),
+        ('a near-miss flag is refused by name, not read as --check',
+         decide(['--chk'])[0] == 'refuse' and '--chk' in decide(['--chk'])[1],
+         decide(['--chk'])[1][:60]),
+        ('a positional is refused too (nothing is silently dropped)',
+         decide(['reports/gate-wiring.json'])[0] == 'refuse', 'refused'),
+        ('running with an unknown flag exits 2 and leaves the ledger bytes untouched',
+         rc == 2 and before == after, 'rc=%d %s -> %s' % (rc, before, after)),
+    ]
+    bad = sum(1 for _n, ok, _d in cases if not ok)
+    for name, ok, detail in cases:
+        print('  %s %s (%s)' % ('ok ' if ok else 'SELFTEST-FAIL', name, detail))
+    print('gate_wiring selftest: %d cases, %d failures' % (len(cases), bad))
+    return 1 if bad else 0
+
+
+def main(argv=None):
+    import sys
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if '--selftest' in argv:
+        return selftest(argv)
+    action, detail = decide(argv)
+    if action == 'refuse':
+        sys.stderr.write(detail + '\n')
+        return 2
+    check = action == 'check'
     want = render()
     path = os.path.join(ROOT, LEDGER)
     have = io.open(path, encoding='utf-8').read() if os.path.exists(path) else ''
