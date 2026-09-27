@@ -445,6 +445,30 @@ def t_workflows():
               not stray, str(stray[:2]))
 
 
+def t_ci_hygiene():
+    """Every workflow declares least-privilege permissions, and the scan proves how many it saw.
+
+    Round 42 measured the population before writing the rule: all four workflows already carry a
+    top-level `permissions:` block and every `uses:` is SHA-pinned with a `#vX.Y.Z` comment
+    (`t_workflows` has judged the pinning since round 12). What nothing judged was the *scope* -
+    a job adding `permissions: contents: write` under a header that declared only `read` widens the
+    token without touching the header, and `permissions: write-all` reviews like boilerplate.
+    The predicates live in tools/ci_hygiene.py, which self-tests both directions; this judge owns
+    the wiring and the denominator, so neither can quietly shrink (the same split as t_no_link_code).
+    """
+    hyg = load_tool('ci_hygiene', 'ci_hygiene.py')
+    rep, base = hyg.scan()
+    check('the workflow directory can be read (a missing population is not a pass)',
+          rep is not None, str(base))
+    if rep is None:
+        return
+    check('the hygiene scan reached every workflow file',
+          rep['workflows'] >= 4 and not rep['unreadable'],
+          'workflows=%d unreadable=%s' % (rep['workflows'], rep['unreadable']))
+    check('no workflow grants a wildcard scope, write-all, or a job wider than its header',
+          not rep['findings'], str(rep['findings'][:3]))
+
+
 def t_vendor():
     """The vendored UMD bundles publish under a specific global name. Guessing it
     (LanguageDetector vs i18nextBrowserLanguageDetector) makes i18next.init() a
@@ -2066,7 +2090,8 @@ def t_triage_copy():
 
 
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
-          t_workflows, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs, t_release,
+          t_workflows, t_ci_hygiene, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs,
+          t_release,
           t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
           t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw, t_page_nav,
           t_contrast_coverage, t_perf_coverage, t_perf_measurement,

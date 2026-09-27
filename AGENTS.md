@@ -133,6 +133,19 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    rewrite is proved lossless at the byte level before it is written, and the judge keeps naming any
    unparsable file it meets.
 
+15. **A control leg must take its baseline from the population it compares against.** Round 42's new
+   battery had a case claiming "adding one workflow moves the count by exactly 1"; it failed, and the
+   defect was in the leg, not the tool: the previous case had restored the boundary to the real tree,
+   so `before` was counted over 4 shipped workflows while `after` was counted over a 6-file sandbox.
+   The assertion was one-to-one in shape and unachievable in fact - which is how a control can look
+   rigorous and measure nothing. Same family as the r41 rule that a mutation must enter the predicate
+   it claims to test. Before trusting a `before/after` case, print both sides' denominators; if they
+   differ by anything other than the change under test, the case is comparing two populations.
+   Wiring cost noted too: a new tool under `tools/` must be declared in `tools/gate-wiring.json` and
+   both `reports/gate-wiring.json` and `reports/judge-coverage.json` regenerated, or three checks
+   fail at once (undeclared consumer, ledger drift, untracked build input) - that is the chain
+   telling you the new file has no owner yet.
+
 ## Attribution before action
 
 When two runs disagree, diff the artifact bytes before theorising. When CI is red, read the tool's
