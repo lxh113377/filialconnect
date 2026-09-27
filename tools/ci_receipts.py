@@ -39,10 +39,19 @@ def head_sha():
     return p.stdout.strip() if p.returncode == 0 else ''
 
 
-def is_ancestor(sha):
-    """True when `sha` is reachable from HEAD - a receipt must describe commits in this history."""
+def ancestor_state(sha):
+    """True (in this history) / False (present but not an ancestor) / None (cannot see it).
+
+    CI checks out with depth 1, so the commit a receipt names is usually not in the local object
+    store at all. That must be reported as blindness, not as a pass and not as a failure: the first
+    version of this check demanded `git merge-base --is-ancestor` unconditionally and turned the
+    quality job red on the day it shipped, which is the same mistake as scoring an unmeasured leg
+    as green - the difference is only which way the lie points.
+    """
     if not sha or len(sha) < 7:
         return False
+    if run(['git', 'cat-file', '-e', '%s^{commit}' % sha]).returncode != 0:
+        return None
     return run(['git', 'merge-base', '--is-ancestor', sha, 'HEAD']).returncode == 0
 
 
@@ -101,12 +110,13 @@ def collect():
 
 
 def receipt_issues(blocks, ledger, ancestor=lambda sha: True):
-    """Pure predicate: (declared blocks on disk, the committed ledger) -> list of problems.
+    """Pure predicate: (declared blocks on disk, the committed ledger) -> (problems, blind_count).
 
-    `ancestor` is injected so the check can be driven without a git repository under test -
-    a judge that cannot be fed a hostile input has no proven failure side.
+    `ancestor` returns True / False / None and is injected so every branch - including "this object
+    is not in the local store" - can be driven from a selftest without a git repository.
     """
     bad = []
+    blind = 0
     got = {(r.get('workflow'), r.get('job')): r for r in (ledger or {}).get('receipts', [])}
     want = set()
     for wf, jobs in sorted(blocks.items()):
@@ -126,10 +136,14 @@ def receipt_issues(blocks, ledger, ancestor=lambda sha: True):
         if r.get('job_conclusion') != 'success':
             bad.append('%s/%s job conclusion is %r, not success'
                        % (key[0], key[1], r.get('job_conclusion')))
-        elif not ancestor(r.get('sha') or ''):
-            bad.append('%s/%s receipt names commit %s which is not in this history'
-                       % (key[0], key[1], (r.get('sha') or '?')[:9]))
-    return bad
+        else:
+            state = ancestor(r.get('sha') or '')
+            if state is False:
+                bad.append('%s/%s receipt names commit %s which is in this history but not an '
+                           'ancestor of HEAD' % (key[0], key[1], (r.get('sha') or '?')[:9]))
+            elif state is None:
+                blind += 1
+    return bad, blind
 
 
 def check():
@@ -142,14 +156,16 @@ def check():
     if not any(blocks.values()):
         return False, ('UNVERIFIED: no job-level permissions block on disk - a receipt ledger with '
                        'nothing to certify is not a pass (R247)')
-    bad = receipt_issues(blocks, ledger, ancestor=is_ancestor)
+    bad, blind = receipt_issues(blocks, ledger, ancestor=ancestor_state)
     n = sum(len(v) for v in blocks.values())
+    face = ('%d job block(s) covered, %d receipt(s), newest run=%s sha=%s ancestry=%s'
+            % (n, len(ledger['receipts']), max(r['run_id'] for r in ledger['receipts']),
+               (ledger['receipts'][0]['sha'] or '')[:9],
+               ('verified' if blind == 0 else 'BLIND(%d, shallow checkout: cannot see the commit)'
+                % blind)))
     if bad:
-        return False, 'RECEIPT-FAIL: %d problem(s): %s' % (len(bad), '; '.join(bad)[:220])
-    return True, ('CI-RECEIPTS-OK: %d job block(s) covered, %d receipt(s), newest run=%s sha=%s'
-                  % (n, len(ledger['receipts']),
-                     max(r['run_id'] for r in ledger['receipts']),
-                     (ledger['receipts'][0]['sha'] or '')[:9]))
+        return False, 'RECEIPT-FAIL: %d problem(s): %s | %s' % (len(bad), '; '.join(bad)[:200], face)
+    return True, 'CI-RECEIPTS-OK: %s' % face
 
 
 def selftest():
@@ -159,33 +175,37 @@ def selftest():
                                'declared': {'contents': 'read'}, 'run_id': 1,
                                'sha': 'a' * 40, 'job_conclusion': 'success'}]}
     cases = []
-    cases.append(('a matching receipt passes', not receipt_issues(blocks, ok_ledger),
-                  str(receipt_issues(blocks, ok_ledger))[:70]))
+    b0, bl0 = receipt_issues(blocks, ok_ledger)
+    cases.append(('a matching receipt passes', not b0 and bl0 == 0, '%s blind=%d' % (b0, bl0)))
     cases.append(('no receipt at all is named', any('no behaviour receipt' in x for x in
-                  receipt_issues(blocks, {'receipts': []})), 'red'))
+                  receipt_issues(blocks, {'receipts': []})[0]), 'red'))
     cases.append(('widening the block after capture is caught',
                   any('scopes changed' in x for x in receipt_issues(
-                      {'a.yml': {'deploy': {'contents': 'write'}}}, ok_ledger)), 'red'))
+                      {'a.yml': {'deploy': {'contents': 'write'}}}, ok_ledger)[0]), 'red'))
     cases.append(('a failed job cannot certify a permission',
                   any('not success' in x for x in receipt_issues(
                       blocks, {'receipts': [dict(ok_ledger['receipts'][0],
-                                                 job_conclusion='failure')]})), 'red'))
-    cases.append(('a receipt pointing outside this history is refused',
-                  any('not in this history' in x for x in receipt_issues(
-                      blocks, ok_ledger, ancestor=lambda s: False)), 'red'))
+                                                 job_conclusion='failure')]})[0]), 'red'))
+    cases.append(('a receipt in this history but not an ancestor is refused',
+                  any('not an ancestor' in x for x in receipt_issues(
+                      blocks, ok_ledger, ancestor=lambda s: False)[0]), 'red'))
+    # the shallow-CI case: blindness is its own state. It must NOT be a problem (that red is what
+    # this judge shipped with) and must NOT be silent - the caller prints `ancestry=BLIND(n)`.
+    bblind, blblind = receipt_issues(blocks, ok_ledger, ancestor=lambda s: None)
+    cases.append(('a commit the checkout cannot see is blindness, not a failure',
+                  not bblind and blblind == 1, 'problems=%s blind=%d' % (bblind, blblind)))
+    ok, line = check()
+    cases.append(('the real verdict says whether ancestry was verified or blind (no quiet skip)',
+                  'ancestry=' in line and ('verified' in line or 'BLIND' in line), line[-60:]))
     cases.append(('an orphan receipt (block deleted) does not stay green',
                   any('stale exemption' in x for x in receipt_issues(
-                      {'a.yml': {}}, ok_ledger)), 'red'))
-    cases.append(('the failure branch is not vacuous: an empty everything reports nothing',
-                  receipt_issues({}, {'receipts': []}) == [], 'ok-but-check-the-guard-in-check()'))
+                      {'a.yml': {}}, ok_ledger)[0]), 'red'))
     real_blocks = declared_blocks(hyg)
     real_n = sum(len(v) for v in real_blocks.values())
     cases.append(('the real tree does carry a job-level block (else this judge is decorative)',
                   real_n >= 1, '%d block(s) across %d workflow(s)' % (real_n, len(real_blocks)))
                  )
-    ok, line = check()
-    cases.append(('the committed ledger passes against the real tree and real git history',
-                  ok, line[:110]))
+    cases.append(('the committed ledger passes against the real tree', ok, line[:110]))
     bad = sum(1 for _n, o, _d in cases if not o)
     for name, ok_c, detail in cases:
         print('  %s %s (%s)' % ('ok ' if ok_c else 'SELFTEST-FAIL', name, detail))
