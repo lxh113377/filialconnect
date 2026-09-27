@@ -196,12 +196,12 @@ def check_metadata(slug):
             # the mismatch gets the same per-field shape as the match, so a reader cannot tell
             # "compared and differed" apart from "never compared" (round 40)
             print('metadata item %s: MISMATCH (%s)' % (field, msg.replace('\n', ' ')[:180]))
-    if not problems:
-        # one receipt per field, not one substring for all three: the archive's close-out reads
-        # this log, and a single line cannot tell "the homepage was compared and matched" from
-        # "the homepage was never reached" (round 40).
-        for field in META_ITEMS:
+        else:
+            # printed here, not in a block after the loop: a log with one differing field used to
+            # carry a single receipt for three comparisons, so the archive could not check
+            # match + mismatch == the declared fields (round 41's identity).
             print('metadata item %s: match' % field)
+    if not problems:
         print(META_OK_LINE)
     return problems
 

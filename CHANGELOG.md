@@ -6,6 +6,15 @@
 ## [Unreleased]
 
 ### Added
+- **仓外 metadata 回执现在两侧都数得过来**（第 41 轮）。第 40 轮把三项比较改成逐字段回执，但打印
+  `match` 的那一段仍只在"全等"时执行——于是一份含一条 `MISMATCH` 的日志，读起来与"另外两项根本没比"
+  完全同形：判红是对的，覆盖率主张却仍然无法核验。现在 `match`/`MISMATCH` 都在循环内按字段各印一行，
+  恒等式 `matched + mismatched == len(META_ITEMS)` 直接印在归档侧第⑩条的门面行上
+  （`items=3/3 matched=2 mismatched=1`）。新增常驻电池
+  `_internal/test_round41_meta_identity_mutations.py`：把 `verify-live.py` 当模块驱动（stub 掉网络调用），
+  全等/单项不符/全不符三种输入各测一次，并对"生产方改掉回执措辞"做变异——变异后 clean 日志由 ok
+  转 unverified、且恒等式在红日志上被破坏，证明这条恒等式抓的是生产方失声，不只是措辞漂移。
+  `AGENTS.md` 反复缺陷清单加第 14 类（结论看不见覆盖率）。
 - **`tools/verify-live.py` 的仓外 metadata 改为逐字段回执**（第 40 轮）。它原来只在三项全等时打印一行
   总结，归档侧 close-out 读的是这条 CI 日志——一行总结无法区分"homepage 比过且相等"与
   "homepage 根本没走到"。现在导出 `META_ITEMS` / `META_OK_LINE` 两个常量，并按字段各印一行

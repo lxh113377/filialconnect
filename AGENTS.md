@@ -118,6 +118,20 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    a case whose mutation was real and whose *own build step* restored the file. Put effectiveness on
    the mutation's receipt (`fixture_guard` per edit), never on a state the system under test is
    allowed to undo.
+14. **A verdict cannot see coverage: count the receipts, on both ends of the wire.** Round 40 made
+   `verify-live.py` print one `metadata item <field>: match` line per declared field, and the archive
+   began importing that vocabulary instead of carrying its own copy - but the *producer* still printed
+   the match lines only in a block that runs when nothing differed. So a log carrying one `MISMATCH`
+   and no `match` lines read `red` whether the other two fields matched, differed, or were never
+   compared: the red verdict was right, and the coverage claim underneath it was unverifiable. The fix
+   is the identity `matched + mismatched == len(META_ITEMS)`, printed on the gate's face
+   (`items=3/3 matched=2 mismatched=1`), plus a battery that drives the real producer with its network
+   call stubbed (`_internal/test_round41_meta_identity_mutations.py`) - a reader-side rule and a
+   producer-side behaviour tested against each other, because two ends of one wire drift separately.
+   Same-round sibling: an archived one-shot script that has never parsed (`patch_round27_bump.py`,
+   `unterminated string literal` since round 27) was **repaired, not excluded** - the escape-only
+   rewrite is proved lossless at the byte level before it is written, and the judge keeps naming any
+   unparsable file it meets.
 
 ## Attribution before action
 
