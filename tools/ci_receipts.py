@@ -206,6 +206,26 @@ def selftest():
                   real_n >= 1, '%d block(s) across %d workflow(s)' % (real_n, len(real_blocks)))
                  )
     cases.append(('the committed ledger passes against the real tree', ok, line[:110]))
+    # The CI condition, reproduced instead of asserted: a depth-1 clone over file:// really does
+    # lack the receipt's commit. Without this case "blind" is a path nobody has walked, and a local
+    # `verified` reading says nothing about a shallow runner.
+    import shutil
+    import tempfile
+    probe = os.path.join(tempfile.gettempdir(), 'ci_receipts_shallow_probe')
+    shutil.rmtree(probe, ignore_errors=True)
+    clone = run(['git', 'clone', '--depth', '1', '-q',
+                 'file://' + ROOT.replace('\\', '/'), probe], cwd=tempfile.gettempdir())
+    if clone.returncode != 0:
+        cases.append(('shallow-clone probe could not run (named as a failure, not skipped)', False,
+                      'git clone failed: %s' % (clone.stderr or '').strip()[:80]))
+    else:
+        depth = run(['git', 'rev-list', '--count', 'HEAD'], cwd=probe).stdout.strip()
+        seen = run([sys.executable, os.path.join('tools', 'ci_receipts.py'), '--check'], cwd=probe)
+        cases.append(('in a depth-1 checkout the same ledger reads BLIND and still exits 0',
+                      depth == '1' and 'BLIND' in (seen.stdout or '') and seen.returncode == 0,
+                      'depth=%s rc=%d %s' % (depth, seen.returncode,
+                                             (seen.stdout or '').strip()[-56:])))
+        shutil.rmtree(probe, ignore_errors=True)
     bad = sum(1 for _n, o, _d in cases if not o)
     for name, ok_c, detail in cases:
         print('  %s %s (%s)' % ('ok ' if ok_c else 'SELFTEST-FAIL', name, detail))
