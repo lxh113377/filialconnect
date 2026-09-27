@@ -82,16 +82,46 @@ def archive_has_no_internal(root=None):
     return not any(n == '_internal' or n.startswith('_internal/') for n in names)
 
 
+def escape_to(ref):
+    """(escaped_above_root_depth, residual path) for a reference that walks out of the repository.
+
+    `../_internal/build_zip.py` in a public document is an archive-side reference, and it must be
+    classified that way **without looking outside the repository**: the first version resolved paths
+    against the filesystem, so it "resolved" on my machine (the archive happens to be a sibling
+    directory) and was a dead link in a clean checkout. A judge whose verdict depends on what sits
+    next to the checkout is not a judge. The residual after climbing out is what the author means,
+    so `_internal/...` is recognised as archive-side while `../../Windows/win.ini` is not.
+    """
+    out, up = [], 0
+    for p in ref.split('/'):
+        if p == '..':
+            if out:
+                out.pop()
+            else:
+                up += 1
+        elif p not in ('', '.'):
+            out.append(p)
+    return up, '/'.join(out)
+
+
 def classify(ref, line, doc_dir, root=None):
     root = root or ROOT
     if any(ref.startswith(a) or ref == a for a in ARCHIVE_ONLY):
         return 'archive-exempt'
+    up, residual = escape_to(ref)
+    if up:
+        # an escaped reference is archive-side exactly when what remains after climbing out is an
+        # archive-only name; `../../Windows/win.ini` escapes too but proves nothing about our repo
+        if any(residual == a or residual.startswith(a) for a in ARCHIVE_ONLY):
+            return 'archive-exempt'
+        return 'dead'
     if resolve(ref, doc_dir, root):
         return 'resolves'
     for owner in UPSTREAM_OWNERS:
-        # the owner must appear BEFORE the path on the same logical line: "we download X, and X
-        # contains y/z.txt" attributes; mentioning an unrelated repo elsewhere in the file does not
-        if owner in line and line.find(owner) < line.find(ref):
+        # co-location on the same logical line is the safety property, not left-to-right order:
+        # prose legitimately reads "the file y/z.txt in owner/repo" as often as the reverse, and
+        # ordering-based attribution failed on my own CHANGELOG sentence the day it shipped
+        if owner in line:
             return 'upstream-attributed'
     return 'dead'
 
@@ -240,6 +270,13 @@ def selftest():
                   bool(issues(dict.fromkeys(('resolves', 'archive-exempt',
                                               'upstream-attributed', 'dead'), 1) | {'documents': 3},
                               [], None)), 'None from git -> red'))
+    up = {'E.md': 'see `../_internal/audit_dupes.py`\n'}
+    ce, de = scan(tmp, up)
+    cases.append(('an escaped archive path is exempt WITHOUT reading outside the repository',
+                  not de and ce['archive-exempt'] == 1, 'dead=%s counts=%s' % (de, dict(ce))))
+    esc, ed = scan(tmp, {'F.md': 'escape hatch `../../Windows/win.ini` and `../outside/thing.py`\n'})
+    cases.append(('an escaped path that is NOT archive-side stays a dead claim (no blanket ..豁免)',
+                  len(ed) == 2 and esc['archive-exempt'] == 0, str(ed)))
     real_counts, real_dead = scan()
     cases.append(('the shipped documents have no dead path claim today', not real_dead,
                   'dead=%s' % (real_dead[:3],)))
