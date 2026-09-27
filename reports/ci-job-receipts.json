@@ -1,0 +1,20 @@
+{
+  "generated_utc": "2026-09-27T04:12:58.772331+00:00",
+  "generator": "python tools/ci_receipts.py --collect",
+  "note": "A receipt is evidence that the declared set was sufficient AND was used: it names the commit, the run, and the exact scopes at capture time. `--check` re-reads the blocks and fails if either moved.",
+  "receipts": [
+    {
+      "captured_utc": "2026-09-27T04:12:58.772331+00:00",
+      "declared": {
+        "contents": "read"
+      },
+      "job": "verify-live",
+      "job_conclusion": "success",
+      "run_conclusion": "success",
+      "run_id": 36292171772,
+      "sha": "693921b6454639fb3bd570e6626f2e6536af9e89",
+      "workflow": "deploy-pages.yml"
+    }
+  ],
+  "ruler": "newest completed run of each workflow that carries a job-level permissions block; per-job conclusion read from the run itself"
+}

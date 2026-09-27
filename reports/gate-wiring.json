@@ -13,7 +13,7 @@
     "verify-dom.mjs",
     "verify-live.py"
   ],
-  "declared": 22,
+  "declared": 23,
   "declared_but_absent": [],
   "hand": [
     "ci-audit-nodes.py",
@@ -26,6 +26,7 @@
   "silent_gap": [],
   "test": [
     "ci_hygiene.py",
+    "ci_receipts.py",
     "contrast_audit.py",
     "last-updated.py",
     "link_guard.py",
@@ -34,7 +35,7 @@
     "release.py",
     "triage.py"
   ],
-  "tools_on_disk": 22,
+  "tools_on_disk": 23,
   "undeclared": [],
   "undocumented_hand_only": []
 }

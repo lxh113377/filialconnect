@@ -6,6 +6,7 @@
   "ci-audit-nodes.py": "hand",
   "ci-watch.py": "hand",
   "ci_hygiene.py": "test",
+  "ci_receipts.py": "test",
   "contrast_audit.py": "test",
   "contrast_coverage.py": "ci",
   "fetch-fraud-feeds.py": "ci",

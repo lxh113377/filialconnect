@@ -184,6 +184,18 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    octal-escapes CJK filenames by default, so the report's own name looked untracked until
    `-c core.quotePath=false` was added. Both halves are the same lesson - **size the population
    before writing the rule, and prove the probe can see the thing it claims is missing.**
+19. **A declaration is configuration; only a run that used it is evidence - and a test that matches
+   the chain's log can be certified by the wrong judge.** Round 45 closed the `permissions:` loop:
+   `tools/ci_receipts.py` records, per job-level block, the newest **completed** run (an unfinished
+   run is refused: "I expect it to pass" is not a receipt), its commit sha, the job conclusion and
+   the exact scopes at capture time; `--check` then requires disk == ledger scope-for-scope, the job
+   to have succeeded, and the sha to be reachable in this history. Six counter-cases, including the
+   one people forget - a block deleted while its receipt survives (an orphan exemption is the silent
+   half of a silent gap). Same round: after `test_round30_page_title_mutations` was moved to run
+   `t_page_title` alone instead of the whole chain, case C1 went red immediately - its expected
+   string had been satisfied by **another judge's** wording, so the battery had been green while
+   never proving the judge it names. Match a finding, never a log; the chain's output is large
+   enough for any red to look like yours.
 
 ## Attribution before action
 

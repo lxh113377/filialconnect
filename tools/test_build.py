@@ -467,14 +467,21 @@ def t_ci_hygiene():
           'workflows=%d unreadable=%s' % (rep['workflows'], rep['unreadable']))
     check('no workflow grants a wildcard scope, write-all, or a job wider than its header',
           not rep['findings'], str(rep['findings'][:3]))
-    # A leg with no sample is not a pass. Round 43: this tree has zero job-level `permissions:`
-    # blocks, so the job-widening leg cannot bite today - the judge must say so instead of
-    # contributing a green that measured nothing (same family as `unverified is not pass`).
+    # A leg with no sample is not a pass, and a leg WITH a sample must not be reported as empty
+    # either: this sentence used to claim "zero job-level permissions blocks" - a number hand-counted
+    # with a two-space grep, disproved in round 43 when the enumerator found `verify-live`'s
+    # four-space block. The counts below are the only source of that claim now.
     check('every hygiene leg is judged or declared untested, and the declaration is consistent',
           not hyg.coverage_identity_issues(rep),
           'leg_samples=%s untested=%s' % (
               ','.join('%s=%d' % (k, rep['leg_samples'][k]) for k in hyg.LEGS),
               ','.join(rep['untested_legs']) or '-'))
+    # Declaring a scope is configuration; a green run that used it is the behaviour receipt. Without
+    # this half, `permissions: contents: read` is a comment someone wrote, not a constraint that held.
+    rec = load_tool('ci_receipts', 'ci_receipts.py')
+    rok, rline = rec.check()
+    check('every job-level permission block has a behaviour receipt from a successful run of this commit',
+          rok, rline[:150])
 
 
 def t_vendor():

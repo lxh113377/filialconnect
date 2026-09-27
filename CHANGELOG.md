@@ -6,6 +6,43 @@
 ## [Unreleased]
 
 ### Added
+- **权限声明从此要有行为回执；顺带抓出一条"绿着但什么也没证明"的电池断言**（第 45 轮）。
+  第 44 轮把"job 级 scopes ⊆ 声明"登记为下一轮首项，并写明**禁止用静态推断凑绿**——
+  静态只能证明"有人写下了这行 YAML"，证明不了"这套权限真的够用且真的被用过"。
+  本轮补上回执链：`tools/ci_receipts.py --collect` 用 `gh run list/view` 取该工作流**最近一次已完成**
+  run（未完成即拒，"等我期望它过"不算证据），逐 job 记下 `run_id / sha / job_conclusion / declared`，
+  写入 **公开仓** 的 `reports/ci-job-receipts.json`（台账必须留在公开仓：归档侧对
+  `git archive HEAD` 不可见，公开判据读一个不存在的文件会永远绿——第 43 轮已把这条教训写进 §0 L2）；
+  `--check` 纯本地复判：台账与盘面目**逐 scope 相等**、job 结论为 success、`sha` 必须在本历史里
+  （`git merge-base --is-ancestor`，等价于"这份回执描述的是可达的提交"）。谓词
+  `receipt_issues(blocks, ledger, ancestor=…)` 把 git 做成注入参数，所以"提交不可达"这一侧能在自检里
+  被真驱动。实测：`deploy-pages.yml` 的 `verify-live`（`contents: read`，run `36292171772`，
+  sha `693921b64`，job success）。**六条反向对照**：无回执／改宽后未重取／job 失败／sha 不可达／
+  块被删但回执还在（孤儿豁免＝静默豁免的另一半）／盘上无块时判 UNVERIFIED 不判绿。
+  接线：`t_ci_hygiene` 第 5 条断言读它，链 2102 → **2105**（`--attribute ci_receipts.py` 实测
+  `delta=2 moved=t_no_control_bytes+1, t_no_duplicate_defs+1`；另 +1 来自新断言本身），
+  `gate_wiring` 22 → 23 工具（新工具必须先落 `tools/gate-wiring.json` 声明 `test`，
+  否则"每个工具都要有消费者"判红——第 42 轮写下的清单本轮按预期拦了我一次）。
+- **一条电池的 expected 字符串在替别人的输出作证**（同轮实抓）。`test_round30_page_title_mutations`
+  接上 restore_guard 三证后，把 oracle 从"跑整条链"换成"只跑 `t_page_title`"，C1 立刻 **MISS**：
+  它原先匹配的 `"manual-title set is exactly the four hand-authored ones"` 并不来自
+  `t_page_title` 对这次变异的反应，而是链上**另一条判据**的措辞——变异被邻居判据（built-form 漂移、
+  sw precache）先抓住，测试因此长期"通过"，而它命名的那条判据有没有牙齿从未被证明。
+  现改为匹配真发现文本 `pages/tutorials.html='manual' want 'derived'`，5/5 全 HIT，
+  `restores proven=5`、跑完全仓 `git status` 干净。通则：**匹配发现，不匹配日志**；
+  整条链的输出足以让任意一条红看起来像"我这条判据红了"。挂账电池 `unguarded` 8 → 7。
+- **采集件的轮号要能自我对账**（第 45 轮，close-out 第⑯条）。第 44 轮的捕获脚本是从上一轮复制来的，
+  输出常量还写着 `r43_instruments.txt`——跑起来第一件事就是覆盖上一轮的仪器记录。
+  先把历史量清楚：跟踪的取证产物 26 件，**跨轮覆盖 0 次**（两次"创建后被改"都是同轮自己重写），
+  所以一刀切的"派生件必须改常量"判据没有作用面；真正可判的是**编号自洽**：
+  最新一份 `rNN_instruments.txt` 里必须出现 `第NN轮`（来自 `--report=` 参数），
+  文件名与内文不符即判红——这正好抓住"只改了内文没改输出"的那种半更新。
+  `cn_round()` 只认 1–99，`一百` 显式返回 None（读不出就拒判，不猜一个数让闸门指空处）。
+  自检 34 → 48 例（含 7 例中文数字与 5 例 provenance 双向）。闸 15 → **16 条**。
+- **注释不许承载可测事实**（第 45 轮，第 42 轮假零的最后一块）。`test_build.py` 里那句
+  "this tree has zero job-level `permissions:` blocks"是手敲两空格 grep 造的假零残留——
+  判据实测早已是 `job_within_header=1`，注释却没跟上。现在删掉这句人写的断言，
+  改为让门面行的 `leg_samples=` 自己说话。
 - **"写盘"不该是一个拼错的 flag 触发的动作；但一刀切规则被分母否证**（第 44 轮）。第 43 轮把
   `build_zip.py --help` 覆盖当天交付物那件事修成了 `decide()` 谓词，本轮先回答"要不要推广"：
   AST 枚举 110 个模块 ⇒ 94 个会写盘，其中 **64 个是一次性化石补丁脚本**（再也不会被带参数调用），

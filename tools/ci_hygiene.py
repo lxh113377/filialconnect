@@ -32,6 +32,7 @@ WILDCARD = re.compile(r'^\s*(?:-\s+)?["\x27]?\*["\x27]?\s*(?:[\s:,]|$)|permissio
 TOP_PERMISSIONS = re.compile(r'^permissions:[ \t]*\n((?:[ \t]+\w[\w-]*:[ \t]*\S+\n?)+)', re.M)
 JOB_PERMISSIONS = re.compile(r'^([ \t]+)permissions:[ \t]*\n'
                              r'((?:\1 [ \t]*\w[\w-]*:[ \t]*\S+[ \t]*\n?)+)', re.M)
+JOB_KEY = re.compile(r'^  ([A-Za-z_][\w-]*):[ \t]*$', re.M)
 
 
 def job_blocks(text):
@@ -42,6 +43,30 @@ def job_blocks(text):
     than by *deeper than this header*. Anchoring on the header's indent keeps the block to children.
     """
     return [m[1] for m in JOB_PERMISSIONS.findall(text)]
+
+
+def named_job_blocks(text):
+    """{job name: {scope: level}} for job-level permission blocks - the same parse, attributed.
+
+    `ci_receipts.py` needs to say *which* job a receipt belongs to, and a second parser there would
+    be a copy that can drift (round 42's rule: one judgement, one implementation). So attribution
+    lives here: a block belongs to the nearest preceding two-space key that sits under `jobs:`.
+    """
+    out = {}
+    jobs_span = text.find('\njobs:')
+    if jobs_span < 0:
+        return out
+    keys = [(m.start(), m.group(1)) for m in JOB_KEY.finditer(text) if m.start() > jobs_span]
+    for m in JOB_PERMISSIONS.finditer(text):
+        if m.start() < jobs_span:
+            continue                    # the workflow header's own block is not a job's
+        owner = [name for pos, name in keys if pos < m.start()]
+        if not owner:
+            continue
+        scopes = scope_map(m.group(2))
+        if scopes:
+            out[owner[-1]] = scopes
+    return out
 PR_TARGET = re.compile(r'pull_request_target')
 
 
