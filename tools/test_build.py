@@ -2104,6 +2104,32 @@ def t_triage_copy():
           cov['covered_sites'] >= 9, tr.coverage_line(cov))
 
 
+def t_doc_citations():
+    """Paths this repository's own documents claim must resolve - and every exemption must be earned.
+
+    Round 46's denominator first: the naive version of this rule ("resolve every backticked thing
+    with a slash") fires on 110 strings, 109 of which are not path claims at all (`before/after`,
+    `--write/--verify`, `actions/checkout`, upstream file names, deliberate `_internal/` citations).
+    So the unit is "slash path whose last segment carries an extension", which leaves exactly one
+    real dead claim in the whole corpus - and that one was fixed by attributing it to its upstream
+    rather than by deleting the sentence. Predicates live in tools/doc_citations.py (15 selftest
+    cases, including "the noise strings stay uncollected" and "an unprovable exemption is refused").
+    """
+    dc = load_tool('doc_citations', 'doc_citations.py')
+    counts, dead = dc.scan()
+    proved = dc.archive_has_no_internal()
+    check('the documents were actually read (an empty corpus is not a pass)',
+          counts['documents'] >= 5, 'docs=%d' % counts['documents'])
+    check('no document claims a repository path that is not there', not dead,
+          'dead=%s' % (dead[:3],))
+    check('the `_internal/` exemption is proved from committed names, not assumed',
+          proved is True, 'archive_has_no_internal=%r' % proved)
+    check('every exemption class has at least one live member (a dead exemption is a blind spot)',
+          counts['archive-exempt'] >= 1 and counts['resolves'] >= 1,
+          'resolves=%d archive-exempt=%d upstream-attributed=%d'
+          % (counts['resolves'], counts['archive-exempt'], counts['upstream-attributed']))
+
+
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
           t_workflows, t_ci_hygiene, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs,
           t_release,
@@ -2114,7 +2140,7 @@ JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets,
           t_capability_claims, t_documented_numbers, t_gate_wiring,
           t_judge_ledger, t_perf_provenance, t_deploy_reasons,
           t_page_title, t_aria_locale, t_tracked_inputs, t_coverage_identity, t_no_link_code,
-          t_triage_copy)
+          t_triage_copy, t_doc_citations)
 
 
 def _abort_note(name, exc):

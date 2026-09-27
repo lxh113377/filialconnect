@@ -196,6 +196,18 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    string had been satisfied by **another judge's** wording, so the battery had been green while
    never proving the judge it names. Match a finding, never a log; the chain's output is large
    enough for any red to look like yours.
+20. **Count in the right unit before you gate on it, and make every exemption prove itself.**
+   Round 46's task was "widen the citation gate to the public docs". The raw count said 110 unresolved
+   backticked strings; the *unit* said one - 17 deliberate `_internal/` references, 41 fragments that
+   are not paths (`before/after`, `.com.cn`), 24 bare-name shorthands, 1 genuine dead claim. A judge
+   aimed at 110 is 109 false alarms trained to be ignored. Two self-inflicted bugs the tool's own
+   first run exposed: (a) my extractor accepted any slash, so it "found dead links" in prose - the
+   unit needs an extension on the last segment, and the counter-case ("those strings stay
+   uncollected") now pins it; (b) the exemption was proved by grepping `git archive` **bytes**, so a
+   document that merely *mentions* `_internal/` flipped the proof - verify against committed member
+   names instead. Same lesson twice this round: attribution must live on the same **logical** line
+   (re-wrapping a paragraph is not a semantic change), and an exemption that cannot be demonstrated
+   is a hole, not a rule.
 
 ## Attribution before action
 

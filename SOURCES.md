@@ -28,7 +28,10 @@
   跑真实名单验证（含反向对照：`zz.staging.store.lilybharat.com` 旧规则漏、新规则中）
 - 离线审计：`python tools/fetch-fraud-feeds.py --check`（不联网）复核摘要、条数与
   新鲜度（>30 天判失败）；CI 每次构建都跑，因此定时任务停摆会直接变红而不是悄悄过期
-- 档位说明：取上游 **online 根域档**（DNS 实测在线，`rootlist/online_root_domains.txt`）；上游另有含未审条目的 primary 全量档（21 万+），未采用——宁缺毋滥，避免未审条目造成误报
+- 档位说明：取上游 **online 根域档**（DNS 实测在线；文件在上游仓 `phishdestroy/destroylist`
+  内的 `rootlist/online_root_domains.txt`，本仓不镜像该原始清单，只入库其派生的
+  `assets/data/destroylist-domains.txt`）；上游另有含未审条目的 primary 全量档（21 万+），
+  未采用——宁缺毋滥，避免未审条目造成误报
 - **已知覆盖边界（必须如实告知用户，页面已写入 `linkcheck.scope`）**：
   - 名单以英文/国际钓鱼域为主，**中国大陆域名覆盖极薄**（`.cn` 653 条 / `.com.cn` 387
     条，合计 0.79%，2026-09-24 实测）；

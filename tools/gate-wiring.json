@@ -9,6 +9,7 @@
   "ci_receipts.py": "test",
   "contrast_audit.py": "test",
   "contrast_coverage.py": "ci",
+  "doc_citations.py": "test",
   "fetch-fraud-feeds.py": "ci",
   "gate_wiring.py": "ci",
   "judge_coverage.py": "ci",
