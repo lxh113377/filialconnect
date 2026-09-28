@@ -20,8 +20,11 @@ import datetime
 import io
 import json
 import os
+import shutil
+import stat
 import subprocess
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
@@ -37,6 +40,62 @@ def run(cmd, cwd=ROOT):
 def head_sha():
     p = run(['git', 'rev-parse', 'HEAD'])
     return p.stdout.strip() if p.returncode == 0 else ''
+
+
+PROBE_PREFIX = 'ci_receipts_probe_'
+#: constant text on purpose. The first version printed the probe's unique path here, and the
+#: archive compares its instrument block byte for byte - a random path in the transcript made
+#: every capture "stale" forever. Facts that vary belong to --probe-census, not in here.
+PROBE_RETAINED_NOTE = ('NOTE: shallow probe dir retained (read-only objects survived two '
+                       'rmtree passes); census: python tools/ci_receipts.py --probe-census\n')
+
+
+def reclaim(path):
+    """Delete a shallow git clone, including on Windows where its objects are read-only.
+
+    Round 64 measured the first version: `shutil.rmtree(probe, ignore_errors=True)` reported success
+    while the directory stayed, and the fallback printed its **unique path** into the instrument
+    capture - so every capture differed from every other and the archive's byte-equality gate on §10
+    could never converge (52 leaked directories accumulated on one machine). Clearing the read-only
+    bit and retrying is what actually removes it; `ignore_errors` is what hid that it never did.
+    """
+    if not os.path.exists(path):
+        return True
+    for attempt in (1, 2):
+        try:
+            shutil.rmtree(path)
+        except OSError:
+            if attempt == 2:
+                return False
+            for dirpath, _dirnames, filenames in os.walk(path):
+                for name in filenames:
+                    try:
+                        os.chmod(os.path.join(dirpath, name), stat.S_IWRITE)
+                    except OSError:
+                        pass
+        else:
+            return not os.path.exists(path)
+    return False
+
+
+def probe_retained():
+    """How many probe directories are on disk right now - enumerated, never a copied constant.
+
+    Returns None when the temp directory cannot be read: "could not count" must not be reportable
+    as "counted zero", and a leg that compares two counts has to be able to tell those apart.
+    """
+    base = tempfile.gettempdir()
+    try:
+        return len([n for n in os.listdir(base) if n.startswith(PROBE_PREFIX)])
+    except OSError:
+        return None
+
+
+def probe_census():
+    n = probe_retained()
+    if n is None:
+        return 'PROBE-CENSUS: unreadable (%s)' % tempfile.gettempdir()
+    return 'PROBE-CENSUS: retained=%d base=%s' % (n, tempfile.gettempdir())
 
 
 def ancestor_state(sha):
@@ -216,7 +275,12 @@ def selftest():
     # git then refused to clone into it - the case reported "clone failed" about an environment
     # leftover instead of what it means. So: claim a unique path, and refuse to continue if the
     # empty directory cannot be released (a probe that cannot run must say so, not pass quietly).
-    staging = tempfile.mkdtemp(prefix='ci_receipts_probe_')
+    # Sampled BEFORE this run creates anything - `mkdtemp` already adds one, so sampling after it
+    # (the first version) compared "54 including the dir I had just made" with "53 after cleanup"
+    # and failed: a self-measurement taken at the wrong moment is wrong in the direction of
+    # looking broken, which is the easiest kind to "fix" by deleting the leg.
+    census_before = probe_retained()
+    staging = tempfile.mkdtemp(prefix=PROBE_PREFIX)
     try:
         shutil.rmtree(staging)                     # git clone wants to create the directory itself
     except OSError as exc:
@@ -235,15 +299,35 @@ def selftest():
                       depth == '1' and 'BLIND' in (seen.stdout or '') and seen.returncode == 0,
                       'depth=%s rc=%d %s' % (depth, seen.returncode,
                                              (seen.stdout or '').strip()[-56:])))
-        shutil.rmtree(probe, ignore_errors=True)
-        # Windows leaves the (now empty) directory behind after rmtree of a git work tree; git itself
-        # can remove an empty dir, so retry instead of calling it unreclaimed
-        if os.path.isdir(probe) and not os.listdir(probe):
-            os.rmdir(probe)
-        if os.path.exists(probe):
-            # clutter the probe leaves behind is how the next run gets a confusing failure, so the
-            # path is printed rather than swallowed
-            sys.stderr.write('NOTE: shallow probe dir not reclaimed: %s\n' % probe)
+        # Round 64's finding about my own cleanup: `rmtree(ignore_errors=True)` "succeeded" while the
+        # directory survived, and the fallback printed its unique path - which made every instrument
+        # capture differ from every other, so the archive's byte-equality gate on §10 could not
+        # converge (6 extra captures in one round, 52 leaked directories on the machine).
+        reclaimed = reclaim(probe)
+        cases.append(('the probe directory is really gone afterwards (not "ignore_errors said so")',
+                      reclaimed and not os.path.exists(probe), 'reclaimed=%s exists=%s'
+                      % (reclaimed, os.path.exists(probe))))
+        sandbox = tempfile.mkdtemp(prefix=PROBE_PREFIX + 'ro_')
+        io.open(os.path.join(sandbox, 'obj'), 'w', encoding='utf-8').write(u'x' + chr(10))
+        os.chmod(os.path.join(sandbox, 'obj'), stat.S_IREAD)   # what a git clone leaves on Win
+        cases.append(('reclaim clears a read-only file instead of reporting success over it',
+                      reclaim(sandbox) and not os.path.exists(sandbox),
+                      'exists=%s' % os.path.exists(sandbox)))
+        cases.append(('the retained line carries no absolute path and no unique dir name, so a capture'
+                      ' holding it stays byte-comparable',
+                      chr(92) not in PROBE_RETAINED_NOTE
+                      and tempfile.gettempdir() not in PROBE_RETAINED_NOTE
+                      and PROBE_PREFIX not in PROBE_RETAINED_NOTE
+                      and 'probe-census' in PROBE_RETAINED_NOTE,
+                      PROBE_RETAINED_NOTE.strip()[:56]))
+        census_after = probe_retained()
+        cases.append(('one selftest run leaves no new probe directory behind',
+                      census_after == census_before, 'retained %d -> %d' % (census_before,
+                                                                           census_after)))
+        if not reclaimed:
+            # a constant line, never a unique path: the countable fact belongs to --probe-census, not
+            # to a transcript that is later compared byte for byte
+            sys.stderr.write(PROBE_RETAINED_NOTE)
     bad = sum(1 for _n, o, _d in cases if not o)
     for name, ok_c, detail in cases:
         print('  %s %s (%s)' % ('ok ' if ok_c else 'SELFTEST-FAIL', name, detail))
@@ -256,7 +340,12 @@ def main():
     ap.add_argument('--collect', action='store_true')
     ap.add_argument('--check', action='store_true')
     ap.add_argument('--selftest', action='store_true')
+    ap.add_argument('--probe-census', action='store_true',
+                    help='count leftover probe dirs (read-only; the count is never printed as a path)')
     a = ap.parse_args()
+    if a.probe_census:
+        print(probe_census())
+        return 0
     if a.selftest:
         return selftest()
     if a.collect:
