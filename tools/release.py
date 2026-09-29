@@ -59,6 +59,17 @@ def classify_checks(pairs):
     detail = ','.join('%s:%s' % (n, by_name[n][1] or by_name[n][0]) for n in sorted(by_name))
     if not by_name:
         return 'unknown', 'no check-runs at all'
+    # A job outside the judged set can be red forever here, and this verdict would still print
+    # green with its name sitting in the same line (measured: refresh:failure under ci=green on
+    # the 2026-09-28 schedule). Say which names this verdict does NOT cover, so a reader cannot
+    # fold 'listed' into 'judged'.
+    judged = set(REQUIRED_JOBS) | {POST_DEPLOY_JOB}
+    stray = sorted(n for n in by_name
+                   if n not in judged and by_name[n][0] == 'completed'
+                   and by_name[n][1] not in (None, 'success'))
+    if stray:
+        detail += ' unjudged=%s (not covered by this verdict)' % ','.join(
+            '%s:%s' % (n, by_name[n][1]) for n in stray)
     for name in REQUIRED_JOBS:
         if name not in by_name:
             return 'unknown', 'required job %s never reported [%s]' % (name, detail)

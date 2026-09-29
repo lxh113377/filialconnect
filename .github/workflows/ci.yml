@@ -70,6 +70,9 @@ jobs:
       - name: Scam-list provenance and freshness check
         run: python3 tools/fetch-fraud-feeds.py --check
 
+      - name: Scam-list tool self-tests (deadline states and the write-path band guard)
+        run: python3 tools/fetch-fraud-feeds.py --selftest
+
       - name: Link check (linkinator, fragments + external)
         run: |
           node_modules/.bin/linkinator . \

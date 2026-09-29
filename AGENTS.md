@@ -239,6 +239,7 @@ CI 跑 `--check` 逐字节回验，判据 `t_triage_copy` 在链上——因为�
 | `hand drift: N row(s) differ` | AGENTS.md 的 Triage 表被手改，或 `HINTS` 改了没重生成 | run `python tools/triage.py --write` and commit it; the section between the markers is generated, so hand edits there are not a second opinion (t_triage_copy) |
 | `stale receipt` / `malformed receipt` | 报告里的收尾回执不是本次实测（或字段残缺） | re-run `python _internal/closeout_round.py --emit` and paste the whole block again; a receipt from last round is not evidence this round closed |
 | `unknown permission key` / `declared untested` | 工作流里写了 GitHub 不认识的权限键（拼错即静默失权），或判据报告自称某腿无样本却与样本数矛盾（块锚定把 `runs-on` 之类误当权限项） | 按 `tools/ci_hygiene.py` 的 `KNOWN_SCOPES` 改键名或删掉那行；若是锚定问题，修 `job_blocks()` 的缩进回引用，不要放宽判据或把键加进豁免名单 |
+| `GitHub Actions is not permitted to create or approve pull requests` | 仓库设置不允许 Actions 令牌开 PR（Settings → Actions → General），分支已推上去、PR 开不出来，产出停在孤儿分支上没人看——不是网络也不是取数失败 | 不要在作业里重试，`pull-requests: write` 换不来这把开关：把产出改成受守卫的直提（见 `.github/workflows/refresh-fraud-feeds.yml` 的 COUNT_BAND 与 --check），或由 owner 在仓库设置里开启并留下行为回执 |
 <!-- END:TRIAGE-TABLE -->
 
 两条**不是日志签名**的操作纪律（它们没法被 grep 到，所以不进表；表只收"原话"）：

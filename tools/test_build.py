@@ -824,6 +824,17 @@ def t_release():
         check('release classifier never raises on %s' % label, raised == '', raised)
         check('release classifier: %s' % label, got == want, 'got %s want %s' % (got, want))
     src = read(os.path.join('tools', 'release.py'))
+    # Round 72: a scheduled job outside the judged set was red for a day while this verdict printed
+    # its name inside a GREEN line. 'listed' is not 'judged', so the detail has to own the difference.
+    verdict, stray_detail = release_tool.classify_checks(
+        done + [('refresh', 'completed', 'failure')])
+    check('a red job the verdict does not judge is named as unjudged, never folded into green',
+          verdict == 'green' and 'unjudged=refresh:failure' in stray_detail,
+          'verdict=%s detail=%s' % (verdict, stray_detail[-90:]))
+    verdict2, clean_detail = release_tool.classify_checks(done)
+    check('a clean judged set prints no unjudged clause (the naming is not a fixed tail)',
+          verdict2 == 'green' and 'unjudged=' not in clean_detail,
+          'verdict=%s detail=%s' % (verdict2, clean_detail))
     check('an unknown verdict cannot be relaxed by --allow-pending',
           "verdict == 'unknown'" in src and 'ALLOW_PENDING' not in
           src.split("verdict == 'unknown'")[1].split('if problems')[0].upper(),
@@ -2130,6 +2141,73 @@ def t_doc_citations():
           % (counts['resolves'], counts['archive-exempt'], counts['upstream-attributed']))
 
 
+def t_fraud_supply():
+    """The offline scam-domain list is a promise, so its supply chain is judged end to end.
+
+    Round 72's trigger: the scheduled refresh ran on 2026-09-28, pushed `automate/scam-list-20260928`,
+    and then `gh pr create` was refused ("GitHub Actions is not permitted to create or approve pull
+    requests"). The list shipped to elders was five days stale, the job's red conclusion was printed
+    inside a line that said GREEN, and README still advertised the PR that this repository's settings
+    make structurally impossible. Every claim below is a face of that one failure: the copy, the
+    permission the job actually needs, the wiring that attests it, and the deadline that makes the
+    next silent stop cheap to notice.
+    """
+    ff = load_tool('fetch_fraud_feeds', 'fetch-fraud-feeds.py')
+    meta = json.loads(read(os.path.join('assets', 'data', 'fraud-feeds-meta.json')))
+    snap_lines = [l for l in read(os.path.join('assets', 'data',
+                                               'destroylist-domains.txt')).splitlines() if l.strip()]
+    check('the shipped snapshot is the size its own meta declares',
+          meta.get('domains') == len(snap_lines),
+          'meta=%s file=%d' % (meta.get('domains'), len(snap_lines)))
+    due = None
+    try:
+        due = ff.parse_utc(meta['refresh_due_by_utc']) - ff.parse_utc(meta['fetched_utc'])
+    except (KeyError, TypeError):
+        pass
+    check('the deadline stamped into meta is the cadence the tool declares, not a number in prose',
+          due is not None and due.days == ff.REFRESH_CADENCE_DAYS + ff.STALE_GRACE_DAYS,
+          'gap=%s declared=%d+%d' % (None if due is None else due.days,
+                                     ff.REFRESH_CADENCE_DAYS, ff.STALE_GRACE_DAYS))
+    wf = read(os.path.join('.github', 'workflows', 'refresh-fraud-feeds.yml'))
+    # Comments are prose about the mechanism, not the mechanism: the header explains why the job
+    # no longer opens a pull request, and a predicate that reads that as a violation would punish
+    # the very documentation that makes the failure recognisable.
+    wf_live = '\n'.join(l for l in wf.splitlines() if not l.strip().startswith('#'))
+    check('the refresh job holds no permission it cannot use (PR creation is refused by settings, '
+          'so asking for pull-requests:write is a claim with no behaviour behind it)',
+          'pull-requests:' not in wf_live and 'gh pr create' not in wf_live,
+          'pull-requests=%s gh_pr=%s' % ('pull-requests:' in wf_live, 'gh pr create' in wf_live))
+    ci = read(os.path.join('.github', 'workflows', 'ci.yml'))
+    check('the audit and the self-test of that tool are both CI steps (a judge nobody runs is a note)',
+          'fetch-fraud-feeds.py --check' in ci and 'fetch-fraud-feeds.py --selftest' in ci,
+          'check=%s selftest=%s' % ('fetch-fraud-feeds.py --check' in ci,
+                                    'fetch-fraud-feeds.py --selftest' in ci))
+    proc = subprocess.run([sys.executable, os.path.join('tools', 'fetch-fraud-feeds.py'), '--check'],
+                          cwd=ROOT, capture_output=True, text=True, timeout=120)
+    out = (proc.stdout or '') + (proc.stderr or '')
+    states = re.findall(r'state=([a-z-]+)', out)
+    check('the offline audit prints exactly one verdict line for the real snapshot',
+          proc.returncode == 0 and out.count('FRAUD-SNAPSHOT: state=') == 1 and len(states) == 1,
+          'rc=%d lines=%d out=%s' % (proc.returncode, out.count('FRAUD-SNAPSHOT: state='), out[:120]))
+    ff_src = read(os.path.join('tools', 'fetch-fraud-feeds.py'))
+    printed = set(re.findall(r"(?:return|face\()'([a-z-]+)'", ff_src))
+    check('every state the code can return is in the vocabulary the tool declares (a constant '
+          'that drifts from its own code is a second owner of one fact)',
+          bool(printed) and printed <= set(ff.STATES),
+          'printed=%s declared=%s' % (sorted(printed), sorted(ff.STATES)))
+    readme = read('README.md')
+    promised = re.findall(r'--selftest[^\n]*[（(]([^)）]+)[)）]', readme)
+    named = set(re.findall(r'[a-z][a-z-]*', promised[0])) if promised else set()
+    check('the states README advertises are states this tool can actually print',
+          bool(promised) and named and named <= set(ff.STATES),
+          'promised=%s vocab=%s' % (sorted(named), sorted(ff.STATES)))
+    check('README no longer promises a pull request the repository cannot grant',
+          '自动开 PR' not in readme, 'the false capability was the entry that hid the stale list')
+    band_ok, band_why = ff.band_ok(meta['domains'], meta['domains'])
+    check('the write path accepts the numbers actually on disk (a guard tuned to fail is no guard)',
+          band_ok is True, band_why)
+
+
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
           t_workflows, t_ci_hygiene, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs,
           t_release,
@@ -2140,7 +2218,7 @@ JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets,
           t_capability_claims, t_documented_numbers, t_gate_wiring,
           t_judge_ledger, t_perf_provenance, t_deploy_reasons,
           t_page_title, t_aria_locale, t_tracked_inputs, t_coverage_identity, t_no_link_code,
-          t_triage_copy, t_doc_citations)
+          t_triage_copy, t_doc_citations, t_fraud_supply)
 
 
 def _abort_note(name, exc):

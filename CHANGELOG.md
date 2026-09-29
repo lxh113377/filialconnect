@@ -6,6 +6,27 @@
 ## [Unreleased]
 
 ### Added
+- **防骗名单的自动刷新链从「开 PR」改成「守卫后直提」，并把 30 天保险丝换成节奏推导的到期线**
+  （第 72 轮）。实测事实：`refresh-fraud-feeds.yml` 在 2026-09-28 的定时运行里把分支
+  `automate/scam-list-20260928` 推上去了，随后 `gh pr create` 被仓库设置拒绝
+  （`GitHub Actions is not permitted to create or approve pull requests`，见 run 36413873010），
+  名单于是停更而收口行仍印 `ci=green`——因为 `refresh` 不在 `REQUIRED_JOBS` 里，它只是被印在
+  同一行的 detail 里。三处同病一起改：
+  ① 作业只留 `contents: write` 并直提 main；写盘前由 `COUNT_BAND`(0.90–1.15) 与 `MIN_DOMAINS`
+  拒绝异常增幅，拒绝路径点名比值且证明没动一个字节。
+  ② `--check` 判的对象改成快照自己声明的 `refresh_due_by_utc`（写入时刻 + cadence 7 + grace 3），
+  死 cron 的暴露时刻从第 31 天提前到第 11 天；状态词一分七档（fresh / late / overdue /
+  digest-mismatch / count-mismatch / absent / unreadable），旧快照没有该字段时走推导并印
+  `due_origin=derived`——"没看见"与"看见且没问题"必须长得不一样。
+  ③ `classify_checks` 把受理集合外的红具名成 `unjudged=<name>:<conclusion>`，让"列出来了"与
+  "判过了"不能再折成一个词；干净集合不出现该子句（反向腿在场）。
+  新常驻判据 `t_fraud_supply` 把这条链的四个面都钉住：快照字节⇄meta 条数、meta 到期⇄工具声明的
+  cadence、作业不再索要它拿不到的权限、README 写出的状态词必须是工具真能打印的那些（词汇表由
+  `fetch-fraud-feeds.py` 的 `STATES` 单主拥有）。链计数以 `tools/test_build.py --isolate` 打印为准；
+  本轮增量另由 `git diff` 中新增 `check(` 站点数逐字节背书。名单实采 83,278 条（上游 commit
+  67a05f8d，较入库时 +181），README 的条数与 gzip 体积、SOURCES 的根域/深层拆分都随实测更新，
+  并把拆分口径写成一条可复算命令（点数 > 2 即深层；该规则在旧快照上复算得 66,680/16,417，
+  与原主张逐字相同，才敢用它算新的 66,970/16,308）。
 - **上面那条判据上线后立刻被 CI 判红两次，红的全是判据自己**（第 46 轮，同轮补记）。
   本机 `PASS: 2111` 而 CI `FAIL: no document claims a repository path that is not there:
   dead=['CHANGELOG.md: ../_internal/build_zip.py', 'CHANGELOG.md: rootlist/online_root_domains.txt']`。

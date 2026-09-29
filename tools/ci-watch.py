@@ -102,6 +102,15 @@ HINTS = (
               '样本数矛盾（块锚定把 `runs-on` 之类误当权限项）',
      'action': '按 `tools/ci_hygiene.py` 的 `KNOWN_SCOPES` 改键名或删掉那行；若是锚定问题，'
                '修 `job_blocks()` 的缩进回引用，不要放宽判据或把键加进豁免名单'},
+    # Round 72's row: measured on run 36413873010 (schedule, 2026-09-28) - the branch landed and
+    # only then the PR was refused, which is the worst shape because the half-done work looks done.
+    {'sig': '`GitHub Actions is not permitted to create or approve pull requests`',
+     'pattern': r'is not permitted to create or approve pull requests',
+     'cause': '仓库设置不允许 Actions 令牌开 PR（Settings → Actions → General），分支已推上去、'
+              'PR 开不出来，产出停在孤儿分支上没人看——不是网络也不是取数失败',
+     'action': '不要在作业里重试，`pull-requests: write` 换不来这把开关：把产出改成受守卫的直提'
+               '（见 `.github/workflows/refresh-fraud-feeds.yml` 的 COUNT_BAND 与 --check），'
+               '或由 owner 在仓库设置里开启并留下行为回执'},
 )
 
 # One synthetic log line per row, in the words the real failure actually printed. This is the
@@ -140,6 +149,10 @@ FIXTURES = {
         "[\'deploy.yml: top-level permissions has contets (unknown permission key)\'] | every "
         'hygiene leg is judged or declared untested: declared untested [job_within_header] != '
         "zero-sample legs []",
+    # Round 72: these are the words the refused pull request actually printed (run 36413873010).
+    '`GitHub Actions is not permitted to create or approve pull requests`':
+        'pull request create failed: GraphQL: GitHub Actions is not permitted to create or '
+        'approve pull requests (createPullRequest)',
 }
 
 

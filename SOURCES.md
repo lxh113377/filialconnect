@@ -20,7 +20,8 @@
 - 上游：`phishdestroy/destroylist`（MIT 协议，日更）的 rootlist
 - 拉取：`python tools/fetch-fraud-feeds.py`（写 `assets/data/destroylist-domains.txt`
   与 `assets/data/fraud-feeds-meta.json`）
-- 当前入库：83,097 条（其中 66,680 条是根域、16,417 条是上游按主机名收录的深层条目），
+- 当前入库：83,278 条（根域 66,970 / 深层主机名 16,308；口径 = 「点数 > 2 即深层」，
+  复算 `python -c "import io;ls=[l.strip() for l in io.open('assets/data/destroylist-domains.txt',encoding='utf-8') if l.strip()];print(sum(1 for l in ls if l.count('.')>2))"`），
   `fraud-feeds-meta.json` 记录上游 commit、拉取时间，以及快照自身的 `snapshot_sha256`（防手工改动 / 截断）
 - 匹配规则（`assets/js/main.js` 的 `listed()`）：把用户粘贴的 host 从完整主机名逐级上溯到
   根域，任一级命中即判危险。**只比"末两段"是不够的**——那样 19.8% 的深层条目只能靠逐字

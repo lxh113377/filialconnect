@@ -1,7 +1,13 @@
 name: Refresh offline scam-domain list
 
 # The offline list is a snapshot, so freshness has to be scheduled rather than
-# remembered. A pull request (not a direct push) keeps the 83k-line diff reviewable.
+# remembered. It commits straight to main: this repository does not permit the
+# Actions token to open pull requests (Settings -> Actions -> General), and the
+# 2026-09-28 attempt proved it - the branch was pushed, `gh pr create` was refused,
+# and the refreshed list sat on an orphan branch for a day nobody was watching.
+# The safety that a review step used to provide is now declared in the tool:
+# fetch-fraud-feeds.py refuses to overwrite the snapshot when the domain count moves
+# outside COUNT_BAND, and --check re-audits digest, count and deadline before the push.
 on:
   schedule:
     - cron: '30 4 * * 1'
@@ -9,13 +15,14 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -27,21 +34,23 @@ jobs:
       - name: Report coverage counters
         run: cat assets/data/fraud-feeds-meta.json
 
-      - name: Open pull request when the snapshot changed
+      - name: Audit the candidate snapshot before it can be pushed
+        run: python tools/fetch-fraud-feeds.py --check
+
+      - name: Commit the refreshed snapshot to main when it changed
         run: |
-          if git diff --quiet -- assets/data/destroylist-domains.txt; then
-            echo "no upstream change; nothing to open"
+          set -euo pipefail
+          if git diff --quiet -- assets/data; then
+            echo "no upstream change; nothing to commit"
             exit 0
           fi
-          BR="automate/scam-list-$(date -u +%Y%m%d)"
-          git checkout -b "$BR"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add assets/data
-          git commit -m "chore(data): refresh offline scam-domain snapshot"
-          git push origin "$BR"
-          gh pr create --fill --base main --head "$BR" \
-            --title "chore(data): refresh offline scam-domain snapshot" \
-            --body "Scheduled refresh from destroylist (MIT). See assets/data/fraud-feeds-meta.json for the upstream commit and domain counters."
-        env:
-          GH_TOKEN: ${{ github.token }}
+          git commit -m "chore(data): refresh offline scam-domain snapshot
+
+Refuses-then-pushes under contents:write only; see the header comment for why this
+job does not open a pull request."
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

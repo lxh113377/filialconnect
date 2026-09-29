@@ -67,7 +67,9 @@ python tools/build.py check    # 校验派生件与内容源无漂移（CI 同�
 python tools/check-i18n.py     # EN/ZH 键对称 + HTML 覆盖 + 孤儿键
 python tools/test_build.py     # 管线/结构/无障碍/文案真实性断言（条数以实跑输出为准，写死会烂）
 python tools/stage-site.py check   # 校验"哪些文件离得开这个仓"与已提交台账无漂移
-python tools/fetch-fraud-feeds.py  # 手动刷新防骗域名离线名单（CI 每周一自动开 PR）
+python tools/fetch-fraud-feeds.py  # 手动刷新防骗域名离线名单（CI 每周一自动刷新并直提 main；名单过了 cadence+grace 仍未更新即判红）
+python tools/fetch-fraud-feeds.py --check    # 无网络复核：摘要/条数/到期三态（CI 阻断步）
+python tools/fetch-fraud-feeds.py --selftest # 双向夹具（fresh/late/overdue/…），只在临时目录里跑
 ```
 
 ## 质量门禁（CI）
@@ -116,7 +118,7 @@ WCAG 2.2 AA 之外的适老细节：`prefers-reduced-motion` 同时约束 CSS �
   用户在自家 App 里点发送才真正发出；本站不会、也无法替用户发出任何通知。
   家人联系方式仅存于本机 `localStorage`。
 - 远程协助的连接码是本机随机字符串，不对应任何真实远控会话。
-- 可疑链接自查用的离线名单为**国际钓鱼域名**（83,097 条，gzip 后 532 KB），不含境内域名、
+- 可疑链接自查用的离线名单为**国际钓鱼域名**（83,278 条，gzip 后 531 KB），不含境内域名、
   不覆盖电话诈骗，「未命中」不等于安全（页面已按此措辞）。名单**只在长者碰这个输入框之后**才下载
   （聚焦 / 粘贴 / 输入任一项触发投机预热；`save-data` 与 2g 下完全不预热。按下「检查」是另一条路：
   它按正常优先级自己加载并显示进度，所以点按钮不算预热触发点——否则点击会排在刚启动的低优先级
