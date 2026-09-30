@@ -5,6 +5,24 @@
 
 ## [Unreleased]
 
+### Changed
+- **许可证口径统一为 Apache-2.0**（2026-09-30）。仓内 `LICENSE`（MIT 全文，1103 B）换成 Apache License 2.0
+  全文（11,380 B，末尾署名 `Copyright 2026 FilialConnect (孝心联) Project Contributors`），`README.md`
+  徽章与 License 段同步、`package.json` 补 `license: Apache-2.0`。动机：比赛提交材料与演示视频片尾字幕
+  早已声明 Apache 2.0，而仓库实际是 MIT，三处口径必须一致；视频字幕已烧入成片，改仓库的成本最低。
+  destroylist 上游的 MIT 署名（`SOURCES.md`、`SECURITY.md`、i18n 文案、`assets/data/fraud-feeds-meta.json`）
+  一字未动——那是上游的许可，不是我们的。参赛副本侧同步：两份同名文档与源仓逐字节一致，快照重算后
+  `source_commit=fdda728bd6d8`、`stage_recheck.clean=true`，源码包重打为 155 条目 / 2,196,065 B。
+
+### Fixed
+- **`verify-live.py` 的 slug 白名单把唯一会传进来的值拒了**（2026-09-30）。SSRF 加固那次加的
+  `SLUG_RE = ^[A-Za-z0-9_.-]{1,80}$` 是单段字符集，而 slug 永远是 `owner/name`，于是
+  `--slug lxh113377/filialconnect` 每次都印 `REFUSED: 非法 repo slug`，`Deploy to GitHub Pages` 的
+  "Live site equals this commit" 整条红（run 36701767313，2026-09-30T10:20Z）。改成两段式
+  `SLUG_SEG/SLUG_SEG` 并抽出 `valid_slug()` 拒 `./..` 段；`selftest()` 由 6 例补到 12 例，两个方向都在场
+  （真值必须过；裸名 / 双斜杠 / 穿越段 / 空格 / 空串必须不过）。行为面回执：真 slug 走通 metadata 三项
+  match（rc=0），`--slug filialconnect` 仍 REFUSED（rc=1）。
+
 ### Added
 - **防骗名单的自动刷新链从「开 PR」改成「守卫后直提」，并把 30 天保险丝换成节奏推导的到期线**
   （第 72 轮）。实测事实：`refresh-fraud-feeds.yml` 在 2026-09-28 的定时运行里把分支

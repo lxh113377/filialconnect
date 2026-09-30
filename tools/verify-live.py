@@ -33,7 +33,22 @@ UA = 'FilialConnect-verify-live/1.0 (+https://github.com/lxh113377/filialconnect
 FETCH_HOSTS = ('filialconnect-ican.netlify.app', 'lxh113377.github.io',
                'api.github.com', 'raw.githubusercontent.com',
                'objects.githubusercontent.com', '127.0.0.1', 'localhost')
-SLUG_RE = re.compile(r'^[A-Za-z0-9_.-]{1,80}$')
+#: A slug is `owner/name`: two segments around exactly one slash. The first pattern written here
+#: was a single-segment charset, so it refused the only value it is ever passed
+#: (`lxh113377/filialconnect`) and turned the whole live gate red - measured 2026-09-30 on the
+#: push that made it visible. A whitelist that rejects the real input is not strict, it is
+#: broken; selftest() now covers both directions.
+SLUG_SEG = r'[A-Za-z0-9_.-]{1,80}'
+SLUG_RE = re.compile(r'^%s/%s$' % (SLUG_SEG, SLUG_SEG))
+
+
+def valid_slug(slug):
+    """`owner/name`, no traversal segments. The host is pinned by `check_fetch_url`, so this is
+    path hygiene rather than the SSRF control."""
+    slug = slug or ''
+    if not SLUG_RE.fullmatch(slug):
+        return False
+    return all(part not in ('.', '..') for part in slug.split('/'))
 
 
 def check_fetch_url(url):
@@ -167,7 +182,7 @@ def fetch_repo_api(slug):
     machine has. Unauthenticated api.github.com answers from a shared proxy IP and its rate
     limit is not ours to spend."""
     token = os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN') or ''
-    if not SLUG_RE.fullmatch(slug or ''):
+    if not valid_slug(slug):
         raise SystemExit('REFUSED: 非法 repo slug %r' % (slug,))
     if token:
         req = urllib.request.Request('https://api.github.com/repos/' + slug,
@@ -316,7 +331,23 @@ def selftest():
             print('  SELFTEST-FAIL %s: ok=%s want=%s %s' % (name, ok, want_ok, problems[:1]))
         else:
             print('  ok  %s' % name)
-    print('verify-live selftest: %d cases, %d failures' % (len(cases), bad))
+    # The slug gate, both directions: the real value must pass, every malformed shape must not.
+    slug_cases = [
+        ('the real slug passes', 'lxh113377/filialconnect', True),
+        ('a bare name is not a slug', 'filialconnect', False),
+        ('two slashes are not a slug', 'lxh113377/filialconnect/extra', False),
+        ('a traversal segment is not a slug', 'lxh113377/..', False),
+        ('a space is not a slug', 'lxh113377/filial connect', False),
+        ('an empty slug is not a slug', '', False),
+    ]
+    for name, slug, want_ok in slug_cases:
+        ok = valid_slug(slug)
+        if ok != want_ok:
+            bad += 1
+            print('  SELFTEST-FAIL %s: ok=%s want=%s slug=%r' % (name, ok, want_ok, slug))
+        else:
+            print('  ok  %s' % name)
+    print('verify-live selftest: %d cases, %d failures' % (len(cases) + len(slug_cases), bad))
     return 1 if bad else 0
 
 
