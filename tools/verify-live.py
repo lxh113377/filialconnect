@@ -29,6 +29,23 @@ import urllib.request
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UA = 'FilialConnect-verify-live/1.0 (+https://github.com/lxh113377/filialconnect)'
 
+#: 上游白名单（SSRF 加固 2026-09-30）：只核验公开部署域、GitHub Pages 与 GitHub API。
+FETCH_HOSTS = ('filialconnect-ican.netlify.app', 'lxh113377.github.io',
+               'api.github.com', 'raw.githubusercontent.com',
+               'objects.githubusercontent.com', '127.0.0.1', 'localhost')
+SLUG_RE = re.compile(r'^[A-Za-z0-9_.-]{1,80}$')
+
+
+def check_fetch_url(url):
+    from urllib.parse import urlsplit
+    parts = urlsplit(url)
+    if parts.scheme not in ('https', 'http') or parts.username or parts.password:
+        raise SystemExit('REFUSED: 非法 URL %r' % url)
+    host = (parts.hostname or '').lower()
+    if host not in FETCH_HOSTS:
+        raise SystemExit('REFUSED: 主机不在白名单 %s: %s' % (FETCH_HOSTS, host or url))
+    return url
+
 
 def load_stager():
     """tools/stage-site.py has a hyphen in its name, so it cannot be imported directly."""
@@ -48,6 +65,7 @@ def git_tracked():
 
 
 def fetch(url, timeout=30):
+    check_fetch_url(url)
     req = urllib.request.Request(url, headers={'User-Agent': UA, 'Accept-Encoding': 'gzip'})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -149,6 +167,8 @@ def fetch_repo_api(slug):
     machine has. Unauthenticated api.github.com answers from a shared proxy IP and its rate
     limit is not ours to spend."""
     token = os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN') or ''
+    if not SLUG_RE.fullmatch(slug or ''):
+        raise SystemExit('REFUSED: 非法 repo slug %r' % (slug,))
     if token:
         req = urllib.request.Request('https://api.github.com/repos/' + slug,
                                      headers={'User-Agent': UA, 'Accept': 'application/vnd.github+json',

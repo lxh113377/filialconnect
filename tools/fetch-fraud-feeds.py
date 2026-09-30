@@ -49,7 +49,14 @@ VERDICT = ('FRAUD-SNAPSHOT: state=%s age_days=%d due_utc=%s due_origin=%s domain
 STATES = ('fresh', 'late', 'overdue', 'digest-mismatch', 'count-mismatch', 'absent', 'unreadable')
 
 
+FEED_HOSTS = ('api.github.com', 'raw.githubusercontent.com', 'objects.githubusercontent.com')
+
+
 def fetch(url):
+    from urllib.parse import urlsplit
+    host = (urlsplit(url).hostname or '').lower()
+    if host not in FEED_HOSTS:
+        raise SystemExit('REFUSED: feed 上游不在白名单 %s: %s' % (FEED_HOSTS, host or url))
     req = urllib.request.Request(url, headers=UA)
     return urllib.request.urlopen(req, timeout=60).read()
 
