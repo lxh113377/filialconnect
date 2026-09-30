@@ -10,7 +10,7 @@
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JS-vanilla-F7DF1E?style=flat&logo=javascript&logoColor=black)
 ![WCAG 2.2 AA](https://img.shields.io/badge/WCAG%202.2-AA%20%E2%9C%93-blue)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 
 **纯静态 · 运行时不请求第三方 origin · 构建脚本 = Python（页面）+ Node（xmlbuilder2 / workbox-build / i18next / Pagefind）· Lighthouse 无障碍 CI error 级门禁 ≥0.95（14 页全量，浅色与深色两套配色均已实测）· 长者字号三档 + 整页朗读**
 
@@ -151,4 +151,4 @@ filialconnect/
 
 ## License
 
-[MIT](LICENSE)。教程文案与图示 © FilialConnect 项目。
+[Apache License 2.0](LICENSE)。上游钓鱼域名名单来自 destroylist（MIT），署名见 [SOURCES.md](SOURCES.md)。教程文案与图示 © FilialConnect 项目。

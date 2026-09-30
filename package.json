@@ -2,6 +2,7 @@
   "name": "filialconnect-devtools",
   "version": "1.11.0",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Dev/CI tooling manifest only (htmlhint, linkinator, lighthouse-ci). The site is plain HTML/CSS/JS served statically; this file exists so the checkers and their transitive dependencies are pinned and Dependabot can bump them.",
   "scripts": {
     "lint:html": "htmlhint \"index.html\" \"404.html\" \"pages/*.html\"",
