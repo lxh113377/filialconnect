@@ -15,6 +15,20 @@
   `source_commit=fdda728bd6d8`、`stage_recheck.clean=true`，源码包重打为 155 条目 / 2,196,065 B。
 
 ### Fixed
+- **第 72 轮那次「改成守卫后直提」的重写，把整个 workflow 文件写成了 GitHub 读不懂的 YAML**（第 75 轮）。
+  `refresh-fraud-feeds.yml` 的 `run: |` 块里放了一条多行 `git commit -m "…"`，续行落在第 1 列 ⇒
+  YAML 在那里结束块、把后两行当文档结构读 ⇒ 整个文件解析失败。平台侧三项读数（本轮一手）：
+  注册的 workflow `name` 退化回文件路径本身、`POST /dispatches` 回 `HTTP 422: Workflow does not have
+  'workflow_dispatch' trigger`、2026-09-30 两次 push 造出**零作业、零耗时**的 failure 记录；
+  `cron: '30 4 * * 1'` 自 09-29 起再没有触发过（下一次应触发时刻 2026-10-05，未到点，所以「没跑」
+  不等于「跑了会红」）。本地侧**全绿**：`t_ci_hygiene`、CI 与整条判据链都是拿正则读这个文件的，
+  没有一个读者说过 YAML。修法两层——① 续行改两个 `-m` 参数，正文不再落到第 1 列；
+  ② `tools/ci_hygiene.py` 新增 `block_scalar_shape` 腿（纯函数 + 自带 25 例双向自检），判「块标量是否
+  还是块标量」，并在门面行印它自己的分母与第二读者的意见：`block_scalars=9`、
+  `yaml=corroborated(pyyaml-6.0.3)`；解析器装不上时印 `yaml=blind(no-yaml-parser)`，绝不折成通过。
+  反例即本轮真缺陷形状（`git show b3d2333:` 那份原文）：判据回 1 条具名 finding、行号与 PyYAML 的
+  ScannerError 同一行。`tools/ci-watch.py` 的 `HINTS` 加第 14 行（含自带 fixture 探针），
+  `AGENTS.md` 的 Triage 表由 `tools/triage.py --write` 重生成并逐字节回验。
 - **`verify-live.py` 的 slug 白名单把唯一会传进来的值拒了**（2026-09-30）。SSRF 加固那次加的
   `SLUG_RE = ^[A-Za-z0-9_.-]{1,80}$` 是单段字符集，而 slug 永远是 `owner/name`，于是
   `--slug lxh113377/filialconnect` 每次都印 `REFUSED: 非法 repo slug`，`Deploy to GitHub Pages` 的

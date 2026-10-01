@@ -209,6 +209,24 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    (re-wrapping a paragraph is not a semantic change), and an exemption that cannot be demonstrated
    is a hole, not a rule.
 
+21. **A reader that never parses can certify a file that nothing can execute.** Every check this
+   repository runs on `.github/workflows/*.yml` reads it as *text* - regex for the permissions block,
+   regex for the SHA pins, an `if:`-style scan for `pull_request_target`. That is fine while the text
+   is a workflow. In round 72 the rewrite that fixed the job which could not open a pull request put a
+   multi-line `git commit -m` inside a `run: |` block; the continuation lines sat at column 1, so YAML
+   ended the body there and read the rest as document structure. The file never parsed, so GitHub
+   stopped honoring its `schedule:` and refused `workflow_dispatch` - while `t_ci_hygiene`, the CI job
+   and all 2,122 checks stayed green, and the only product symptom was a data snapshot going stale on
+   a site whose selling point is being current. Three readings prove the platform's side and are the
+   ones to check when a job "silently stops running": the registered workflow's `name` falls back to
+   its **path**, `POST /dispatches` answers 422 `does not have 'workflow_dispatch' trigger`, and push
+   events produce runs with **zero jobs and zero elapsed seconds**. The rule is not "be careful with
+   indentation"; it is: *a file that a machine executes must be judged by something that speaks that
+   machine's language, or the green is a green about our regex, not about the workflow.* Round 75 made
+   the shape leg print its own denominator (`block_scalars=N`) and ask a second, unrelated reader
+   (PyYAML, when installed) whether it agrees - `yaml=corroborated(...)` or `yaml=blind(no-yaml-parser)`
+   printed on the face, because a narrow reader that always agrees with itself proves nothing either.
+
 ## Attribution before action
 
 When two runs disagree, diff the artifact bytes before theorising. When CI is red, read the tool's
@@ -240,6 +258,7 @@ CI 跑 `--check` 逐字节回验，判据 `t_triage_copy` 在链上——因为�
 | `stale receipt` / `malformed receipt` | 报告里的收尾回执不是本次实测（或字段残缺） | re-run `python _internal/closeout_round.py --emit` and paste the whole block again; a receipt from last round is not evidence this round closed |
 | `unknown permission key` / `declared untested` | 工作流里写了 GitHub 不认识的权限键（拼错即静默失权），或判据报告自称某腿无样本却与样本数矛盾（块锚定把 `runs-on` 之类误当权限项） | 按 `tools/ci_hygiene.py` 的 `KNOWN_SCOPES` 改键名或删掉那行；若是锚定问题，修 `job_blocks()` 的缩进回引用，不要放宽判据或把键加进豁免名单 |
 | `GitHub Actions is not permitted to create or approve pull requests` | 仓库设置不允许 Actions 令牌开 PR（Settings → Actions → General），分支已推上去、PR 开不出来，产出停在孤儿分支上没人看——不是网络也不是取数失败 | 不要在作业里重试，`pull-requests: write` 换不来这把开关：把产出改成受守卫的直提（见 `.github/workflows/refresh-fraud-feeds.yml` 的 COUNT_BAND 与 --check），或由 owner 在仓库设置里开启并留下行为回执 |
+| `Workflow does not have 'workflow_dispatch' trigger` | 该 workflow 文件根本没被 GitHub 解析成工作流（块标量里出现第 1 列的正文 ⇒ YAML 在那一行结束块、把后面的行当文档结构读 ⇒ 整个文件无效）。注册名退化回文件路径、push 事件造出零作业零耗时的记录、schedule 从此不再触发，都是同一件事的读数——不是权限，不是网络 | 先跑 `python tools/ci_hygiene.py` 读 `block_scalars=` 与 findings，把缩进改回块内（多行 commit message 用两个 `-m` 参数传，别让任何正文落到第 1 列），不要去动仓库设置、也不要为它重开权限 |
 <!-- END:TRIAGE-TABLE -->
 
 两条**不是日志签名**的操作纪律（它们没法被 grep 到，所以不进表；表只收"原话"）：

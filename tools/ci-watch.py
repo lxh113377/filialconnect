@@ -111,6 +111,18 @@ HINTS = (
      'action': '不要在作业里重试，`pull-requests: write` 换不来这把开关：把产出改成受守卫的直提'
                '（见 `.github/workflows/refresh-fraud-feeds.yml` 的 COUNT_BAND 与 --check），'
                '或由 owner 在仓库设置里开启并留下行为回执'},
+    # Round 75's row: the 2026-09-29 rewrite of that same job (which fixed the row above) shipped a
+    # multi-line `git commit -m` inside a `run: |` block. Two lines fell to column 1, YAML ended the
+    # block there, and the whole file stopped being a workflow - while every local judge stayed green,
+    # because each of them reads that file as text. A schedule that cannot be parsed never fires.
+    {'sig': "`Workflow does not have 'workflow_dispatch' trigger`",
+     'pattern': r"does not have '?workflow_dispatch'? trigger",
+     'cause': '该 workflow 文件根本没被 GitHub 解析成工作流（块标量里出现第 1 列的正文 ⇒ YAML 在那一行'
+              '结束块、把后面的行当文档结构读 ⇒ 整个文件无效）。注册名退化回文件路径、push 事件造出'
+              '零作业零耗时的记录、schedule 从此不再触发，都是同一件事的读数——不是权限，不是网络',
+     'action': '先跑 `python tools/ci_hygiene.py` 读 `block_scalars=` 与 findings，把缩进改回块内'
+               '（多行 commit message 用两个 `-m` 参数传，别让任何正文落到第 1 列），'
+               '不要去动仓库设置、也不要为它重开权限'},
 )
 
 # One synthetic log line per row, in the words the real failure actually printed. This is the
@@ -153,6 +165,12 @@ FIXTURES = {
     '`GitHub Actions is not permitted to create or approve pull requests`':
         'pull request create failed: GraphQL: GitHub Actions is not permitted to create or '
         'approve pull requests (createPullRequest)',
+    # Round 75: the words `gh workflow run` actually printed against this repository's own disabled
+    # schedule (HTTP 422 on the dispatch endpoint). The refusal was correct - the file it points at
+    # really did not have that trigger any more, because GitHub could not read the file at all.
+    "`Workflow does not have 'workflow_dispatch' trigger`":
+        'could not create workflow dispatch event: HTTP 422: Workflow does not have '
+        "'workflow_dispatch' trigger (https://api.github.com/repos/x/y/actions/workflows/1/dispatches)",
 }
 
 

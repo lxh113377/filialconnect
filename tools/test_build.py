@@ -455,6 +455,13 @@ def t_ci_hygiene():
     token without touching the header, and `permissions: write-all` reviews like boilerplate.
     The predicates live in tools/ci_hygiene.py, which self-tests both directions; this judge owns
     the wiring and the denominator, so neither can quietly shrink (the same split as t_no_link_code).
+
+    Round 75 added a second question to the same scan. Everything above reads a workflow as *text*,
+    which means it kept passing on a file that was not a workflow at all: a multi-line commit message
+    inside a `run: |` block dropped two lines to column 1, YAML closed the block there, and GitHub
+    refused the whole document - the scheduled job stopped firing, `workflow_dispatch` answered 422,
+    and the chain here stayed green throughout. So the scan now also judges that the block scalars it
+    is reading are still block scalars to a parser, and it prints how many it found.
     """
     hyg = load_tool('ci_hygiene', 'ci_hygiene.py')
     rep, base = hyg.scan()
@@ -467,6 +474,14 @@ def t_ci_hygiene():
           'workflows=%d unreadable=%s' % (rep['workflows'], rep['unreadable']))
     check('no workflow grants a wildcard scope, write-all, or a job wider than its header',
           not rep['findings'], str(rep['findings'][:3]))
+    # The block leg is only worth having if it bit on something, and a second reader is only worth
+    # having if it can say "I disagree". Both states print; neither can fold into a green.
+    check('the block-scalar leg has samples in this population and no reader disagrees with it',
+          rep['leg_samples']['block_scalar_shape'] >= 1
+          and not rep['corroborated_disagreements'],
+          'block_scalars=%d yaml=%s disagreements=%s'
+          % (rep['leg_samples']['block_scalar_shape'], rep['corroboration'],
+             rep['corroborated_disagreements']))
     # A leg with no sample is not a pass, and a leg WITH a sample must not be reported as empty
     # either: this sentence used to claim "zero job-level permissions blocks" - a number hand-counted
     # with a two-space grep, disproved in round 43 when the enumerator found `verify-live`'s

@@ -69,6 +69,117 @@ def named_job_blocks(text):
     return out
 PR_TARGET = re.compile(r'pull_request_target')
 
+#: A GitHub Actions file is YAML, and every judgement this tool makes about it has been made with
+#: regular expressions over its text. That was fine while the only questions were about scopes.
+#: It stopped being fine in round 75, when the text was not a workflow at all: `git commit -m` with a
+#: multi-line message put two lines at column 1 inside a `run: |` block, which ENDS the block, so the
+#: document never parsed and GitHub refused the whole file - while `t_ci_hygiene`, the CI job and the
+#: 2,122-check chain all stayed green, because a regex reads anything it is handed. The platform's own
+#: readings proved it: the registered workflow's name fell back to its path, `workflow_dispatch`
+#: answered HTTP 422 "does not have 'workflow_dispatch' trigger", and two push events produced runs
+#: with zero jobs and zero elapsed seconds. A schedule that cannot be parsed never fires.
+#:
+#: This leg therefore judges the one structural thing a regex scan silently assumed: that the block
+#: scalars it reads as text are still block scalars to a parser.
+BLOCK_HEADER = re.compile(r'^(?P<indent>[ ]*)(?:-[ ]+)?(?P<key>"?[A-Za-z_][\w.-]*"?|[0-9]+):[ ]*'
+                          r'(?P<style>[|>])(?P<mod>[+-]?[0-9]?)[ ]*(?:#.*)?$')
+BLOCK_DASH = re.compile(r'^(?P<indent>[ ]*)-[ ]*(?P<style>[|>])(?P<mod>[+-]?[0-9]?)[ ]*(?:#.*)?$')
+#: What a line may be once a block scalar has ended: a mapping key, a list item, a comment, or blank.
+#: Anything else was prose inside the block whose indentation the block had already taken away.
+YAML_STRUCTURAL = re.compile(r'^(?:[ ]*(?:#|"|\?|-|[A-Za-z_][\w.-]*[ ]*:|!%&*)|$)')
+
+
+def block_scalars(text):
+    """Every block scalar in a workflow, with the shape problems this file can prove.
+
+    Returns [{'line', 'header_indent', 'content_indent', 'issues'}]. The header scan resumes at the
+    line that ended a body, so a legitimate `key:` that closes a block is still parsed as a header by
+    the caller's own walk - a block that swallows its successor is exactly the bug class here.
+    """
+    lines = (text or '').split('\n')
+    out, i = [], 0
+    while i < len(lines):
+        m = BLOCK_HEADER.match(lines[i]) or BLOCK_DASH.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        # The node that owns the block starts after any sequence dash, so `- run: |` has its body at
+        # the dash's content column rather than the dash column; judging it at the dash column would
+        # call a correctly indented body "shallower than its block".
+        node_col = len(re.match(r'^[ ]*(?:-[ ]+)?', lines[i]).group(0))
+        header_indent = node_col
+        rec = {'line': i + 1, 'header_indent': header_indent, 'content_indent': None, 'issues': []}
+        j = i + 1
+        while j < len(lines):
+            line = lines[j]
+            if not line.strip():
+                j += 1
+                continue
+            indent = len(line) - len(line.lstrip(' '))
+            if indent <= header_indent:
+                if rec['content_indent'] is None:
+                    rec['issues'].append(
+                        'block scalar at line %d has no body - the value is empty, so whatever this '
+                        'step was meant to do does nothing' % (i + 1))
+                elif not YAML_STRUCTURAL.match(line):
+                    rec['issues'].append(
+                        'the block scalar opened at line %d is ended at line %d by a line that is '
+                        'neither a key, a list item nor a comment (%r): YAML closes the body there, '
+                        'so the lines after it are parsed as document structure and the file fails'
+                        % (i + 1, j + 1, line.strip()[:60]))
+                break
+            if rec['content_indent'] is None:
+                rec['content_indent'] = indent
+            if indent < rec['content_indent']:
+                rec['issues'].append(
+                    'line %d sits at indent %d inside the block opened at line %d, shallower than '
+                    'its body (%d) - the body ends here and the deeper lines that follow are orphans'
+                    % (j + 1, indent, i + 1, rec['content_indent']))
+                break
+            j += 1
+        else:
+            if rec['content_indent'] is None:
+                rec['issues'].append('block scalar at line %d has no body before end of file'
+                                     % (i + 1))
+        out.append(rec)
+        i = max(j, i + 1)
+    return out
+
+
+def block_scalar_findings(text, name='(inline)'):
+    """The block-shape verdicts for one workflow, tagged with the leg that produced them."""
+    return [('block_scalar_shape', '%s: %s' % (name, msg))
+            for rec in block_scalars(text) for msg in rec['issues']]
+
+
+def parse_corroboration(items):
+    """Ask an unrelated reader (PyYAML) whether it agrees these files parse. Nothing else changes.
+
+    The blocking decision never depends on this: the shape leg stands alone, because a CI job cannot
+    be made to install a parser this repository does not declare. What this does prove is the *reach*
+    of the narrow reader - if a real YAML parser and the shape check ever disagree on a file, the
+    shape check is missing a case, and that is reported rather than smoothed over. A missing parser
+    gets its own state; it is never read as agreement (round 39: unavailable is not zero).
+    """
+    try:
+        import yaml
+    except ImportError:
+        return 'blind(no-yaml-parser)', 0
+    disagreed = []
+    for name, text in items:
+        if text is None:
+            continue
+        mine = bool(block_scalar_findings(text, name))
+        try:
+            yaml.safe_load(text)
+            theirs = False
+        except Exception:
+            theirs = True
+        if mine != theirs:
+            disagreed.append(name)
+    return ('corroborated(pyyaml-%s)' % getattr(yaml, '__version__', '?'), len(disagreed))
+
+
 
 def scope_map(block):
     """`contents: read` lines -> {scope: level}. Unordered, last wins, comments dropped."""
@@ -88,7 +199,8 @@ def _rank(level):
 #: untested instead of passing (round 43). The tree today contains zero job-level `permissions:`
 #: blocks, so `job_within_header` has nothing to bite on - a green that says "verified" there is
 #: a green that measured nothing.
-LEGS = ('pull_request_target', 'wildcard_scope', 'permissions_block', 'job_within_header')
+LEGS = ('pull_request_target', 'wildcard_scope', 'permissions_block', 'job_within_header',
+        'block_scalar_shape')
 
 
 #: GitHub's own permission keys. Anything else inside a `permissions:` block is a typo
@@ -124,12 +236,17 @@ def leg_samples(texts):
             jobs += len(job_blocks(text))
     seen = [t for t in texts if t]
     return {'pull_request_target': len(seen), 'wildcard_scope': len(seen),
-            'permissions_block': len(seen), 'job_within_header': jobs}
+            'permissions_block': len(seen), 'job_within_header': jobs,
+            # This leg bites once per block scalar, not once per file: a workflow with no `run: |`
+            # step gives it nothing to judge, and counting files there would be a green that
+            # measured nothing - the round-43 false zero, in the other direction.
+            'block_scalar_shape': sum(len(block_scalars(t)) for t in seen)}
 
 
 def workflow_findings(text, name='(inline)'):
     """The same verdicts as `workflow_issues`, tagged with the leg that produced each one."""
     found = []
+    found.extend(block_scalar_findings(text, name))
     if PR_TARGET.search(text):
         found.append(('pull_request_target',
                       '%s: uses pull_request_target (runs the base workflow with write access '
@@ -207,9 +324,11 @@ def scan(dirpath=None):
             findings.append(msg)
             legs[leg] += 1
     samples = leg_samples(readable)
+    corroboration, disagreements = parse_corroboration(items)
     return {'workflows': len(items), 'names': [n for n, _ in items],
             'unreadable': unreadable, 'findings': findings,
             'leg_findings': legs, 'leg_samples': samples,
+            'corroboration': corroboration, 'corroborated_disagreements': disagreements,
             'untested_legs': [l for l in LEGS if samples[l] == 0]}, base
 
 
@@ -302,12 +421,22 @@ def selftest():
             continue
         for leg in LEGS:
             indep[leg] = indep.get(leg, 0) + (
+                0 if leg == 'block_scalar_shape' else
                 1 if leg != 'job_within_header'
                 else sum(1 for ln in txt.splitlines()
                          if ln.startswith('    ') and ln.strip().startswith('permissions:')))
+    # The block leg counts block scalars, not files, so its independent count is a different
+    # expression over the same text (a line ending in a block indicator with a key or dash before
+    # it), not the same walk run twice.
+    indep['block_scalar_shape'] = sum(
+        1 for n, txt in workflows(os.path.join(ROOT, WF_DIR))[0] if txt
+        for ln in txt.splitlines()
+        if re.match(r'^[ ]*(?:-[ ]+)?[A-Za-z_][\w.-]*:[ ]*[|>]', ln)
+        or re.match(r'^[ ]*-[ ]*[|>][ ]*$', ln))
     add('per-leg samples match an independent count, so no leg is called untested off a typed grep',
         all(real_rep['leg_samples'][k] == indep[k] for k in LEGS)
         and real_rep['leg_samples']['job_within_header'] >= 1
+        and real_rep['leg_samples']['block_scalar_shape'] >= 1
         and not coverage_identity_issues(real_rep),
         'report=%s independent=%s' % (real_rep['leg_samples'], indep))
     add('the leg that round 42 called empty actually has a sample today (false zero corrected)',
@@ -326,11 +455,65 @@ def selftest():
         good + 'jobs:\n  x:\n    permissions:\n      contents: write\n')
     jw, _ = scan(widen_dir)
     add('a population with no job-level block declares that leg untested, and one block ends it',
-        e0['untested_legs'] == ['job_within_header'] and e0['findings'] == []
+        'job_within_header' in e0['untested_legs'] and 'block_scalar_shape' in e0['untested_legs']
+        and e0['findings'] == []
         and 'job_within_header' not in jw['untested_legs']
         and jw['leg_samples']['job_within_header'] == 1
         and any('contents:write' in f for f in jw['findings']),
         'empty=%s withjob=%s' % (e0['leg_samples'], jw['leg_samples']))
+    # --- round 75: the block-scalar leg, both directions, on in-memory samples only ---
+    block_ok = ('permissions:\n  contents: write\njobs:\n  a:\n    runs-on: x\n    steps:\n'
+                '      - name: Commit\n        run: |\n          set -euo pipefail\n'
+                '          git commit -m "one line"\n          git push origin HEAD:main\n')
+    add('a properly indented run: | block passes and is counted as a sample',
+        workflow_issues(block_ok) == [] and len(block_scalars(block_ok)) == 1,
+        '%s / blocks=%d' % (workflow_issues(block_ok), len(block_scalars(block_ok))))
+    # The shape that actually shipped in round 72: a multi-line `git commit -m "..."` whose second
+    # and third lines sit at column 1, which ENDS the block and hands the rest to the document parser.
+    block_bad = block_ok.replace(
+        '          git commit -m "one line"\n',
+        '          git commit -m "one line\n\nDedented continuation that ends the block\n'
+        'and is not a YAML key."\n')
+    got75 = workflow_findings(block_bad, 'broken.yml')
+    add('a block scalar ended by a dedented prose line is named, with the line number',
+        len(got75) == 1 and got75[0][0] == 'block_scalar_shape'
+        and 'opened at line 8' in got75[0][1] and 'ended at line 12' in got75[0][1]
+        and 'neither a key' in got75[0][1],
+        str(got75)[:150])
+    add('a block scalar with no body is refused, not read as an empty step that passed',
+        any('has no body' in m for _l, m in block_scalar_findings(
+            'permissions:\n  contents: read\njobs:\n  a:\n    steps:\n'
+            '      - run: |\n      - name: next\n')),
+        'empty body')
+    add('a body line shallower than its own block is caught before the orphaned deeper lines',
+        any('shallower than' in m for _l, m in block_scalar_findings(
+            'permissions:\n  contents: read\njobs:\n  a:\n    steps:\n'
+            '      - run: |\n          line one\n         line two\n          line three\n')),
+        'inconsistent indent')
+    add('the block leg loses its sample when a population has no block scalar, and gains it back',
+        e0['leg_samples']['block_scalar_shape'] == 0
+        and jw['leg_samples']['block_scalar_shape'] == 0,
+        'empty=%s withjob=%s' % (e0['leg_samples']['block_scalar_shape'],
+                                jw['leg_samples']['block_scalar_shape']))
+    block_dir = os.path.join(tmp, 'blockreach')
+    os.makedirs(block_dir)
+    io.open(os.path.join(block_dir, 'a.yml'), 'w', encoding='utf-8', newline='\n').write(block_ok)
+    b0, _ = scan(block_dir)
+    io.open(os.path.join(block_dir, 'b.yml'), 'w', encoding='utf-8', newline='\n').write(block_bad)
+    b1, _ = scan(block_dir)
+    add('adding one broken block to the sandbox changes the finding count (reach, in one population)',
+        b0['leg_samples']['block_scalar_shape'] == 1 and b0['findings'] == []
+        and b1['leg_samples']['block_scalar_shape'] == 2
+        and len(b1['findings']) == 1 and 'broken.yml' not in str(b1['findings'])
+        and 'b.yml' in str(b1['findings']),
+        'before=%s after=%s' % (b0['leg_samples'], b1['findings'][:1]))
+    add('the real tree parses for a block-shape reader AND for a YAML parser, or says which is blind',
+        real_rep['leg_samples']['block_scalar_shape'] >= 4 and real_rep['findings'] == []
+        and real_rep['corroborated_disagreements'] == 0
+        and not coverage_identity_issues(real_rep),
+        'block_scalars=%d yaml=%s' % (real_rep['leg_samples']['block_scalar_shape'],
+                                      real_rep['corroboration']))
+
     liar = dict(real_rep, untested_legs=['job_within_header', 'wildcard_scope'])
     add('declaring a leg untested while it had samples is caught (the label can lie)',
         any('declared untested' in x for x in coverage_identity_issues(liar)),
@@ -363,14 +546,18 @@ def main():
     if args.as_json:
         print(json.dumps(rep, ensure_ascii=False))
     else:
-        print('CI-HYG: %d workflows, %d findings, unreadable=%s, leg_samples=%s, untested=%s'
+        print('CI-HYG: %d workflows, %d findings, unreadable=%s, leg_samples=%s, untested=%s, '
+              'yaml=%s'
               % (rep['workflows'], len(rep['findings']), rep['unreadable'],
                  ','.join('%s=%d' % (k, rep['leg_samples'][k]) for k in LEGS),
-                 ','.join(rep['untested_legs']) or '-'))
+                 ','.join(rep['untested_legs']) or '-', rep['corroboration']))
         for f in rep['findings'][:8]:
             print('  - %s' % f[:150])
         for x in coverage_identity_issues(rep)[:4]:
             print('  ! %s' % x[:150])
+        if rep['corroborated_disagreements']:
+            print('  ! the shape leg and a real YAML parser disagree on: %s'
+                  % ','.join(rep['corroborated_disagreements']))
     return 0 if not rep['findings'] and not coverage_identity_issues(rep) else 1
 
 
