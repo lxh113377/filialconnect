@@ -1,8 +1,16 @@
 name: Deploy to GitHub Pages
 
+# A push to main triggers this. The scheduled list refresh also lands on main, but not through this
+# door: GitHub creates no workflow runs at all for a commit pushed with an Actions token, so the
+# refreshed list can sit there unpublished until some unrelated push happens. Round 76 measured it
+# on 9e0d5aa - two check-runs, both Dependabot's, and no push run - which is why the weekly
+# schedule below exists: one hour after the refresh cron in refresh-fraud-feeds.yml, it publishes
+# whatever is on main and lets verify-live prove that production equals it.
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '30 5 * * 1'
   workflow_dispatch:
 
 permissions:

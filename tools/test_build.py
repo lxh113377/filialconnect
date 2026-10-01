@@ -251,11 +251,12 @@ def t_promises():
     body = open(os.path.join(ROOT, 'assets', 'data', 'destroylist-domains.txt'), 'rb').read()
     gz = len(gzip.compress(body, 9))
     readme = read('README.md')
-    cited = [int(m.replace(',', '')) for m in re.findall(r'([\d,]{3,7}) 条', readme)]
-    check('README domain count matches the shipped list', feed['domains'] in cited, str(cited[:4]))
-    kb = [int(x) for x in re.findall(r'gzip 后 (\d+) KB', readme)]
-    check('README gzip quote within 2% of the measured size',
-          bool(kb) and abs(kb[0] * 1000 - gz) <= 0.02 * gz, 'cited %s KB, measured %d B' % (kb, gz))
+    #: The predicate belongs to the tool that writes the list, so the `--check` step in the refresh
+    #: job and this judge audit that sentence with one wording (round 36: two copies each drift).
+    fff = load_tool('fetch_fraud_feeds', 'fetch-fraud-feeds.py')
+    copy_state, copy_issues = fff.public_copy_issues(fff.README, feed['domains'], gz)
+    check('the public copy quotes the shipped list count and gzipped size, and it was actually read',
+          copy_state == 'ok' and not copy_issues, '%s | %s' % (copy_state, copy_issues[:2]))
     # The docs promised an idle-time pre-fetch of this list for a day; the download is now
     # intent-gated (v1.6.1), so that sentence became false while still reading like documentation.
     stale_warm = [fp for fp in ('README.md', 'SECURITY.md', 'CONTRIBUTING.md', 'SOURCES.md')

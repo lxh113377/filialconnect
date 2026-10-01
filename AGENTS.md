@@ -227,6 +227,17 @@ by `t_triage_copy`; the rows are data, this document is a rendering of them.
    (PyYAML, when installed) whether it agrees - `yaml=corroborated(...)` or `yaml=blind(no-yaml-parser)`
    printed on the face, because a narrow reader that always agrees with itself proves nothing either.
 
+22. **The commit that no CI ever sees is the automation's, not the human's.** GitHub creates no
+   workflow runs for a push made with an Actions token, so the one job that writes to `main` on a
+   schedule is also the only change that arrives unverified *and* undeployed. Measured on 2026-10-01:
+   the refresh commit `9e0d5aa` carried a README that still quoted the previous list's size (the chain
+   would have reddened on it - and did, on the next human's push eleven hours later), and Pages kept
+   serving the older snapshot until that unrelated push. Two halves close it: `fetch-fraud-feeds.py
+   --check` now audits the public copy in the same pass as the snapshot, so the refresh job refuses
+   before it can commit; and `deploy-pages.yml` carries a weekly schedule, so a token-pushed commit
+   still gets published and probed. Any future job that writes to `main` needs both: verify inside the
+   job, and a door that publishes what it cannot trigger.
+
 ## Attribution before action
 
 When two runs disagree, diff the artifact bytes before theorising. When CI is red, read the tool's
