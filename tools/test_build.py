@@ -499,6 +499,40 @@ def t_ci_hygiene():
           rok, rline[:150])
 
 
+def t_js_parse():
+    """Every tracked first-party script parses with the only reader here that speaks JavaScript.
+
+    Round 75's rule - a file a machine executes must be judged by something that speaks that
+    machine's language - was measured against this repository's own browser scripts on 2026-10-01:
+    `assets/js/search.js` was replaced with bytes that no longer form a program and the chain here
+    printed `PASS` without ever naming the file, because every other reader of these files greps
+    them (build.py, stage-site.py, check-i18n.py) and CI only executes `tools/*.mjs`, never what
+    ships to a phone. Node is the parser, one unit per call; the population is what git tracks, the
+    ok/bad/blind identity prints on the face, and the selftest re-runs the exact mutation above in
+    a sandbox so the leg cannot be a green that never bites (`tools/js_syntax.py`).
+    """
+    js = load_tool('js_syntax', 'js_syntax.py')
+    rep = js.scan()
+    check('a JavaScript parser and a readable tree are both reachable (blindness is not a pass)',
+          rep is not None, js.face(rep))
+    if rep is None:
+        return
+    check('the script population is enumerated from git, not from a directory that regenerates',
+          rep['population_state'] == 'ok' and rep['units'] >= 11,
+          'population=%s units=%d' % (rep['population_state'], rep['units']))
+    check('each unit lands in exactly one outcome and the arithmetic closes',
+          not js.identity_issues(rep), js.face(rep))
+    check('no first-party script fails to parse and none was left unjudged',
+          not rep['findings'] and rep['blind_units'] == 0, str(rep['findings'][:3]))
+    st = subprocess.run([sys.executable, os.path.join('tools', 'js_syntax.py'), '--selftest'],
+                        cwd=ROOT, capture_output=True, text=True, timeout=600)
+    out = (st.stdout or '') + (st.stderr or '')
+    m = re.search(r'js_syntax selftest: (\d+)/(\d+)', out)
+    check('the parse leg bites on a mutation and on its own counter-cases',
+          st.returncode == 0 and bool(m) and m.group(1) == m.group(2) and int(m.group(1)) >= 8,
+          last_line(' '.join(out.splitlines())) if out else 'no selftest output')
+
+
 def t_vendor():
     """The vendored UMD bundles publish under a specific global name. Guessing it
     (LanguageDetector vs i18nextBrowserLanguageDetector) makes i18next.init() a
@@ -2224,7 +2258,7 @@ def t_fraud_supply():
 
 
 JUDGES = (t_pipeline, t_structure, t_i18n, t_promises, t_scam_matcher, t_assets, t_output,
-          t_workflows, t_ci_hygiene, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs,
+          t_workflows, t_ci_hygiene, t_js_parse, t_vendor, t_budgets, t_contrast_tokens, t_contrast_pairs,
           t_release,
           t_search_corpus, t_search_ui, t_content_roster, t_no_duplicate_defs, t_no_control_bytes,
           t_changelog_shape, t_last_updated, t_feedback_exit, t_deterministic_sw, t_page_nav,

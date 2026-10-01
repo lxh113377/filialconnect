@@ -13,6 +13,7 @@
   "fetch-fraud-feeds.py": "ci",
   "gate_wiring.py": "ci",
   "judge_coverage.py": "ci",
+  "js_syntax.py": "test",
   "last-updated.py": "test",
   "link_guard.py": "test",
   "package-offline.py": "test",

@@ -13,7 +13,7 @@
     "verify-dom.mjs",
     "verify-live.py"
   ],
-  "declared": 24,
+  "declared": 25,
   "declared_but_absent": [],
   "hand": [
     "ci-audit-nodes.py",
@@ -29,6 +29,7 @@
     "ci_receipts.py",
     "contrast_audit.py",
     "doc_citations.py",
+    "js_syntax.py",
     "last-updated.py",
     "link_guard.py",
     "package-offline.py",
@@ -36,7 +37,7 @@
     "release.py",
     "triage.py"
   ],
-  "tools_on_disk": 24,
+  "tools_on_disk": 25,
   "undeclared": [],
   "undocumented_hand_only": []
 }
