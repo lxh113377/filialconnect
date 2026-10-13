@@ -158,8 +158,16 @@ def scan_tree(root, patterns=('.py', '.mjs', '.js'), self_path=None):
     findings, notes, scanned = [], [], 0
     self_rel = None
     if self_path:
-        rel = os.path.relpath(os.path.abspath(self_path), os.path.abspath(root))
-        if not os.path.isabs(rel) and rel.split(os.sep)[0] != '..':
+        try:
+            rel = os.path.relpath(os.path.abspath(self_path), os.path.abspath(root))
+        except ValueError:
+            # Windows 上两个路径不同盘符时 relpath 直接抛（本机一手：仓在 C:、`tempfile` 落在
+            # D:\app-cache\temp ⇒ `path is on mount 'C:', start on mount 'D:'`，整块 selftest
+            # 崩在半路，报出来的是一条与"有没有链接"无关的 FAIL）。这不是判不出来：
+            # 不同挂载点 ⇒ self 必不在 root 内，与 relpath 返回 '../x' 是同一种结论，
+            # 所以这里落到「不豁免、不宣布」，而不是往 notes 里塞一条新的。
+            rel = None
+        if rel is not None and not os.path.isabs(rel) and rel.split(os.sep)[0] != '..':
             self_rel = rel.replace(chr(92), '/')
             notes.append('self-exclusion active: %s (marker strings only; calls and imports '
                          'are still checked)' % self_rel)
@@ -280,6 +288,21 @@ def selftest():
         # A root that does not contain this file must not claim the file is exempt from it.
         cases.append(('no self-exclusion is announced for an unrelated root', not notes,
                       'notes=%d' % len(notes)))
+        # ...and a self_path it cannot even put in the same space must not crash the scan.
+        # 形态取自本机一手故障：Windows 下 `tempfile` 在 D: 而仓在 C: 时，relpath 抛 ValueError，
+        # selftest 整块崩掉 ⇒ test_build 报出的 FAIL 与「树里有没有链接」毫无关系。
+        alien_root = os.path.join(tmp, 'alien_root')
+        os.makedirs(alien_root)
+        alien_self = ('Z:' + os.sep + 'alien' + os.sep + 'link_guard.py' if os.name == 'nt'
+                      else '/alien/link_guard.py')
+        try:
+            _af, _as_, alien_notes = scan_tree(alien_root, self_path=alien_self)
+            raised = None
+        except ValueError as exc:
+            alien_notes, raised = ['raised'], exc
+        cases.append(('a self_path on an unreachable mount is neither a crash nor an exemption',
+                      raised is None and not any('self-exclusion active' in n for n in alien_notes),
+                      'raised=%s notes=%s' % (raised, str(alien_notes)[:60])))
         # Symmetric exclusion: the marker table here is data, but the identical text in another
         # file is a command. Both halves have to hold or "spare the scanner" becomes "spare anyone".
         here = os.path.dirname(os.path.abspath(__file__))

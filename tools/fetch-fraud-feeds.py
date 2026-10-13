@@ -44,6 +44,9 @@ FEED_PATH = 'rootlist/online_root_domains.txt'
 #: the count has to move the copy in the same breath or it lands a red main.
 README = os.path.join(ROOT, 'README.md')
 COPY_ANCHOR = re.compile(r'(（)([\d,]{3,7})( 条，gzip 后)')
+#: 同一句引用里的第二个数字。审计器 `public_copy_issues()` 量两件（条数 + 体积），
+#: 生产者过去只搬一件 —— 见 `sync_public_copy` 的 docstring。
+GZIP_ANCHOR = re.compile(r'(gzip 后 )(\d+)( KB)')
 LICENSE = 'MIT'
 UA = {'User-Agent': 'FilialConnect-feed-refresh'}
 DOMAIN_RE = re.compile(r'^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$')
@@ -223,7 +226,7 @@ def plan_write(old_meta, domains):
     return band_ok(int(old_meta.get('domains') or 0), len(domains))
 
 
-def sync_public_copy(path, domains):
+def sync_public_copy(path, domains, gz_kb=None):
     """Move the size the public copy quotes, because this tool is the only thing that knows it.
 
     (state, detail) with five states kept apart: `updated`, `already-current`, `unreadable`,
@@ -231,6 +234,11 @@ def sync_public_copy(path, domains):
     a second quote was typed in somewhere and no rewrite may guess which one is authoritative).
     Reading with newline='' and writing the same way is not decoration - this file is eol=lf in
     .gitattributes, and a rewrite that normalised the bytes would show up as a whole-file change.
+
+    `gz_kb` 补的是第二件（2026-10-14 一手）：审计器 `public_copy_issues()` 同时量条数与 gzip
+    体积，而这里过去只搬条数 ⇒ 每一次成功刷新都把 README 的体积句留在旧值上，下一次 `--check`
+    必红（实测：刷新写进 87,893 条、531 KB 没动，量得 557,525 B 超出 2% 容差，链 2/2129 红）。
+    省略 `gz_kb` 保持旧语义（只搬条数），夹具与非真源场景不受影响。
     """
     try:
         text = io.open(path, encoding='utf-8', newline='').read()
@@ -243,15 +251,29 @@ def sync_public_copy(path, domains):
     if len(numbers) > 1:
         return 'ambiguous', '%d citations carrying %s - refusing to guess the authoritative one' % (
             len(cited), ','.join(sorted(numbers)))
+    kb_vals = {int(m.group(2)) for m in GZIP_ANCHOR.finditer(text)} if gz_kb is not None else set()
+    if gz_kb is not None:
+        if not kb_vals:
+            return 'anchor-missing', 'README no longer quotes the gzipped size'
+        if len(kb_vals) > 1:
+            return 'ambiguous', 'gzip 句里有 %d 个不同值 %s - 不猜哪个算权威' % (
+                len(kb_vals), ','.join(str(v) for v in sorted(kb_vals)))
     wanted = '{:,}'.format(domains)
-    if numbers == {wanted}:
+    if numbers == {wanted} and (gz_kb is None or kb_vals == {gz_kb}):
         return 'already-current', '%s already quotes %s' % (os.path.basename(path), wanted)
     out = COPY_ANCHOR.sub(lambda m: m.group(1) + wanted + m.group(3), text)
+    if gz_kb is not None:
+        out = GZIP_ANCHOR.sub(lambda m: '%s%d%s' % (m.group(1), gz_kb, m.group(3)), out)
     if out == text:
         return 'anchor-missing', 'substitution changed nothing (%s -> %s)' % (
             ','.join(sorted(numbers)), wanted)
     io.open(path, 'w', encoding='utf-8', newline='').write(out)
-    return 'updated', '%s -> %s in %d citation(s)' % (','.join(sorted(numbers)), wanted, len(cited))
+    #: 一句「旧值 -> 新值」把两件数字都说全：混成一个字符串集合（`558 KB,87,893 -> ...`）读起来
+    #: 像是搬了两个不同的东西，而它其实是「条数与体积各自的从→到」。
+    was = ','.join(sorted(numbers)) + (' / %s KB' % ','.join(str(v) for v in sorted(kb_vals))
+                                       if kb_vals else '')
+    now_text = wanted + (' / %d KB' % gz_kb if gz_kb is not None else '')
+    return 'updated', '%s -> %s in %d citation(s)' % (was, now_text, len(cited))
 
 
 def main(data_dir=None):
@@ -296,7 +318,10 @@ def main(data_dir=None):
             'snapshot_sha256': sha256_of(snap),
             'raw_upstream_sha256': hashlib.sha256(raw.encode('utf-8')).hexdigest()}
     json.dump(meta, io.open(meta_path, 'w', encoding='utf-8', newline='\n'), indent=2)
-    state, detail = sync_public_copy(README, len(domains))
+    #: 体积那半必须量**盘上那份字节**：`--check` 用 `gzip.compress(open(snap,'rb').read(), 9)`
+    #: 复核 README 的引用，生产者若压内存里的字符串，两者今天恰好相等，而"恰好相等"不是判据。
+    gz_bytes = len(gzip.compress(io.open(snap, 'rb').read(), 9))
+    state, detail = sync_public_copy(README, len(domains), int(round(gz_bytes / 1000.0)))
     print('refreshed: %d domains (%d malformed skipped, %d mainland-CN), due %s' % (
         len(domains), bad, meta['mainland_cn_domains'], meta['refresh_due_by_utc']))
     print('public copy: %s - %s' % (state, detail))
@@ -449,6 +474,35 @@ def selftest():
         state, detail = sync_public_copy(copy, 91000)
         results.append(('two citations carrying different numbers come back ambiguous',
                         state == 'ambiguous', detail))
+        # 第二件数字（gzip 体积）的四条腿。2026-10-14 一手：审计器 `public_copy_issues()` 量两件，
+        # 生产者只搬条数 ⇒ 刷新成功的那一次反而把 README 的体积句留在旧值上，`--check` 次次红。
+        # 「生产者与审计器对同一处引用各说各话」是这组腿要拦的形状，不是「README 写错了一个数」。
+        io.open(copy, 'w', encoding='utf-8', newline='').write(u'名单（83,278 条，gzip 后 531 KB）\n')
+        state, detail = sync_public_copy(copy, 91000, 558)
+        both = io.open(copy, encoding='utf-8', newline='').read()
+        results.append(('the sync moves BOTH quoted numbers (count and gzipped size)',
+                        state == 'updated' and u'（91,000 条，gzip 后 558 KB）' in both,
+                        '%s | %s | %r' % (state, detail, both[:46])))
+        state, detail = sync_public_copy(copy, 91000, 558)
+        results.append(('both numbers current is a no-op, not a reported rewrite',
+                        state == 'already-current', detail))
+        io.open(copy, 'w', encoding='utf-8', newline='').write(u'名单（91,000 条，gzip 后 531 KB）\n')
+        state, detail = sync_public_copy(copy, 91000, 558)
+        results.append(('a current count with a stale size is still rewritten (the failure mode)',
+                        state == 'updated' and u'gzip 后 558 KB' in
+                        io.open(copy, encoding='utf-8', newline='').read(), detail))
+        cstate, cissues = public_copy_issues(copy, 91000, 558 * 1000)
+        results.append(('producer and auditor agree on the same bytes (one fact, one owner)',
+                        cstate == 'ok' and not cissues, '%s | %s' % (cstate, cissues)))
+        io.open(copy, 'w', encoding='utf-8', newline='').write(
+            u'（83,278 条，gzip 后 531 KB）与（83,278 条，gzip 后 600 KB）\n')
+        state, detail = sync_public_copy(copy, 91000, 558)
+        results.append(('two different gzipped quotes are ambiguous too', state == 'ambiguous',
+                        detail))
+        io.open(copy, 'w', encoding='utf-8', newline='').write(u'名单（83,278 条，gzip 后 未知）\n')
+        state, detail = sync_public_copy(copy, 91000, 558)
+        results.append(('a citation whose size half cannot be read is named, not half-written',
+                        state == 'anchor-missing' and 'gzipped size' in detail, detail))
         io.open(copy, 'wb').write(u'（83,278 条，gzip 后）\r\nCRLF kept\r\n'.encode('utf-8'))
         sync_public_copy(copy, 42)
         raw = io.open(copy, 'rb').read()
