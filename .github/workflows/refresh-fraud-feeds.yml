@@ -40,13 +40,27 @@ jobs:
       - name: Commit the refreshed snapshot to main when it changed
         run: |
           set -euo pipefail
-          if git diff --quiet -- assets/data; then
+          if git diff --quiet -- assets/data README.md; then
             echo "no upstream change; nothing to commit"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/data
+          # 2026-10-14 一手：这里过去只 `git add assets/data`，而 `fetch-fraud-feeds.py` 会顺手搬
+          # README 里的那两句数字（条数与 gzip 体积）。README 留在 unstaged 状态，下一步
+          # `git rebase origin/main` 就报 `error: cannot rebase: You have unstaged changes.` ——
+          # 于是**刷新每次都成功、却永远提交不上去**：run 38248502678 的日志里 meta 已是
+          # `state=fresh domains=85148 copy=ok`，main 上仍是 10-01 那份，九天后保险丝到期
+          # （`state=overdue age_days=12`）把公开仓的链顶红。
+          git add assets/data README.md
+          # 守卫放在提交之前，且说的是名字：类是「生产者写了 N 个文件，提交步骤只认得其中几个」。
+          # 再新增一个输出文件时，这里要给出的是文件名，而不是让 rebase 抛一句看不出根因的话。
+          left=$(git status --porcelain --untracked-files=no)
+          if [ -n "$left" ]; then
+            echo "REFUSED: 生产者写了却没有被这一步收入的文件（把它们加进上面的 git add）："
+            printf '%s\n' "$left"
+            exit 1
+          fi
           git commit -m "chore(data): refresh offline scam-domain snapshot" \
             -m "Pushes under contents:write only; this job does not open a pull request because the repository does not permit the Actions token to create one."
           git fetch origin main
