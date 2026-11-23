@@ -3,15 +3,15 @@
   "license": "MIT",
   "feed": "rootlist/online_root_domains.txt",
   "branch": "main",
-  "commit": "0d15602951b9bf76492ad9f2a8c5773b3fd4a338",
-  "fetched_utc": "2026-11-16T13:04:26Z",
-  "refresh_due_by_utc": "2026-11-26T13:04:26Z",
+  "commit": "df358b531e47eaa61f23795d2515eec018ec8c5a",
+  "fetched_utc": "2026-11-23T15:13:41Z",
+  "refresh_due_by_utc": "2026-12-03T15:13:41Z",
   "refresh_cadence_days": 7,
   "refresh_grace_days": 3,
-  "domains": 87782,
+  "domains": 86144,
   "malformed_skipped": 0,
   "coverage_note": "international phishing roots only; mainland-China domains counted below",
-  "mainland_cn_domains": 874,
-  "snapshot_sha256": "215300b4482cd8359799662f79823387b8778e75ad491f5ee4eba217a5fdc529",
-  "raw_upstream_sha256": "215300b4482cd8359799662f79823387b8778e75ad491f5ee4eba217a5fdc529"
+  "mainland_cn_domains": 925,
+  "snapshot_sha256": "15a82789f04d7293b9995e0da5bbe2b4cb17e01fad5b24c91ea3d19841b8c9cc",
+  "raw_upstream_sha256": "15a82789f04d7293b9995e0da5bbe2b4cb17e01fad5b24c91ea3d19841b8c9cc"
 }
