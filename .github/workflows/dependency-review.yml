@@ -21,7 +21,7 @@ jobs:
       # Resolved from the release's git tag object on 2026-09-25 (gh api
       # repos/actions/dependency-review-action -> tag v5.0.0 -> commit a1d282b...),
       # not copied from a README, because a `# vX` comment is an unverified assertion.
-      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+      - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
         with:
           fail-on-severity: moderate
           # Dev-only tooling still runs on the runner, so it is not exempt; the site
